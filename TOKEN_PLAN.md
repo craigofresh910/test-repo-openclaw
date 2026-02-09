@@ -41,12 +41,14 @@
 
 ## Token‑Saving Habits
 - **Prefer patch diffs** over full files when possible.
+- **Hard cap on file reads**: start with 200–400 lines; expand only if needed.
 - **Avoid re‑reading large files** unless needed (use targeted offsets).
 - **Avoid web search** unless requirements are unclear.
 - **Cache context**: keep shared notes in concise files (e.g., `MEMORY.md`).
 - **Limit verbose output**: prefer concise explanations + only required code.
 - **Batch related requests** instead of many small iterations.
 - **Stop streaming** when not needed.
+- **Keep reasoning off** unless explicitly requested.
 
 ---
 
@@ -54,6 +56,13 @@
 - Main agent triages with T1.
 - Spawn sub‑agents only when complexity demands it.
 - Use T0 for quick reviews / summarization of outputs.
+
+---
+
+## Operational Settings (Config)
+- **Heartbeat interval**: 60m (local Ollama model).
+- **Heartbeat model**: local `ollama/llama3.2:3b`.
+- **Default model**: `gpt-4.1-mini`; escalate only when needed.
 
 ---
 
