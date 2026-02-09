@@ -32,6 +32,8 @@ const IMESSAGE_CHAT_ID = process.env.IMESSAGE_CHAT_ID || "";
 const IMESSAGE_TO = process.env.IMESSAGE_TO || "";
 const IMESSAGE_POLL_MS = Number(process.env.IMESSAGE_POLL_MS || "3000");
 
+const MEMORY_MAX_MESSAGES = Number(process.env.MEMORY_MAX_MESSAGES || "20");
+
 // Directories
 const TEMP_DIR = join(RELAY_DIR, "temp");
 const UPLOADS_DIR = join(RELAY_DIR, "uploads");
@@ -42,6 +44,9 @@ const SESSION_FILE = join(RELAY_DIR, "session.json");
 // iMessage polling state
 const IMESSAGE_STATE_FILE = join(RELAY_DIR, "imessage-state.json");
 
+// Persistent memory
+const MEMORY_FILE = join(RELAY_DIR, "memory.json");
+
 interface SessionState {
   sessionId: string | null;
   lastActivity: string;
@@ -49,6 +54,13 @@ interface SessionState {
 
 interface IMessageState {
   lastMessageId: string | null;
+}
+
+interface MemoryMessage {
+  role: "user" | "assistant";
+  source: "Telegram" | "iMessage";
+  content: string;
+  ts: string;
 }
 
 // ============================================================
@@ -81,8 +93,33 @@ async function saveIMessageState(state: IMessageState): Promise<void> {
   await writeFile(IMESSAGE_STATE_FILE, JSON.stringify(state, null, 2));
 }
 
+async function loadMemory(): Promise<MemoryMessage[]> {
+  try {
+    const content = await readFile(MEMORY_FILE, "utf-8");
+    const data = JSON.parse(content);
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
+async function saveMemory(messages: MemoryMessage[]): Promise<void> {
+  await writeFile(MEMORY_FILE, JSON.stringify(messages, null, 2));
+}
+
+function normalizeMemory(messages: MemoryMessage[]): MemoryMessage[] {
+  if (messages.length <= MEMORY_MAX_MESSAGES) return messages;
+  return messages.slice(-MEMORY_MAX_MESSAGES);
+}
+
+async function appendMemory(entry: MemoryMessage): Promise<void> {
+  memory = normalizeMemory([...memory, entry]);
+  await saveMemory(memory);
+}
+
 let session = await loadSession();
 let imessageState = await loadIMessageState();
+let memory = await loadMemory();
 
 // ============================================================
 // LOCK FILE (prevent multiple instances)
@@ -301,10 +338,24 @@ if (bot) {
     await ctx.replyWithChatAction("typing");
 
     // Add any context you want here
+    await appendMemory({
+      role: "user",
+      source: "Telegram",
+      content: text,
+      ts: new Date().toISOString(),
+    });
+
     const enrichedPrompt = buildPrompt(text, "Telegram");
 
     const response = await callModel(enrichedPrompt, { resume: true });
     await sendResponse(ctx, response);
+
+    await appendMemory({
+      role: "assistant",
+      source: "Telegram",
+      content: response,
+      ts: new Date().toISOString(),
+    });
   });
 }
 
@@ -420,11 +471,17 @@ function buildPrompt(userMessage: string, source: "Telegram" | "iMessage"): stri
     minute: "2-digit",
   });
 
+  const memoryLines = memory
+    .map((entry) => `[${entry.source}] ${entry.role}: ${entry.content}`)
+    .join("\n");
+
+  const memoryBlock = memoryLines ? `\nRecent memory:\n${memoryLines}\n` : "";
+
   return `
 You are responding via ${source}. Keep responses concise.
 
 Current time: ${timeStr}
-
+${memoryBlock}
 User: ${userMessage}
 `.trim();
 }
@@ -524,9 +581,23 @@ async function pollIMessage(): Promise<void> {
     imessageState.lastMessageId = latestId;
     await saveIMessageState(imessageState);
 
+    await appendMemory({
+      role: "user",
+      source: "iMessage",
+      content: latest.text,
+      ts: new Date().toISOString(),
+    });
+
     const enrichedPrompt = buildPrompt(latest.text, "iMessage");
     const response = await callModel(enrichedPrompt, { resume: true });
     await sendIMessage(response || "(no response)");
+
+    await appendMemory({
+      role: "assistant",
+      source: "iMessage",
+      content: response,
+      ts: new Date().toISOString(),
+    });
   } catch (error) {
     console.error("iMessage poll error:", error);
   }

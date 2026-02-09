@@ -283,6 +283,9 @@ OPENAI_BASE_URL=https://api.openai.com/v1
 RELAY_TRANSPORTS=telegram,imessage
 IMESSAGE_POLL_MS=3000
 
+# Optional - Memory
+MEMORY_MAX_MESSAGES=20
+
 # Optional - Paths (defaults work for most setups)
 CLAUDE_PATH=claude        # Path to claude CLI (if not in PATH)
 RELAY_DIR=~/.claude-relay # Working directory for temp files
