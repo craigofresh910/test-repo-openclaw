@@ -106,6 +106,34 @@ body {
   font-size: 16px;
 }
 
+.cap-title {
+  margin-top: 20px;
+}
+
+.cap-list {
+  display: grid;
+  gap: 12px;
+}
+
+.cap-item {
+  border: 1px solid #1f2430;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #111722;
+}
+
+.cap-item h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+}
+
+.cap-item ul {
+  margin: 0;
+  padding-left: 16px;
+  color: #9aa4b2;
+  font-size: 12px;
+}
+
 .feed-item {
   border-bottom: 1px solid #1f2430;
   padding: 12px 0;

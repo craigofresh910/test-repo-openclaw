@@ -6,6 +6,7 @@ const canvas = document.getElementById("scene");
 const labelsEl = document.getElementById("labels");
 const feed = document.getElementById("feed");
 const updatedAt = document.getElementById("updatedAt");
+const capabilitiesEl = document.getElementById("capabilities");
 
 const layoutOrder = [
   "builder",
@@ -19,14 +20,62 @@ const layoutOrder = [
 ];
 
 const defaultAgents = [
-  { id: "builder", name: "Builder", role: "Senior Engineer", model: "deepseek-coder" },
-  { id: "pm", name: "PM", role: "Execution Planner", model: "dolphin" },
-  { id: "research", name: "Research", role: "Analyst", model: "dolphin" },
-  { id: "craigo", name: "Craigo (Lead)", role: "Lead / CTO", model: "gpt-4.1-mini" },
-  { id: "qa", name: "QA", role: "Debugger", model: "dolphin" },
-  { id: "growth", name: "Growth", role: "Revenue", model: "dolphin" },
-  { id: "ops", name: "Ops", role: "DevOps", model: "dolphin" },
-  { id: "content", name: "Content", role: "Content Engine", model: "dolphin" }
+  {
+    id: "builder",
+    name: "Builder",
+    role: "Senior Engineer",
+    model: "deepseek-coder",
+    capabilities: ["Code implementation", "Infra automation", "API wiring"]
+  },
+  {
+    id: "pm",
+    name: "PM",
+    role: "Execution Planner",
+    model: "dolphin",
+    capabilities: ["Spec breakdown", "Roadmaps", "Task sequencing"]
+  },
+  {
+    id: "research",
+    name: "Research",
+    role: "Analyst",
+    model: "dolphin",
+    capabilities: ["Competitive scans", "Tech selection", "Synthesis"]
+  },
+  {
+    id: "craigo",
+    name: "Craigo (Lead)",
+    role: "Lead / CTO",
+    model: "gpt-4.1-mini",
+    capabilities: ["Strategy", "Architectures", "Final decisions"]
+  },
+  {
+    id: "qa",
+    name: "QA",
+    role: "Debugger",
+    model: "dolphin",
+    capabilities: ["Bug reproduction", "Test plans", "Edge-case checks"]
+  },
+  {
+    id: "growth",
+    name: "Growth",
+    role: "Revenue",
+    model: "dolphin",
+    capabilities: ["Pricing", "Funnels", "Monetization"]
+  },
+  {
+    id: "ops",
+    name: "Ops",
+    role: "DevOps",
+    model: "dolphin",
+    capabilities: ["Deploys", "Monitoring", "Scaling"]
+  },
+  {
+    id: "content",
+    name: "Content",
+    role: "Content Engine",
+    model: "dolphin",
+    capabilities: ["Outlines", "Scripts", "Brand voice"]
+  }
 ];
 
 const roleColors = {
@@ -415,6 +464,33 @@ function renderFeed(data) {
     .join("");
 }
 
+function renderCapabilities(data) {
+  capabilitiesEl.innerHTML = "";
+  const wrapper = document.createElement("div");
+  wrapper.className = "cap-list";
+
+  data.agents.forEach((agent) => {
+    const item = document.createElement("div");
+    item.className = "cap-item";
+
+    const title = document.createElement("h3");
+    const model = agent.model ? ` • ${agent.model}` : "";
+    title.textContent = `${agent.name}${model}`;
+
+    const list = document.createElement("ul");
+    (agent.capabilities || []).forEach((cap) => {
+      const li = document.createElement("li");
+      li.textContent = cap;
+      list.appendChild(li);
+    });
+
+    item.append(title, list);
+    wrapper.appendChild(item);
+  });
+
+  capabilitiesEl.appendChild(wrapper);
+}
+
 function render(data) {
   if (!data) return;
   if (data.updatedAt) {
@@ -424,6 +500,7 @@ function render(data) {
   agentsById = new Map(data.agents.map((agent) => [agent.id, agent]));
   ensureModules(data);
   renderFeed(data);
+  renderCapabilities(data);
 }
 
 async function init() {
