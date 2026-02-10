@@ -8,6 +8,29 @@ const feed = document.getElementById("feed");
 const updatedAt = document.getElementById("updatedAt");
 const capabilitiesEl = document.getElementById("capabilities");
 
+const debugEl = document.createElement("div");
+debugEl.style.position = "absolute";
+debugEl.style.left = "12px";
+debugEl.style.bottom = "12px";
+debugEl.style.background = "rgba(15, 23, 42, 0.85)";
+debugEl.style.border = "1px solid rgba(56, 189, 248, 0.3)";
+debugEl.style.color = "#e2e8f0";
+debugEl.style.padding = "8px 10px";
+debugEl.style.borderRadius = "10px";
+debugEl.style.fontSize = "11px";
+debugEl.style.maxWidth = "320px";
+debugEl.style.zIndex = "10";
+debugEl.textContent = "debug: booting";
+floorEl.appendChild(debugEl);
+
+window.addEventListener("error", (event) => {
+  debugEl.textContent = `error: ${event.message}`;
+});
+
+window.addEventListener("unhandledrejection", (event) => {
+  debugEl.textContent = `promise: ${event.reason}`;
+});
+
 const layoutOrder = [
   "builder",
   "pm",
@@ -98,6 +121,7 @@ function initScene() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color("#0b0f17");
   scene.fog = new THREE.Fog("#0b0f17", 16, 50);
+  debugEl.textContent = "debug: scene initialized";
 
   const width = floorEl.clientWidth;
   const height = floorEl.clientHeight;
@@ -622,6 +646,7 @@ async function init() {
   const bootstrap = { agents: defaultAgents };
   agentsById = new Map(defaultAgents.map((agent) => [agent.id, agent]));
   ensureModules(bootstrap);
+  debugEl.textContent = `debug: modules ${modules.size}, avatars ${avatars.size}`;
 
   try {
     const res = await fetch("/api/agents", { credentials: "include" });
