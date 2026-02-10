@@ -92,6 +92,7 @@ const roleColors = {
 let scene, camera, renderer, clock, controls;
 let agentsById = new Map();
 let modules = new Map();
+let avatars = new Map();
 
 function initScene() {
   scene = new THREE.Scene();
@@ -332,25 +333,120 @@ function createWorkspace(agent, position) {
   glow.position.set(-1.2, 1.2, -1.0);
   group.add(glow);
 
-  const avatarMat = new THREE.MeshStandardMaterial({
-    color: accent.clone(),
-    roughness: 0.4,
-    metalness: 0.1
-  });
-  const avatar = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), avatarMat);
-  avatar.position.set(1.2, 0.35, 0.8);
-  group.add(avatar);
-
   group.position.copy(position);
   group.userData = {
     id: agent.id,
     accent,
-    glow: [strip, ring, orb, glow],
-    avatar
+    glow: [strip, ring, orb, glow]
   };
 
   scene.add(group);
   return group;
+}
+
+function createAvatar(agent, modulePosition) {
+  const accent = new THREE.Color(roleColors[agent.id] || "#38bdf8");
+  const group = new THREE.Group();
+
+  const bodyMat = new THREE.MeshStandardMaterial({
+    color: accent.clone(),
+    roughness: 0.5,
+    metalness: 0.05
+  });
+  const limbMat = new THREE.MeshStandardMaterial({ color: "#0f172a", roughness: 0.7 });
+
+  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.38, 12), bodyMat);
+  torso.position.y = 0.45;
+  group.add(torso);
+
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 14), bodyMat);
+  head.position.y = 0.78;
+  group.add(head);
+
+  const handGeo = new THREE.SphereGeometry(0.09, 10, 10);
+  const leftHand = new THREE.Mesh(handGeo, limbMat);
+  leftHand.position.set(-0.18, 0.46, 0.05);
+  const rightHand = leftHand.clone();
+  rightHand.position.set(0.18, 0.46, 0.05);
+  group.add(leftHand, rightHand);
+
+  const legGeo = new THREE.CylinderGeometry(0.07, 0.07, 0.22, 10);
+  const leftLeg = new THREE.Mesh(legGeo, limbMat);
+  leftLeg.position.set(-0.08, 0.12, 0);
+  const rightLeg = leftLeg.clone();
+  rightLeg.position.set(0.08, 0.12, 0);
+  group.add(leftLeg, rightLeg);
+
+  const base = modulePosition.clone().add(new THREE.Vector3(1.1, -0.2, 0.9));
+  group.position.copy(base);
+
+  group.userData = {
+    id: agent.id,
+    base,
+    target: base.clone(),
+    state: "idle",
+    phase: Math.random() * Math.PI * 2,
+    head,
+    leftHand,
+    rightHand,
+    leftLeg,
+    rightLeg
+  };
+
+  scene.add(group);
+  return group;
+}
+
+function deriveState(agent, avatar) {
+  const status = (agent.status || "idle").toLowerCase();
+  const task = `${agent.task || ""} ${agent.lastMessage || ""}`.toLowerCase();
+  const wantsCollab = status === "busy" && /(meet|sync|collab|review|handoff)/.test(task);
+
+  if (wantsCollab) return "walking";
+  if (avatar.userData.state === "walking" && avatar.position.distanceTo(avatar.userData.base) > 0.2) {
+    return "returning";
+  }
+  if (status === "busy") return "working";
+  return "idle";
+}
+
+function updateAvatars(elapsed) {
+  const hub = new THREE.Vector3(0, -0.2, 0);
+
+  avatars.forEach((avatar, id) => {
+    const agent = agentsById.get(id);
+    if (!agent) return;
+
+    const state = deriveState(agent, avatar);
+    avatar.userData.state = state;
+
+    if (state === "walking") {
+      avatar.userData.target.copy(hub);
+    } else if (state === "returning") {
+      avatar.userData.target.copy(avatar.userData.base);
+    } else {
+      avatar.userData.target.copy(avatar.userData.base);
+    }
+
+    const target = avatar.userData.target;
+    avatar.position.lerp(target, state === "walking" ? 0.06 : 0.08);
+
+    const bob = Math.sin(elapsed * 2 + avatar.userData.phase) * 0.02;
+    avatar.position.y = (state === "walking" ? -0.1 : -0.2) + bob;
+
+    if (state === "idle") {
+      avatar.rotation.y = Math.sin(elapsed * 0.6 + avatar.userData.phase) * 0.2;
+      avatar.userData.head.rotation.y = Math.sin(elapsed * 0.8) * 0.2;
+    } else if (state === "working") {
+      avatar.rotation.y = 0.2;
+      avatar.userData.leftHand.position.y = 0.48 + Math.sin(elapsed * 3) * 0.03;
+      avatar.userData.rightHand.position.y = 0.48 + Math.cos(elapsed * 3) * 0.03;
+    } else if (state === "walking" || state === "returning") {
+      const stride = Math.sin(elapsed * 5 + avatar.userData.phase) * 0.05;
+      avatar.userData.leftLeg.rotation.x = stride;
+      avatar.userData.rightLeg.rotation.x = -stride;
+    }
+  });
 }
 
 function ensureModules(data) {
@@ -358,10 +454,15 @@ function ensureModules(data) {
 
   data.agents.forEach((agent) => {
     if (!positions.has(agent.id)) return;
-    if (modules.has(agent.id)) return;
+    if (!modules.has(agent.id)) {
+      const module = createWorkspace(agent, positions.get(agent.id));
+      modules.set(agent.id, module);
+    }
 
-    const module = createWorkspace(agent, positions.get(agent.id));
-    modules.set(agent.id, module);
+    if (!avatars.has(agent.id)) {
+      const avatar = createAvatar(agent, positions.get(agent.id));
+      avatars.set(agent.id, avatar);
+    }
   });
 }
 
@@ -380,24 +481,9 @@ function updateModules() {
         mesh.intensity = 0.6 + pulse * 0.6;
       }
     });
-
-    const status = agent.status || "idle";
-    const task = `${agent.task || ""} ${agent.lastMessage || ""}`.toLowerCase();
-    const shouldMeet = status === "busy" && /(meet|sync|collab|review)/.test(task);
-
-    if (module.userData.avatar) {
-      const avatar = module.userData.avatar;
-      if (shouldMeet) {
-        avatar.position.x = 0.4;
-        avatar.position.z = 0.2;
-        avatar.position.y = 0.4 + Math.sin(elapsed * 2 + id.length) * 0.05;
-      } else {
-        avatar.position.x = 1.2;
-        avatar.position.z = 0.8;
-        avatar.position.y = 0.35 + Math.sin(elapsed * 1.5 + id.length) * 0.03;
-      }
-    }
   });
+
+  updateAvatars(elapsed);
 }
 
 function updateLabels() {
