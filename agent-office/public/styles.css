@@ -94,7 +94,7 @@ body {
   background: #151a25;
   border: 1px solid #1f2430;
   border-radius: 18px;
-  padding: 20px;
+  padding: 14px;
   max-height: 720px;
   overflow: hidden;
   display: flex;
@@ -118,15 +118,15 @@ body {
 
 .cap-list {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .cap-item {
   border: 1px solid rgba(56, 189, 248, 0.15);
-  border-radius: 14px;
-  padding: 12px 14px;
+  border-radius: 12px;
+  padding: 8px 10px;
   background: linear-gradient(145deg, rgba(15, 23, 42, 0.85), rgba(17, 24, 39, 0.65));
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.22);
   position: relative;
 }
 
