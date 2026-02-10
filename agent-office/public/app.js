@@ -381,14 +381,14 @@ const rolePosture = {
 };
 
 const modelMap = {
-  craigo: { url: "/models/men-pack/Individual Characters/glTF/Suit.gltf", scale: 0.45 },
-  builder: { url: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf", scale: 0.45 },
-  pm: { url: "/models/women-pack/FBX/Smooth_Female_Casual.fbx", scale: 0.012 },
-  qa: { url: "/models/women-pack/FBX/Smooth_Female_Alternative.fbx", scale: 0.012 },
-  ops: { url: "/models/men-pack/Individual Characters/glTF/Suit.gltf", scale: 0.45 },
-  research: { url: "/models/women-pack/FBX/Smooth_Female_Dress.fbx", scale: 0.012 },
-  growth: { url: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf", scale: 0.45 },
-  content: { url: "/models/women-pack/FBX/Smooth_Female_TankTop.fbx", scale: 0.012 }
+  craigo: { url: "/models/men-pack/Individual Characters/glTF/Suit.gltf", scale: 0.9 },
+  builder: { url: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf", scale: 0.9 },
+  pm: { url: "/models/women-pack/FBX/Smooth_Female_Casual.fbx", scale: 0.08 },
+  qa: { url: "/models/women-pack/FBX/Smooth_Female_Alternative.fbx", scale: 0.08 },
+  ops: { url: "/models/men-pack/Individual Characters/glTF/Suit.gltf", scale: 0.9 },
+  research: { url: "/models/women-pack/FBX/Smooth_Female_Dress.fbx", scale: 0.08 },
+  growth: { url: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf", scale: 0.9 },
+  content: { url: "/models/women-pack/FBX/Smooth_Female_TankTop.fbx", scale: 0.08 }
 };
 
 function loadModel(url) {
@@ -413,7 +413,7 @@ function createAvatar(agent, modulePosition) {
   const standBase = modulePosition.clone().add(new THREE.Vector3(1.1 + profile.stanceX, -0.2, 0.9));
   const seatBase = modulePosition.clone().add(new THREE.Vector3(0.6, -0.12, 0.95));
   group.position.copy(standBase);
-  group.scale.setScalar(profile.scale * 0.85);
+  group.scale.setScalar(profile.scale * 1.0);
 
   const placeholder = new THREE.Mesh(
     new THREE.CapsuleGeometry(0.2, 0.3, 6, 10),
@@ -436,7 +436,7 @@ function createAvatar(agent, modulePosition) {
         }
       });
       model.scale.setScalar(modelScale);
-      model.position.y = -0.05;
+      model.position.y = 0.0;
       model.rotation.y = Math.PI;
       group.add(model);
       group.userData.modelLoaded = true;
