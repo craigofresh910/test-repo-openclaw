@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agent Office</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <h1>Agent Office</h1>
+        <p class="subtitle">Live floor plan view of your team</p>
+      </div>
+      <div class="status">
+        <span id="updatedAt">Last update: --</span>
+      </div>
+    </header>
+
+    <main class="office">
+      <section class="floor" id="floor"></section>
+      <aside class="panel" id="panel">
+        <h2>Agent Feed</h2>
+        <div id="feed"></div>
+      </aside>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

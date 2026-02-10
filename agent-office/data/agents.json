@@ -1,0 +1,85 @@
+{
+  "updatedAt": "",
+  "agents": [
+    {
+      "id": "craigo",
+      "name": "Craigo (Lead)",
+      "role": "Lead / CTO",
+      "status": "idle",
+      "task": "",
+      "lastMessage": "",
+      "filesChanged": [],
+      "logs": []
+    },
+    {
+      "id": "builder",
+      "name": "Builder",
+      "role": "Senior Engineer",
+      "status": "idle",
+      "task": "",
+      "lastMessage": "",
+      "filesChanged": [],
+      "logs": []
+    },
+    {
+      "id": "pm",
+      "name": "PM",
+      "role": "Execution Planner",
+      "status": "idle",
+      "task": "",
+      "lastMessage": "",
+      "filesChanged": [],
+      "logs": []
+    },
+    {
+      "id": "research",
+      "name": "Research",
+      "role": "Analyst",
+      "status": "idle",
+      "task": "",
+      "lastMessage": "",
+      "filesChanged": [],
+      "logs": []
+    },
+    {
+      "id": "qa",
+      "name": "QA",
+      "role": "Debugger",
+      "status": "idle",
+      "task": "",
+      "lastMessage": "",
+      "filesChanged": [],
+      "logs": []
+    },
+    {
+      "id": "growth",
+      "name": "Growth",
+      "role": "Revenue",
+      "status": "idle",
+      "task": "",
+      "lastMessage": "",
+      "filesChanged": [],
+      "logs": []
+    },
+    {
+      "id": "ops",
+      "name": "Ops",
+      "role": "DevOps",
+      "status": "idle",
+      "task": "",
+      "lastMessage": "",
+      "filesChanged": [],
+      "logs": []
+    },
+    {
+      "id": "content",
+      "name": "Content",
+      "role": "Content Engine",
+      "status": "idle",
+      "task": "",
+      "lastMessage": "",
+      "filesChanged": [],
+      "logs": []
+    }
+  ]
+}
