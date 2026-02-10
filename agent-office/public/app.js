@@ -1,4 +1,5 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js";
+import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/controls/OrbitControls.js";
 
 const floorEl = document.getElementById("floor");
 const canvas = document.getElementById("scene");
@@ -28,7 +29,7 @@ const roleColors = {
   content: "#f472b6"
 };
 
-let scene, camera, renderer, clock;
+let scene, camera, renderer, clock, controls;
 let agentsById = new Map();
 let modules = new Map();
 
@@ -56,6 +57,17 @@ function initScene() {
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setSize(width, height, false);
   renderer.setPixelRatio(window.devicePixelRatio || 1);
+
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.enablePan = true;
+  controls.minZoom = 0.6;
+  controls.maxZoom = 2.2;
+  controls.minDistance = 8;
+  controls.maxDistance = 28;
+  controls.target.set(0, 0, 0);
+  controls.update();
 
   const ambient = new THREE.AmbientLight(0xffffff, 0.7);
   scene.add(ambient);
@@ -269,6 +281,7 @@ function renderLoop() {
   requestAnimationFrame(renderLoop);
   updateModules();
   updateLabels();
+  if (controls) controls.update();
   renderer.render(scene, camera);
 }
 
