@@ -10,7 +10,37 @@ const app = express();
 const PORT = process.env.PORT || 3030;
 const DATA_PATH = path.join(__dirname, "data", "agents.json");
 
+const OFFICE_USER = process.env.OFFICE_USER;
+const OFFICE_PASS = process.env.OFFICE_PASS;
+
 app.use(express.json({ limit: "1mb" }));
+
+app.use((req, res, next) => {
+  const isLocal =
+    req.ip === "127.0.0.1" ||
+    req.ip === "::1" ||
+    req.ip === "::ffff:127.0.0.1";
+
+  if (!OFFICE_USER || !OFFICE_PASS) {
+    if (isLocal) return next();
+    res.setHeader("WWW-Authenticate", "Basic realm=\"Agent Office\"");
+    return res.status(401).send("Set OFFICE_USER and OFFICE_PASS to access remotely.");
+  }
+
+  const auth = req.headers.authorization || "";
+  const token = auth.split(" ")[1];
+  if (!token) {
+    res.setHeader("WWW-Authenticate", "Basic realm=\"Agent Office\"");
+    return res.status(401).send("Auth required");
+  }
+
+  const [user, pass] = Buffer.from(token, "base64").toString("utf8").split(":");
+  if (user === OFFICE_USER && pass === OFFICE_PASS) return next();
+
+  res.setHeader("WWW-Authenticate", "Basic realm=\"Agent Office\"");
+  return res.status(401).send("Invalid credentials");
+});
+
 app.use(express.static(path.join(__dirname, "public")));
 
 const clients = new Set();

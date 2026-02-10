@@ -7,6 +7,11 @@ Visual floor‑plan dashboard for your agent team.
 ```bash
 cd /Users/craigofresh/.openclaw/workspace/agent-office
 npm install
+
+# set access for remote viewing
+export OFFICE_USER="fresh"
+export OFFICE_PASS="<your-strong-password>"
+
 npm run dev
 ```
 
