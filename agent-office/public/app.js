@@ -18,6 +18,17 @@ const layoutOrder = [
   "content"
 ];
 
+const defaultAgents = [
+  { id: "builder", name: "Builder", role: "Senior Engineer" },
+  { id: "pm", name: "PM", role: "Execution Planner" },
+  { id: "research", name: "Research", role: "Analyst" },
+  { id: "craigo", name: "Craigo (Lead)", role: "Lead / CTO" },
+  { id: "qa", name: "QA", role: "Debugger" },
+  { id: "growth", name: "Growth", role: "Revenue" },
+  { id: "ops", name: "Ops", role: "DevOps" },
+  { id: "content", name: "Content", role: "Content Engine" }
+];
+
 const roleColors = {
   builder: "#22d3ee",
   pm: "#f59e0b",
@@ -336,9 +347,20 @@ async function init() {
   initScene();
   renderLoop();
 
-  const res = await fetch("/api/agents");
-  const data = await res.json();
-  render(data);
+  // bootstrap modules even if auth blocks fetch
+  const bootstrap = { agents: defaultAgents };
+  agentsById = new Map(defaultAgents.map((agent) => [agent.id, agent]));
+  ensureModules(bootstrap);
+
+  try {
+    const res = await fetch("/api/agents", { credentials: "include" });
+    if (res.ok) {
+      const data = await res.json();
+      render(data);
+    }
+  } catch (err) {
+    console.warn("Agent fetch failed", err);
+  }
 
   const stream = new EventSource("/api/stream");
   stream.onmessage = (event) => {
