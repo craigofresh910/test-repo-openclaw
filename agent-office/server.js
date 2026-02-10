@@ -16,6 +16,10 @@ const OFFICE_PASS = process.env.OFFICE_PASS;
 app.use(express.json({ limit: "1mb" }));
 
 app.use((req, res, next) => {
+  if (req.path.startsWith("/vendor/") || req.path === "/favicon.ico") {
+    return next();
+  }
+
   const isLocal =
     req.ip === "127.0.0.1" ||
     req.ip === "::1" ||
