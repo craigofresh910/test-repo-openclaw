@@ -142,26 +142,29 @@ function initScene() {
     }
   });
 
-  const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+  const ambient = new THREE.AmbientLight(0x8aa0ff, 0.35);
   scene.add(ambient);
 
-  const key = new THREE.DirectionalLight(0xffffff, 0.8);
-  key.position.set(8, 12, 6);
+  const key = new THREE.DirectionalLight(0xffffff, 0.7);
+  key.position.set(10, 14, 8);
   scene.add(key);
 
-  const fill = new THREE.PointLight(0x4f46e5, 0.3, 50);
-  fill.position.set(-8, 8, -6);
+  const rim = new THREE.DirectionalLight(0x7c3aed, 0.5);
+  rim.position.set(-10, 6, -8);
+  scene.add(rim);
+
+  const fill = new THREE.PointLight(0x38bdf8, 0.25, 40);
+  fill.position.set(0, 6, -6);
   scene.add(fill);
 
   const baseGeo = new THREE.PlaneGeometry(30, 20);
-  const baseMat = new THREE.MeshStandardMaterial({ color: "#0f172a", roughness: 0.9 });
+  const baseMat = new THREE.MeshStandardMaterial({ color: "#0b1220", roughness: 0.9 });
   const base = new THREE.Mesh(baseGeo, baseMat);
   base.rotation.x = -Math.PI / 2;
   base.position.y = -0.6;
   scene.add(base);
 
   addWalkways();
-  addWaterCoolerHub();
 
   clock = new THREE.Clock();
 
@@ -225,42 +228,27 @@ function addWalkways() {
   scene.add(neonStrip);
 }
 
-function addWaterCoolerHub() {
-  const hub = new THREE.Group();
-  const baseMat = new THREE.MeshStandardMaterial({ color: "#1f2937", roughness: 0.6 });
-  const waterMat = new THREE.MeshStandardMaterial({ color: "#38bdf8", transparent: true, opacity: 0.7 });
-  const accentMat = new THREE.MeshStandardMaterial({ color: "#e2e8f0", roughness: 0.3 });
-
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.55, 1.1, 16), baseMat);
-  base.position.y = 0.1;
-  hub.add(base);
-
-  const water = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.6, 16), waterMat);
-  water.position.y = 0.8;
-  hub.add(water);
-
-  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.38, 16, 16), accentMat);
-  cap.position.y = 1.2;
-  hub.add(cap);
-
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.05, 12, 24), accentMat);
-  ring.position.set(0, 0.05, 0);
-  ring.rotation.x = Math.PI / 2;
-  hub.add(ring);
-
-  hub.position.set(0, -0.15, 0);
-  scene.add(hub);
-}
+// water cooler hub removed for minimal scene
 
 function createWorkspace(agent, position) {
   const accent = new THREE.Color(roleColors[agent.id] || "#38bdf8");
   const group = new THREE.Group();
 
-  const floorMat = new THREE.MeshStandardMaterial({ color: "#111827", roughness: 0.8 });
-  const wallMat = new THREE.MeshStandardMaterial({ color: "#151a28", roughness: 0.9 });
+  const floorMat = new THREE.MeshStandardMaterial({ color: "#0f172a", roughness: 0.85 });
+  const wallMat = new THREE.MeshStandardMaterial({ color: "#0b1220", roughness: 0.9 });
   const deskMat = new THREE.MeshStandardMaterial({ color: "#1f2937", roughness: 0.5 });
-  const chairMat = new THREE.MeshStandardMaterial({ color: "#0f172a", roughness: 0.6 });
-  const metalMat = new THREE.MeshStandardMaterial({ color: "#1e293b", roughness: 0.3, metalness: 0.4 });
+  const chairMat = new THREE.MeshStandardMaterial({ color: "#0f172a", roughness: 0.7 });
+  const metalMat = new THREE.MeshStandardMaterial({ color: "#1e293b", roughness: 0.3, metalness: 0.35 });
+  const neonBlue = new THREE.MeshStandardMaterial({
+    color: "#38bdf8",
+    emissive: "#38bdf8",
+    emissiveIntensity: 0.8
+  });
+  const neonPurple = new THREE.MeshStandardMaterial({
+    color: "#7c3aed",
+    emissive: "#7c3aed",
+    emissiveIntensity: 0.7
+  });
 
   const platform = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.3, 3.6), floorMat);
   platform.position.y = -0.45;
@@ -295,42 +283,49 @@ function createWorkspace(agent, position) {
   chairBack.position.set(0.6, 0.35, 1.2);
   group.add(chairBack);
 
-  const monitorMat = new THREE.MeshStandardMaterial({ color: "#0b1020", roughness: 0.2 });
+  const monitorMat = new THREE.MeshStandardMaterial({
+    color: "#0b1020",
+    emissive: "#1d4ed8",
+    emissiveIntensity: 0.4,
+    roughness: 0.2
+  });
   const monitor = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.35, 0.05), monitorMat);
   monitor.position.set(0.35, 0.45, -0.05);
   const monitor2 = monitor.clone();
   monitor2.position.set(0.9, 0.45, -0.05);
   group.add(monitor, monitor2);
 
+  const keyboard = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.04, 0.18), metalMat);
+  keyboard.position.set(0.6, 0.23, 0.25);
+  group.add(keyboard);
+
+  const mouse = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.04, 0.1), metalMat);
+  mouse.position.set(0.95, 0.23, 0.28);
+  group.add(mouse);
+
+  const mug = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.12, 12), accent.clone());
+  mug.position.set(0.2, 0.28, 0.3);
+  group.add(mug);
+
+  const tower = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.42, 0.3), metalMat);
+  tower.position.set(1.35, 0.2, 0.5);
+  group.add(tower);
+
   const shelf = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.08, 0.4), metalMat);
   shelf.position.set(-1.1, 1.1, -1.5);
   group.add(shelf);
 
-  const neonStripMat = new THREE.MeshStandardMaterial({
-    color: accent,
-    emissive: accent,
-    emissiveIntensity: 0.9
-  });
-  const strip = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.05, 0.05), neonStripMat);
+  const strip = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.05, 0.05), neonBlue);
   strip.position.set(0, 2.0, -1.6);
   group.add(strip);
 
-  const iconMat = new THREE.MeshStandardMaterial({
-    color: accent,
-    emissive: accent,
-    emissiveIntensity: 1.2
-  });
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.08, 12, 24), iconMat);
-  ring.position.set(-1.6, 0.9, -1.55);
-  ring.rotation.x = Math.PI / 2;
-  group.add(ring);
+  const strip2 = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.05, 0.05), neonPurple);
+  strip2.position.set(-1.4, 0.2, 1.6);
+  strip2.rotation.y = Math.PI / 2;
+  group.add(strip2);
 
-  const orb = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), iconMat);
-  orb.position.set(-1.1, 0.9, -1.55);
-  group.add(orb);
-
-  const glow = new THREE.PointLight(accent, 0.8, 6);
-  glow.position.set(-1.2, 1.2, -1.0);
+  const glow = new THREE.PointLight(accent, 0.7, 5);
+  glow.position.set(0.2, 1.2, -0.8);
   group.add(glow);
 
   group.position.copy(position);
