@@ -94,22 +94,22 @@ body {
   background: #151a25;
   border: 1px solid #1f2430;
   border-radius: 18px;
-  padding: 14px;
-  max-height: 720px;
-  overflow: hidden;
+  padding: 12px;
+  max-height: none;
+  overflow: visible;
   display: flex;
   flex-direction: column;
 }
 
 #capabilities {
-  overflow: auto;
-  padding-right: 4px;
-  max-height: 280px;
+  overflow: hidden;
+  padding-right: 0;
+  max-height: none;
 }
 
 .panel h2 {
-  margin: 0 0 16px;
-  font-size: 16px;
+  margin: 0 0 10px;
+  font-size: 15px;
 }
 
 .cap-title {
@@ -148,10 +148,10 @@ body {
 
 .cap-item ul {
   margin: 0;
-  padding-left: 16px;
+  padding-left: 14px;
   color: #94a3b8;
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 #capabilities {
