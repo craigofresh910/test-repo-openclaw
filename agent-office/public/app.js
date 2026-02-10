@@ -1,6 +1,7 @@
 import * as THREE from "/vendor/three.module.js";
 import { OrbitControls } from "/vendor/OrbitControls.js";
 import { GLTFLoader } from "/vendor/GLTFLoader.js";
+import { FBXLoader } from "/vendor/FBXLoader.js";
 
 const floorEl = document.getElementById("floor");
 const canvas = document.getElementById("scene");
@@ -119,6 +120,7 @@ let modules = new Map();
 let avatars = new Map();
 
 const loader = new GLTFLoader();
+const fbxLoader = new FBXLoader();
 const modelCache = new Map();
 
 function initScene() {
@@ -379,14 +381,14 @@ const rolePosture = {
 };
 
 const modelMap = {
-  craigo: "/models/men-pack/Individual Characters/glTF/Suit.gltf",
-  builder: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf",
-  pm: "/models/men-pack/Individual Characters/glTF/Casual_2.gltf",
-  qa: "/models/men-pack/Individual Characters/glTF/Suit.gltf",
-  ops: "/models/men-pack/Individual Characters/glTF/Suit.gltf",
-  research: "/models/men-pack/Individual Characters/glTF/Casual_2.gltf",
-  growth: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf",
-  content: "/models/men-pack/Individual Characters/glTF/Casual_2.gltf"
+  craigo: { url: "/models/men-pack/Individual Characters/glTF/Suit.gltf", scale: 0.45 },
+  builder: { url: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf", scale: 0.45 },
+  pm: { url: "/models/women-pack/FBX/Smooth_Female_Casual.fbx", scale: 0.012 },
+  qa: { url: "/models/women-pack/FBX/Smooth_Female_Alternative.fbx", scale: 0.012 },
+  ops: { url: "/models/men-pack/Individual Characters/glTF/Suit.gltf", scale: 0.45 },
+  research: { url: "/models/women-pack/FBX/Smooth_Female_Dress.fbx", scale: 0.012 },
+  growth: { url: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf", scale: 0.45 },
+  content: { url: "/models/women-pack/FBX/Smooth_Female_TankTop.fbx", scale: 0.012 }
 };
 
 function loadModel(url) {
@@ -394,7 +396,11 @@ function loadModel(url) {
   if (modelCache.has(url)) return modelCache.get(url);
 
   const promise = new Promise((resolve, reject) => {
-    loader.load(url, (gltf) => resolve(gltf), undefined, reject);
+    if (url.toLowerCase().endsWith(".fbx")) {
+      fbxLoader.load(url, (obj) => resolve({ scene: obj }), undefined, reject);
+    } else {
+      loader.load(url, (gltf) => resolve(gltf), undefined, reject);
+    }
   });
   modelCache.set(url, promise);
   return promise;
@@ -416,7 +422,9 @@ function createAvatar(agent, modulePosition) {
   placeholder.position.y = 0.4;
   group.add(placeholder);
 
-  const modelUrl = modelMap[agent.id];
+  const modelSpec = modelMap[agent.id];
+  const modelUrl = modelSpec?.url || modelSpec;
+  const modelScale = modelSpec?.scale ?? 0.45;
   loadModel(modelUrl)
     .then((gltf) => {
       group.clear();
@@ -427,7 +435,7 @@ function createAvatar(agent, modulePosition) {
           node.receiveShadow = false;
         }
       });
-      model.scale.setScalar(0.45);
+      model.scale.setScalar(modelScale);
       model.position.y = -0.05;
       model.rotation.y = Math.PI;
       group.add(model);
