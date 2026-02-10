@@ -381,38 +381,38 @@ function createAvatar(agent, modulePosition) {
 
   const bodyMat = new THREE.MeshStandardMaterial({
     color: accent.clone(),
-    roughness: 0.55,
-    metalness: 0.05
+    roughness: 0.75,
+    metalness: 0.02
   });
-  const limbMat = new THREE.MeshStandardMaterial({ color: "#0f172a", roughness: 0.8 });
+  const limbMat = new THREE.MeshStandardMaterial({ color: "#0f172a", roughness: 0.85 });
 
-  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 0.4, 12), bodyMat);
-  torso.position.y = 0.46;
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.18, 0.22, 6, 10), bodyMat);
+  torso.position.y = 0.38;
   torso.rotation.x = profile.lean;
   group.add(torso);
 
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 14, 14), bodyMat);
-  head.position.y = 0.82;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 14), bodyMat);
+  head.position.y = 0.68;
   head.rotation.z = profile.headTilt;
   group.add(head);
 
-  const handGeo = new THREE.SphereGeometry(0.1, 10, 10);
+  const handGeo = new THREE.SphereGeometry(0.09, 10, 10);
   const leftHand = new THREE.Mesh(handGeo, limbMat);
-  leftHand.position.set(-0.2, 0.48, 0.05);
+  leftHand.position.set(-0.18, 0.38, 0.05);
   const rightHand = leftHand.clone();
-  rightHand.position.set(0.2, 0.48, 0.05);
+  rightHand.position.set(0.18, 0.38, 0.05);
   group.add(leftHand, rightHand);
 
-  const legGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.22, 10);
+  const legGeo = new THREE.CylinderGeometry(0.07, 0.07, 0.18, 10);
   const leftLeg = new THREE.Mesh(legGeo, limbMat);
-  leftLeg.position.set(-0.09, 0.12, 0);
+  leftLeg.position.set(-0.08, 0.08, 0);
   const rightLeg = leftLeg.clone();
-  rightLeg.position.set(0.09, 0.12, 0);
+  rightLeg.position.set(0.08, 0.08, 0);
   group.add(leftLeg, rightLeg);
 
   const base = modulePosition.clone().add(new THREE.Vector3(1.1 + profile.stanceX, -0.2, 0.9));
   group.position.copy(base);
-  group.scale.setScalar(profile.scale);
+  group.scale.setScalar(profile.scale * 0.8);
 
   group.userData = {
     id: agent.id,
