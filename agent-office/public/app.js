@@ -344,41 +344,56 @@ function createWorkspace(agent, position) {
   return group;
 }
 
+const rolePosture = {
+  craigo: { scale: 1.08, lean: -0.08, headTilt: 0.02, stanceX: 0 },
+  builder: { scale: 1.0, lean: -0.05, headTilt: 0.0, stanceX: -0.02 },
+  pm: { scale: 1.0, lean: 0.0, headTilt: 0.0, stanceX: 0.0 },
+  qa: { scale: 1.0, lean: -0.04, headTilt: -0.05, stanceX: 0.02 },
+  ops: { scale: 1.0, lean: -0.03, headTilt: 0.0, stanceX: -0.01 },
+  research: { scale: 1.0, lean: -0.02, headTilt: 0.06, stanceX: 0.0 },
+  growth: { scale: 1.0, lean: -0.02, headTilt: 0.0, stanceX: 0.04 },
+  content: { scale: 1.0, lean: -0.02, headTilt: 0.02, stanceX: 0.0 }
+};
+
 function createAvatar(agent, modulePosition) {
   const accent = new THREE.Color(roleColors[agent.id] || "#38bdf8");
   const group = new THREE.Group();
+  const profile = rolePosture[agent.id] || { scale: 1, lean: 0, headTilt: 0, stanceX: 0 };
 
   const bodyMat = new THREE.MeshStandardMaterial({
     color: accent.clone(),
-    roughness: 0.5,
+    roughness: 0.55,
     metalness: 0.05
   });
-  const limbMat = new THREE.MeshStandardMaterial({ color: "#0f172a", roughness: 0.7 });
+  const limbMat = new THREE.MeshStandardMaterial({ color: "#0f172a", roughness: 0.8 });
 
-  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.38, 12), bodyMat);
-  torso.position.y = 0.45;
+  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 0.4, 12), bodyMat);
+  torso.position.y = 0.46;
+  torso.rotation.x = profile.lean;
   group.add(torso);
 
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 14), bodyMat);
-  head.position.y = 0.78;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 14, 14), bodyMat);
+  head.position.y = 0.82;
+  head.rotation.z = profile.headTilt;
   group.add(head);
 
-  const handGeo = new THREE.SphereGeometry(0.09, 10, 10);
+  const handGeo = new THREE.SphereGeometry(0.1, 10, 10);
   const leftHand = new THREE.Mesh(handGeo, limbMat);
-  leftHand.position.set(-0.18, 0.46, 0.05);
+  leftHand.position.set(-0.2, 0.48, 0.05);
   const rightHand = leftHand.clone();
-  rightHand.position.set(0.18, 0.46, 0.05);
+  rightHand.position.set(0.2, 0.48, 0.05);
   group.add(leftHand, rightHand);
 
-  const legGeo = new THREE.CylinderGeometry(0.07, 0.07, 0.22, 10);
+  const legGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.22, 10);
   const leftLeg = new THREE.Mesh(legGeo, limbMat);
-  leftLeg.position.set(-0.08, 0.12, 0);
+  leftLeg.position.set(-0.09, 0.12, 0);
   const rightLeg = leftLeg.clone();
-  rightLeg.position.set(0.08, 0.12, 0);
+  rightLeg.position.set(0.09, 0.12, 0);
   group.add(leftLeg, rightLeg);
 
-  const base = modulePosition.clone().add(new THREE.Vector3(1.1, -0.2, 0.9));
+  const base = modulePosition.clone().add(new THREE.Vector3(1.1 + profile.stanceX, -0.2, 0.9));
   group.position.copy(base);
+  group.scale.setScalar(profile.scale);
 
   group.userData = {
     id: agent.id,
@@ -386,7 +401,9 @@ function createAvatar(agent, modulePosition) {
     target: base.clone(),
     state: "idle",
     phase: Math.random() * Math.PI * 2,
+    baseLean: profile.lean,
     head,
+    torso,
     leftHand,
     rightHand,
     leftLeg,
@@ -403,7 +420,8 @@ function deriveState(agent, avatar) {
   const wantsCollab = status === "busy" && /(meet|sync|collab|review|handoff)/.test(task);
 
   if (wantsCollab) return "walking";
-  if (avatar.userData.state === "walking" && avatar.position.distanceTo(avatar.userData.base) > 0.2) {
+  if (avatar.userData.state === "walking" && !wantsCollab) return "returning";
+  if (avatar.userData.state === "returning" && avatar.position.distanceTo(avatar.userData.base) > 0.2) {
     return "returning";
   }
   if (status === "busy") return "working";
@@ -422,29 +440,41 @@ function updateAvatars(elapsed) {
 
     if (state === "walking") {
       avatar.userData.target.copy(hub);
-    } else if (state === "returning") {
-      avatar.userData.target.copy(avatar.userData.base);
     } else {
       avatar.userData.target.copy(avatar.userData.base);
     }
 
     const target = avatar.userData.target;
-    avatar.position.lerp(target, state === "walking" ? 0.06 : 0.08);
+    const moveSpeed = state === "walking" || state === "returning" ? 0.05 : 0.12;
+    avatar.position.lerp(target, moveSpeed);
 
-    const bob = Math.sin(elapsed * 2 + avatar.userData.phase) * 0.02;
-    avatar.position.y = (state === "walking" ? -0.1 : -0.2) + bob;
+    const idleBreath = Math.sin(elapsed * 1.2 + avatar.userData.phase) * 0.01;
+    avatar.position.y = -0.2 + idleBreath;
 
     if (state === "idle") {
-      avatar.rotation.y = Math.sin(elapsed * 0.6 + avatar.userData.phase) * 0.2;
-      avatar.userData.head.rotation.y = Math.sin(elapsed * 0.8) * 0.2;
+      avatar.rotation.y = Math.sin(elapsed * 0.4 + avatar.userData.phase) * 0.15;
+      avatar.userData.torso.rotation.x = avatar.userData.baseLean;
+      avatar.userData.head.rotation.y = Math.sin(elapsed * 0.6) * 0.18;
+      avatar.userData.leftHand.position.y = 0.48 + Math.sin(elapsed * 0.8) * 0.01;
+      avatar.userData.rightHand.position.y = 0.48 + Math.cos(elapsed * 0.8) * 0.01;
+      avatar.userData.leftLeg.rotation.x = 0;
+      avatar.userData.rightLeg.rotation.x = 0;
     } else if (state === "working") {
       avatar.rotation.y = 0.2;
-      avatar.userData.leftHand.position.y = 0.48 + Math.sin(elapsed * 3) * 0.03;
-      avatar.userData.rightHand.position.y = 0.48 + Math.cos(elapsed * 3) * 0.03;
+      avatar.userData.torso.rotation.x = avatar.userData.baseLean - 0.08;
+      avatar.userData.leftHand.position.y = 0.5 + Math.sin(elapsed * 2.4) * 0.02;
+      avatar.userData.rightHand.position.y = 0.5 + Math.cos(elapsed * 2.4) * 0.02;
+      avatar.userData.leftLeg.rotation.x = 0;
+      avatar.userData.rightLeg.rotation.x = 0;
     } else if (state === "walking" || state === "returning") {
-      const stride = Math.sin(elapsed * 5 + avatar.userData.phase) * 0.05;
+      avatar.userData.torso.rotation.x = avatar.userData.baseLean;
+      const stride = Math.sin(elapsed * 4 + avatar.userData.phase) * 0.08;
       avatar.userData.leftLeg.rotation.x = stride;
       avatar.userData.rightLeg.rotation.x = -stride;
+      const dir = target.clone().sub(avatar.position);
+      if (dir.length() > 0.01) {
+        avatar.rotation.y = Math.atan2(dir.x, dir.z);
+      }
     }
   });
 }
