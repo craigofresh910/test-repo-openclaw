@@ -110,6 +110,9 @@ function initScene() {
   base.position.y = -0.6;
   scene.add(base);
 
+  addWalkways();
+  addWaterCoolerHub();
+
   clock = new THREE.Clock();
 
   window.addEventListener("resize", resizeScene);
@@ -145,6 +148,58 @@ function layoutPositions() {
   });
 
   return positions;
+}
+
+function addWalkways() {
+  const pathMat = new THREE.MeshStandardMaterial({
+    color: "#1f2a44",
+    roughness: 0.6,
+    metalness: 0.05
+  });
+  const neonMat = new THREE.MeshStandardMaterial({
+    color: "#38bdf8",
+    emissive: "#38bdf8",
+    emissiveIntensity: 0.6
+  });
+
+  const mainPath = new THREE.Mesh(new THREE.BoxGeometry(22, 0.08, 1.2), pathMat);
+  mainPath.position.set(0, -0.45, 0);
+  scene.add(mainPath);
+
+  const crossPath = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.08, 14), pathMat);
+  crossPath.position.set(0, -0.45, 0);
+  scene.add(crossPath);
+
+  const neonStrip = new THREE.Mesh(new THREE.BoxGeometry(22, 0.04, 0.08), neonMat);
+  neonStrip.position.set(0, -0.4, 0.7);
+  scene.add(neonStrip);
+}
+
+function addWaterCoolerHub() {
+  const hub = new THREE.Group();
+  const baseMat = new THREE.MeshStandardMaterial({ color: "#1f2937", roughness: 0.6 });
+  const waterMat = new THREE.MeshStandardMaterial({ color: "#38bdf8", transparent: true, opacity: 0.7 });
+  const accentMat = new THREE.MeshStandardMaterial({ color: "#e2e8f0", roughness: 0.3 });
+
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.55, 1.1, 16), baseMat);
+  base.position.y = 0.1;
+  hub.add(base);
+
+  const water = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.6, 16), waterMat);
+  water.position.y = 0.8;
+  hub.add(water);
+
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.38, 16, 16), accentMat);
+  cap.position.y = 1.2;
+  hub.add(cap);
+
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.05, 12, 24), accentMat);
+  ring.position.set(0, 0.05, 0);
+  ring.rotation.x = Math.PI / 2;
+  hub.add(ring);
+
+  hub.position.set(0, -0.15, 0);
+  scene.add(hub);
 }
 
 function createWorkspace(agent, position) {
@@ -228,11 +283,21 @@ function createWorkspace(agent, position) {
   glow.position.set(-1.2, 1.2, -1.0);
   group.add(glow);
 
+  const avatarMat = new THREE.MeshStandardMaterial({
+    color: accent.clone(),
+    roughness: 0.4,
+    metalness: 0.1
+  });
+  const avatar = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), avatarMat);
+  avatar.position.set(1.2, 0.35, 0.8);
+  group.add(avatar);
+
   group.position.copy(position);
   group.userData = {
     id: agent.id,
     accent,
-    glow: [strip, ring, orb, glow]
+    glow: [strip, ring, orb, glow],
+    avatar
   };
 
   scene.add(group);
@@ -266,6 +331,23 @@ function updateModules() {
         mesh.intensity = 0.6 + pulse * 0.6;
       }
     });
+
+    const status = agent.status || "idle";
+    const task = `${agent.task || ""} ${agent.lastMessage || ""}`.toLowerCase();
+    const shouldMeet = status === "busy" && /(meet|sync|collab|review)/.test(task);
+
+    if (module.userData.avatar) {
+      const avatar = module.userData.avatar;
+      if (shouldMeet) {
+        avatar.position.x = 0.4;
+        avatar.position.z = 0.2;
+        avatar.position.y = 0.4 + Math.sin(elapsed * 2 + id.length) * 0.05;
+      } else {
+        avatar.position.x = 1.2;
+        avatar.position.z = 0.8;
+        avatar.position.y = 0.35 + Math.sin(elapsed * 1.5 + id.length) * 0.03;
+      }
+    }
   });
 }
 
