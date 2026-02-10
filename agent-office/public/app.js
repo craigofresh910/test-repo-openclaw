@@ -1,5 +1,5 @@
-import * as THREE from "https://esm.sh/three@0.161.0";
-import { OrbitControls } from "https://esm.sh/three@0.161.0/examples/jsm/controls/OrbitControls.js";
+import * as THREE from "/vendor/three.module.js";
+import { OrbitControls } from "/vendor/OrbitControls.js";
 
 const floorEl = document.getElementById("floor");
 const canvas = document.getElementById("scene");
