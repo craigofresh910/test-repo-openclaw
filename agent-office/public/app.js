@@ -381,14 +381,14 @@ const rolePosture = {
 };
 
 const modelMap = {
-  craigo: { url: "/models/men-pack/Individual Characters/glTF/Suit.gltf", height: 1.2 },
-  builder: { url: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf", height: 1.2 },
-  pm: { url: "/models/women-pack/FBX/Smooth_Female_Casual.fbx", height: 1.15 },
-  qa: { url: "/models/women-pack/FBX/Smooth_Female_Alternative.fbx", height: 1.15 },
-  ops: { url: "/models/men-pack/Individual Characters/glTF/Suit.gltf", height: 1.2 },
-  research: { url: "/models/women-pack/FBX/Smooth_Female_Dress.fbx", height: 1.15 },
-  growth: { url: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf", height: 1.2 },
-  content: { url: "/models/women-pack/FBX/Smooth_Female_TankTop.fbx", height: 1.15 }
+  craigo: { url: "/models/men-pack/Individual Characters/glTF/Suit.gltf", height: 2.0 },
+  builder: { url: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf", height: 2.0 },
+  pm: { url: "/models/women-pack/FBX/Smooth_Female_Casual.fbx", height: 2.0 },
+  qa: { url: "/models/women-pack/FBX/Smooth_Female_Alternative.fbx", height: 2.0 },
+  ops: { url: "/models/men-pack/Individual Characters/glTF/Suit.gltf", height: 2.0 },
+  research: { url: "/models/women-pack/FBX/Smooth_Female_Dress.fbx", height: 2.0 },
+  growth: { url: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf", height: 2.0 },
+  content: { url: "/models/women-pack/FBX/Smooth_Female_TankTop.fbx", height: 2.0 }
 };
 
 function loadModel(url) {
@@ -419,7 +419,7 @@ function fitModelToHeight(model, targetHeight) {
   const center = new THREE.Vector3();
   centeredBox.getCenter(center);
   model.position.sub(center);
-  model.position.y = -center.y + (targetHeight * 0.5);
+  model.position.y = -center.y + (targetHeight * 0.6);
 }
 
 function createAvatar(agent, modulePosition) {
