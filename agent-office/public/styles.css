@@ -183,3 +183,44 @@ body {
     max-height: none;
   }
 }
+
+@media (max-width: 480px) {
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 18px;
+  }
+
+  .office {
+    padding: 16px 18px 28px;
+    gap: 16px;
+  }
+
+  .floor {
+    grid-template-columns: 1fr;
+    padding: 16px;
+    min-height: auto;
+  }
+
+  .desk {
+    min-height: 140px;
+    padding: 14px;
+  }
+
+  .agent-title {
+    font-size: 14px;
+  }
+
+  .task {
+    font-size: 12px;
+  }
+
+  .last-message {
+    font-size: 11px;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+}
