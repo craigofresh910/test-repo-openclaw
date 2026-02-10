@@ -356,7 +356,7 @@ function createWorkspace(agent, position) {
   group.userData = {
     id: agent.id,
     accent,
-    glow: [strip, ring, orb, glow]
+    glow: [strip, strip2, glow]
   };
 
   scene.add(group);
