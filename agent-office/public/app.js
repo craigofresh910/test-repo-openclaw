@@ -410,14 +410,17 @@ function createAvatar(agent, modulePosition) {
   rightLeg.position.set(0.08, 0.08, 0);
   group.add(leftLeg, rightLeg);
 
-  const base = modulePosition.clone().add(new THREE.Vector3(1.1 + profile.stanceX, -0.2, 0.9));
-  group.position.copy(base);
+  const standBase = modulePosition.clone().add(new THREE.Vector3(1.1 + profile.stanceX, -0.2, 0.9));
+  const seatBase = modulePosition.clone().add(new THREE.Vector3(0.6, -0.12, 0.95));
+  group.position.copy(standBase);
   group.scale.setScalar(profile.scale * 0.8);
 
   group.userData = {
     id: agent.id,
-    base,
-    target: base.clone(),
+    standBase,
+    seatBase,
+    base: standBase,
+    target: standBase.clone(),
     state: "idle",
     phase: Math.random() * Math.PI * 2,
     baseLean: profile.lean,
@@ -459,8 +462,15 @@ function updateAvatars(elapsed) {
 
     if (state === "walking") {
       avatar.userData.target.copy(hub);
+    } else if (state === "returning") {
+      avatar.userData.base.copy(avatar.userData.standBase);
+      avatar.userData.target.copy(avatar.userData.standBase);
+    } else if (state === "working") {
+      avatar.userData.base.copy(avatar.userData.standBase);
+      avatar.userData.target.copy(avatar.userData.standBase);
     } else {
-      avatar.userData.target.copy(avatar.userData.base);
+      avatar.userData.base.copy(avatar.userData.seatBase);
+      avatar.userData.target.copy(avatar.userData.seatBase);
     }
 
     const target = avatar.userData.target;
@@ -468,16 +478,16 @@ function updateAvatars(elapsed) {
     avatar.position.lerp(target, moveSpeed);
 
     const idleBreath = Math.sin(elapsed * 1.2 + avatar.userData.phase) * 0.01;
-    avatar.position.y = -0.2 + idleBreath;
+    avatar.position.y = avatar.userData.base.y + idleBreath;
 
     if (state === "idle") {
       avatar.rotation.y = Math.sin(elapsed * 0.4 + avatar.userData.phase) * 0.15;
-      avatar.userData.torso.rotation.x = avatar.userData.baseLean;
+      avatar.userData.torso.rotation.x = avatar.userData.baseLean + 0.12;
       avatar.userData.head.rotation.y = Math.sin(elapsed * 0.6) * 0.18;
-      avatar.userData.leftHand.position.y = 0.48 + Math.sin(elapsed * 0.8) * 0.01;
-      avatar.userData.rightHand.position.y = 0.48 + Math.cos(elapsed * 0.8) * 0.01;
-      avatar.userData.leftLeg.rotation.x = 0;
-      avatar.userData.rightLeg.rotation.x = 0;
+      avatar.userData.leftHand.position.y = 0.42 + Math.sin(elapsed * 0.8) * 0.01;
+      avatar.userData.rightHand.position.y = 0.42 + Math.cos(elapsed * 0.8) * 0.01;
+      avatar.userData.leftLeg.rotation.x = 0.2;
+      avatar.userData.rightLeg.rotation.x = 0.2;
     } else if (state === "working") {
       avatar.rotation.y = 0.2;
       avatar.userData.torso.rotation.x = avatar.userData.baseLean - 0.08;
