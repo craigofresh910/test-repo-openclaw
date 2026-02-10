@@ -432,10 +432,10 @@ function createAvatar(agent, modulePosition) {
   group.scale.setScalar(profile.scale * 1.0);
 
   const placeholder = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.2, 0.3, 6, 10),
+    new THREE.CapsuleGeometry(0.26, 0.42, 6, 10),
     new THREE.MeshStandardMaterial({ color: roleColors[agent.id] || "#94a3b8", roughness: 0.8 })
   );
-  placeholder.position.y = 0.4;
+  placeholder.position.y = 0.5;
   group.add(placeholder);
 
   const modelSpec = modelMap[agent.id];
@@ -607,6 +607,18 @@ function renderLoop() {
   updateModules();
   updateLabels();
   if (controls) controls.update();
+
+  const loaded = [];
+  const missing = [];
+  avatars.forEach((avatar, id) => {
+    if (avatar.userData.modelLoaded) {
+      loaded.push(id);
+    } else {
+      missing.push(id);
+    }
+  });
+  debugEl.textContent = `debug: modules ${modules.size}, avatars ${avatars.size}, loaded ${loaded.length}, missing ${missing.join(", ")}`;
+
   renderer.render(scene, camera);
 }
 
