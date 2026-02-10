@@ -1,5 +1,6 @@
 import * as THREE from "/vendor/three.module.js";
 import { OrbitControls } from "/vendor/OrbitControls.js";
+import { GLTFLoader } from "/vendor/GLTFLoader.js";
 
 const floorEl = document.getElementById("floor");
 const canvas = document.getElementById("scene");
@@ -116,6 +117,9 @@ let scene, camera, renderer, clock, controls;
 let agentsById = new Map();
 let modules = new Map();
 let avatars = new Map();
+
+const loader = new GLTFLoader();
+const modelCache = new Map();
 
 function initScene() {
   scene = new THREE.Scene();
@@ -364,56 +368,74 @@ function createWorkspace(agent, position) {
 }
 
 const rolePosture = {
-  craigo: { scale: 1.08, lean: -0.08, headTilt: 0.02, stanceX: 0 },
-  builder: { scale: 1.0, lean: -0.05, headTilt: 0.0, stanceX: -0.02 },
-  pm: { scale: 1.0, lean: 0.0, headTilt: 0.0, stanceX: 0.0 },
-  qa: { scale: 1.0, lean: -0.04, headTilt: -0.05, stanceX: 0.02 },
-  ops: { scale: 1.0, lean: -0.03, headTilt: 0.0, stanceX: -0.01 },
-  research: { scale: 1.0, lean: -0.02, headTilt: 0.06, stanceX: 0.0 },
-  growth: { scale: 1.0, lean: -0.02, headTilt: 0.0, stanceX: 0.04 },
-  content: { scale: 1.0, lean: -0.02, headTilt: 0.02, stanceX: 0.0 }
+  craigo: { scale: 1.05, lean: -0.06, stanceX: 0 },
+  builder: { scale: 1.0, lean: -0.04, stanceX: -0.02 },
+  pm: { scale: 1.0, lean: 0.0, stanceX: 0.0 },
+  qa: { scale: 1.0, lean: -0.03, stanceX: 0.02 },
+  ops: { scale: 1.0, lean: -0.02, stanceX: -0.01 },
+  research: { scale: 1.0, lean: -0.01, stanceX: 0.0 },
+  growth: { scale: 1.0, lean: -0.01, stanceX: 0.04 },
+  content: { scale: 1.0, lean: -0.01, stanceX: 0.0 }
 };
 
-function createAvatar(agent, modulePosition) {
-  const accent = new THREE.Color(roleColors[agent.id] || "#38bdf8");
-  const group = new THREE.Group();
-  const profile = rolePosture[agent.id] || { scale: 1, lean: 0, headTilt: 0, stanceX: 0 };
+const modelMap = {
+  craigo: "/models/men-pack/Individual Characters/glTF/Suit.gltf",
+  builder: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf",
+  pm: "/models/men-pack/Individual Characters/glTF/Casual_2.gltf",
+  qa: "/models/men-pack/Individual Characters/glTF/Suit.gltf",
+  ops: "/models/men-pack/Individual Characters/glTF/Suit.gltf",
+  research: "/models/men-pack/Individual Characters/glTF/Casual_2.gltf",
+  growth: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf",
+  content: "/models/men-pack/Individual Characters/glTF/Casual_2.gltf"
+};
 
-  const bodyMat = new THREE.MeshStandardMaterial({
-    color: accent.clone(),
-    roughness: 0.75,
-    metalness: 0.02
+function loadModel(url) {
+  if (!url) return Promise.reject(new Error("missing model url"));
+  if (modelCache.has(url)) return modelCache.get(url);
+
+  const promise = new Promise((resolve, reject) => {
+    loader.load(url, (gltf) => resolve(gltf), undefined, reject);
   });
-  const limbMat = new THREE.MeshStandardMaterial({ color: "#0f172a", roughness: 0.85 });
+  modelCache.set(url, promise);
+  return promise;
+}
 
-  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.18, 0.22, 6, 10), bodyMat);
-  torso.position.y = 0.38;
-  torso.rotation.x = profile.lean;
-  group.add(torso);
-
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 14), bodyMat);
-  head.position.y = 0.68;
-  head.rotation.z = profile.headTilt;
-  group.add(head);
-
-  const handGeo = new THREE.SphereGeometry(0.09, 10, 10);
-  const leftHand = new THREE.Mesh(handGeo, limbMat);
-  leftHand.position.set(-0.18, 0.38, 0.05);
-  const rightHand = leftHand.clone();
-  rightHand.position.set(0.18, 0.38, 0.05);
-  group.add(leftHand, rightHand);
-
-  const legGeo = new THREE.CylinderGeometry(0.07, 0.07, 0.18, 10);
-  const leftLeg = new THREE.Mesh(legGeo, limbMat);
-  leftLeg.position.set(-0.08, 0.08, 0);
-  const rightLeg = leftLeg.clone();
-  rightLeg.position.set(0.08, 0.08, 0);
-  group.add(leftLeg, rightLeg);
+function createAvatar(agent, modulePosition) {
+  const profile = rolePosture[agent.id] || { scale: 1, lean: 0, stanceX: 0 };
+  const group = new THREE.Group();
 
   const standBase = modulePosition.clone().add(new THREE.Vector3(1.1 + profile.stanceX, -0.2, 0.9));
   const seatBase = modulePosition.clone().add(new THREE.Vector3(0.6, -0.12, 0.95));
   group.position.copy(standBase);
-  group.scale.setScalar(profile.scale * 0.8);
+  group.scale.setScalar(profile.scale * 0.85);
+
+  const placeholder = new THREE.Mesh(
+    new THREE.CapsuleGeometry(0.2, 0.3, 6, 10),
+    new THREE.MeshStandardMaterial({ color: roleColors[agent.id] || "#94a3b8", roughness: 0.8 })
+  );
+  placeholder.position.y = 0.4;
+  group.add(placeholder);
+
+  const modelUrl = modelMap[agent.id];
+  loadModel(modelUrl)
+    .then((gltf) => {
+      group.clear();
+      const model = gltf.scene;
+      model.traverse((node) => {
+        if (node.isMesh) {
+          node.castShadow = false;
+          node.receiveShadow = false;
+        }
+      });
+      model.scale.setScalar(0.45);
+      model.position.y = -0.05;
+      model.rotation.y = Math.PI;
+      group.add(model);
+      group.userData.modelLoaded = true;
+    })
+    .catch((err) => {
+      console.warn("model load failed", modelUrl, err);
+    });
 
   group.userData = {
     id: agent.id,
@@ -424,12 +446,7 @@ function createAvatar(agent, modulePosition) {
     state: "idle",
     phase: Math.random() * Math.PI * 2,
     baseLean: profile.lean,
-    head,
-    torso,
-    leftHand,
-    rightHand,
-    leftLeg,
-    rightLeg
+    modelLoaded: false
   };
 
   scene.add(group);
@@ -482,24 +499,9 @@ function updateAvatars(elapsed) {
 
     if (state === "idle") {
       avatar.rotation.y = Math.sin(elapsed * 0.4 + avatar.userData.phase) * 0.15;
-      avatar.userData.torso.rotation.x = avatar.userData.baseLean + 0.12;
-      avatar.userData.head.rotation.y = Math.sin(elapsed * 0.6) * 0.18;
-      avatar.userData.leftHand.position.y = 0.42 + Math.sin(elapsed * 0.8) * 0.01;
-      avatar.userData.rightHand.position.y = 0.42 + Math.cos(elapsed * 0.8) * 0.01;
-      avatar.userData.leftLeg.rotation.x = 0.2;
-      avatar.userData.rightLeg.rotation.x = 0.2;
     } else if (state === "working") {
       avatar.rotation.y = 0.2;
-      avatar.userData.torso.rotation.x = avatar.userData.baseLean - 0.08;
-      avatar.userData.leftHand.position.y = 0.5 + Math.sin(elapsed * 2.4) * 0.02;
-      avatar.userData.rightHand.position.y = 0.5 + Math.cos(elapsed * 2.4) * 0.02;
-      avatar.userData.leftLeg.rotation.x = 0;
-      avatar.userData.rightLeg.rotation.x = 0;
     } else if (state === "walking" || state === "returning") {
-      avatar.userData.torso.rotation.x = avatar.userData.baseLean;
-      const stride = Math.sin(elapsed * 4 + avatar.userData.phase) * 0.08;
-      avatar.userData.leftLeg.rotation.x = stride;
-      avatar.userData.rightLeg.rotation.x = -stride;
       const dir = target.clone().sub(avatar.position);
       if (dir.length() > 0.01) {
         avatar.rotation.y = Math.atan2(dir.x, dir.z);

@@ -16,7 +16,7 @@ const OFFICE_PASS = process.env.OFFICE_PASS;
 app.use(express.json({ limit: "1mb" }));
 
 app.use((req, res, next) => {
-  if (req.path.startsWith("/vendor/") || req.path === "/favicon.ico") {
+  if (req.path.startsWith("/vendor/") || req.path.startsWith("/models/") || req.path === "/favicon.ico") {
     return next();
   }
 
@@ -46,6 +46,7 @@ app.use((req, res, next) => {
 });
 
 app.use(express.static(path.join(__dirname, "public")));
+app.use("/models", express.static(path.join(__dirname, "models")));
 
 const clients = new Set();
 
