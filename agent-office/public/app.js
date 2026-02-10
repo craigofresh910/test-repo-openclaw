@@ -381,14 +381,14 @@ const rolePosture = {
 };
 
 const modelMap = {
-  craigo: { url: "/models/men-pack/Individual Characters/glTF/Suit.gltf", scale: 0.9 },
-  builder: { url: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf", scale: 0.9 },
-  pm: { url: "/models/women-pack/FBX/Smooth_Female_Casual.fbx", scale: 0.08 },
-  qa: { url: "/models/women-pack/FBX/Smooth_Female_Alternative.fbx", scale: 0.08 },
-  ops: { url: "/models/men-pack/Individual Characters/glTF/Suit.gltf", scale: 0.9 },
-  research: { url: "/models/women-pack/FBX/Smooth_Female_Dress.fbx", scale: 0.08 },
-  growth: { url: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf", scale: 0.9 },
-  content: { url: "/models/women-pack/FBX/Smooth_Female_TankTop.fbx", scale: 0.08 }
+  craigo: { url: "/models/men-pack/Individual Characters/glTF/Suit.gltf", height: 1.2 },
+  builder: { url: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf", height: 1.2 },
+  pm: { url: "/models/women-pack/FBX/Smooth_Female_Casual.fbx", height: 1.15 },
+  qa: { url: "/models/women-pack/FBX/Smooth_Female_Alternative.fbx", height: 1.15 },
+  ops: { url: "/models/men-pack/Individual Characters/glTF/Suit.gltf", height: 1.2 },
+  research: { url: "/models/women-pack/FBX/Smooth_Female_Dress.fbx", height: 1.15 },
+  growth: { url: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf", height: 1.2 },
+  content: { url: "/models/women-pack/FBX/Smooth_Female_TankTop.fbx", height: 1.15 }
 };
 
 function loadModel(url) {
@@ -404,6 +404,22 @@ function loadModel(url) {
   });
   modelCache.set(url, promise);
   return promise;
+}
+
+function fitModelToHeight(model, targetHeight) {
+  const box = new THREE.Box3().setFromObject(model);
+  const size = new THREE.Vector3();
+  box.getSize(size);
+  if (!size.y || !isFinite(size.y)) return;
+
+  const scale = targetHeight / size.y;
+  model.scale.setScalar(scale);
+
+  const centeredBox = new THREE.Box3().setFromObject(model);
+  const center = new THREE.Vector3();
+  centeredBox.getCenter(center);
+  model.position.sub(center);
+  model.position.y = -center.y + (targetHeight * 0.5);
 }
 
 function createAvatar(agent, modulePosition) {
@@ -424,7 +440,7 @@ function createAvatar(agent, modulePosition) {
 
   const modelSpec = modelMap[agent.id];
   const modelUrl = modelSpec?.url || modelSpec;
-  const modelScale = modelSpec?.scale ?? 0.45;
+  const targetHeight = modelSpec?.height ?? 1.2;
   loadModel(modelUrl)
     .then((gltf) => {
       group.clear();
@@ -435,8 +451,7 @@ function createAvatar(agent, modulePosition) {
           node.receiveShadow = false;
         }
       });
-      model.scale.setScalar(modelScale);
-      model.position.y = 0.0;
+      fitModelToHeight(model, targetHeight);
       model.rotation.y = Math.PI;
       group.add(model);
       group.userData.modelLoaded = true;
