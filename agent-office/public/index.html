@@ -18,13 +18,16 @@
     </header>
 
     <main class="office">
-      <section class="floor" id="floor"></section>
+      <section class="floor" id="floor">
+        <canvas id="scene"></canvas>
+        <div id="labels" class="labels"></div>
+      </section>
       <aside class="panel" id="panel">
         <h2>Agent Feed</h2>
         <div id="feed"></div>
       </aside>
     </main>
 
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
   </body>
 </html>
