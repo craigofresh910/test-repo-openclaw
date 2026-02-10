@@ -17,32 +17,40 @@ const layoutOrder = [
   "content"
 ];
 
-const statusColors = {
-  idle: new THREE.Color("#94a3b8"),
-  busy: new THREE.Color("#4ade80"),
-  blocked: new THREE.Color("#f87171")
-};
-
-const labelColors = {
-  idle: "#94a3b8",
-  busy: "#4ade80",
-  blocked: "#f87171"
+const roleColors = {
+  builder: "#22d3ee",
+  pm: "#f59e0b",
+  research: "#60a5fa",
+  craigo: "#a855f7",
+  qa: "#f97316",
+  growth: "#34d399",
+  ops: "#38bdf8",
+  content: "#f472b6"
 };
 
 let scene, camera, renderer, clock;
 let agentsById = new Map();
-let bots = new Map();
-const coolerPosition = new THREE.Vector3(0, 0, 0);
+let modules = new Map();
 
 function initScene() {
   scene = new THREE.Scene();
-  scene.fog = new THREE.Fog("#0f1115", 10, 30);
+  scene.background = new THREE.Color("#0b0f17");
+  scene.fog = new THREE.Fog("#0b0f17", 16, 50);
 
   const width = floorEl.clientWidth;
   const height = floorEl.clientHeight;
+  const aspect = width / height;
+  const viewSize = 10;
 
-  camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-  camera.position.set(0, 10, 16);
+  camera = new THREE.OrthographicCamera(
+    -viewSize * aspect,
+    viewSize * aspect,
+    viewSize,
+    -viewSize,
+    0.1,
+    100
+  );
+  camera.position.set(12, 12, 12);
   camera.lookAt(0, 0, 0);
 
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
@@ -53,26 +61,19 @@ function initScene() {
   scene.add(ambient);
 
   const key = new THREE.DirectionalLight(0xffffff, 0.8);
-  key.position.set(6, 10, 6);
+  key.position.set(8, 12, 6);
   scene.add(key);
 
-  const floorGeo = new THREE.PlaneGeometry(20, 12);
-  const floorMat = new THREE.MeshStandardMaterial({
-    color: "#111827",
-    roughness: 0.85,
-    metalness: 0.05
-  });
-  const floorMesh = new THREE.Mesh(floorGeo, floorMat);
-  floorMesh.rotation.x = -Math.PI / 2;
-  floorMesh.position.y = -0.5;
-  scene.add(floorMesh);
+  const fill = new THREE.PointLight(0x4f46e5, 0.3, 50);
+  fill.position.set(-8, 8, -6);
+  scene.add(fill);
 
-  const grid = new THREE.GridHelper(20, 10, "#1f2937", "#111827");
-  grid.position.y = -0.49;
-  scene.add(grid);
-
-  addDeskLayout();
-  addWaterCooler();
+  const baseGeo = new THREE.PlaneGeometry(30, 20);
+  const baseMat = new THREE.MeshStandardMaterial({ color: "#0f172a", roughness: 0.9 });
+  const base = new THREE.Mesh(baseGeo, baseMat);
+  base.rotation.x = -Math.PI / 2;
+  base.position.y = -0.6;
+  scene.add(base);
 
   clock = new THREE.Clock();
 
@@ -82,7 +83,13 @@ function initScene() {
 function resizeScene() {
   const width = floorEl.clientWidth;
   const height = floorEl.clientHeight;
-  camera.aspect = width / height;
+  const aspect = width / height;
+  const viewSize = 10;
+
+  camera.left = -viewSize * aspect;
+  camera.right = viewSize * aspect;
+  camera.top = viewSize;
+  camera.bottom = -viewSize;
   camera.updateProjectionMatrix();
   renderer.setSize(width, height, false);
 }
@@ -90,8 +97,8 @@ function resizeScene() {
 function layoutPositions() {
   const positions = new Map();
   const cols = 3;
-  const spacingX = 6;
-  const spacingZ = 4;
+  const spacingX = 7;
+  const spacingZ = 5;
 
   layoutOrder.forEach((id, idx) => {
     const row = Math.floor(idx / cols);
@@ -105,169 +112,137 @@ function layoutPositions() {
   return positions;
 }
 
-function addDeskLayout() {
-  const positions = layoutPositions();
-  const deskTopMat = new THREE.MeshStandardMaterial({
-    color: "#1f2937",
-    roughness: 0.6,
-    metalness: 0.2
-  });
-  const legMat = new THREE.MeshStandardMaterial({ color: "#0f172a", roughness: 0.9 });
-  const monitorMat = new THREE.MeshStandardMaterial({ color: "#0b1020", roughness: 0.4 });
-
-  positions.forEach((pos) => {
-    const desk = new THREE.Group();
-
-    const top = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.18, 1.0), deskTopMat);
-    top.position.y = 0.1;
-    desk.add(top);
-
-    const legGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.5, 8);
-    const offsets = [
-      [-0.8, -0.15, -0.4],
-      [0.8, -0.15, -0.4],
-      [-0.8, -0.15, 0.4],
-      [0.8, -0.15, 0.4]
-    ];
-    offsets.forEach(([x, y, z]) => {
-      const leg = new THREE.Mesh(legGeo, legMat);
-      leg.position.set(x, y, z);
-      desk.add(leg);
-    });
-
-    const monitor = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.35, 0.05), monitorMat);
-    monitor.position.set(0, 0.45, -0.3);
-    desk.add(monitor);
-
-    desk.position.set(pos.x, -0.2, pos.z);
-    scene.add(desk);
-  });
-}
-
-function addWaterCooler() {
-  const cooler = new THREE.Group();
-
-  const baseMat = new THREE.MeshStandardMaterial({ color: "#334155", roughness: 0.5 });
-  const waterMat = new THREE.MeshStandardMaterial({ color: "#38bdf8", transparent: true, opacity: 0.65 });
-  const topMat = new THREE.MeshStandardMaterial({ color: "#94a3b8", roughness: 0.4 });
-
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 1.0, 16), baseMat);
-  base.position.y = 0.2;
-  cooler.add(base);
-
-  const water = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.55, 16), waterMat);
-  water.position.y = 0.8;
-  cooler.add(water);
-
-  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 16), topMat);
-  cap.position.y = 1.1;
-  cooler.add(cap);
-
-  const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.2, 12), topMat);
-  cup.position.set(0.4, 0.2, 0.0);
-  cooler.add(cup);
-
-  cooler.position.copy(coolerPosition);
-  scene.add(cooler);
-}
-
-function createBot(id, basePosition) {
+function createWorkspace(agent, position) {
+  const accent = new THREE.Color(roleColors[agent.id] || "#38bdf8");
   const group = new THREE.Group();
 
-  const bodyMat = new THREE.MeshStandardMaterial({
-    color: statusColors.idle.clone(),
-    roughness: 0.35,
-    metalness: 0.15
+  const floorMat = new THREE.MeshStandardMaterial({ color: "#111827", roughness: 0.8 });
+  const wallMat = new THREE.MeshStandardMaterial({ color: "#151a28", roughness: 0.9 });
+  const deskMat = new THREE.MeshStandardMaterial({ color: "#1f2937", roughness: 0.5 });
+  const chairMat = new THREE.MeshStandardMaterial({ color: "#0f172a", roughness: 0.6 });
+  const metalMat = new THREE.MeshStandardMaterial({ color: "#1e293b", roughness: 0.3, metalness: 0.4 });
+
+  const platform = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.3, 3.6), floorMat);
+  platform.position.y = -0.45;
+  group.add(platform);
+
+  const backWall = new THREE.Mesh(new THREE.BoxGeometry(4.5, 2.6, 0.2), wallMat);
+  backWall.position.set(0, 0.7, -1.7);
+  group.add(backWall);
+
+  const sideWall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.6, 3.6), wallMat);
+  sideWall.position.set(-2.15, 0.7, 0);
+  group.add(sideWall);
+
+  const deskTop = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.15, 0.9), deskMat);
+  deskTop.position.set(0.6, 0.15, 0.2);
+  group.add(deskTop);
+
+  const deskLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.5, 10), metalMat);
+  [-0.1, 1.3].forEach((x) => {
+    [-0.1, 0.5].forEach((z) => {
+      const leg = deskLeg.clone();
+      leg.position.set(x, -0.1, z);
+      group.add(leg);
+    });
   });
-  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.55, 0.8, 16), bodyMat);
-  torso.position.y = 0.5;
-  group.add(torso);
 
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), bodyMat);
-  head.position.y = 1.05;
-  group.add(head);
+  const chairSeat = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.1, 0.7), chairMat);
+  chairSeat.position.set(0.6, 0.05, 0.9);
+  group.add(chairSeat);
 
-  const eyeGeo = new THREE.SphereGeometry(0.06, 12, 12);
-  const eyeMat = new THREE.MeshStandardMaterial({ color: "#0f172a" });
-  const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
-  leftEye.position.set(-0.12, 1.08, 0.3);
-  const rightEye = leftEye.clone();
-  rightEye.position.set(0.12, 1.08, 0.3);
-  group.add(leftEye, rightEye);
+  const chairBack = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.6, 0.1), chairMat);
+  chairBack.position.set(0.6, 0.35, 1.2);
+  group.add(chairBack);
 
-  const legGeo = new THREE.CylinderGeometry(0.07, 0.07, 0.35, 10);
-  const legMat = new THREE.MeshStandardMaterial({ color: "#111827", roughness: 0.7 });
-  const leftLeg = new THREE.Mesh(legGeo, legMat);
-  leftLeg.position.set(-0.18, 0.05, 0);
-  const rightLeg = leftLeg.clone();
-  rightLeg.position.set(0.18, 0.05, 0);
-  group.add(leftLeg, rightLeg);
+  const monitorMat = new THREE.MeshStandardMaterial({ color: "#0b1020", roughness: 0.2 });
+  const monitor = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.35, 0.05), monitorMat);
+  monitor.position.set(0.35, 0.45, -0.05);
+  const monitor2 = monitor.clone();
+  monitor2.position.set(0.9, 0.45, -0.05);
+  group.add(monitor, monitor2);
 
-  group.position.copy(basePosition);
+  const shelf = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.08, 0.4), metalMat);
+  shelf.position.set(-1.1, 1.1, -1.5);
+  group.add(shelf);
+
+  const neonStripMat = new THREE.MeshStandardMaterial({
+    color: accent,
+    emissive: accent,
+    emissiveIntensity: 0.9
+  });
+  const strip = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.05, 0.05), neonStripMat);
+  strip.position.set(0, 2.0, -1.6);
+  group.add(strip);
+
+  const iconMat = new THREE.MeshStandardMaterial({
+    color: accent,
+    emissive: accent,
+    emissiveIntensity: 1.2
+  });
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.08, 12, 24), iconMat);
+  ring.position.set(-1.6, 0.9, -1.55);
+  ring.rotation.x = Math.PI / 2;
+  group.add(ring);
+
+  const orb = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), iconMat);
+  orb.position.set(-1.1, 0.9, -1.55);
+  group.add(orb);
+
+  const glow = new THREE.PointLight(accent, 0.8, 6);
+  glow.position.set(-1.2, 1.2, -1.0);
+  group.add(glow);
+
+  group.position.copy(position);
   group.userData = {
-    id,
-    base: basePosition.clone(),
-    status: "idle",
-    phase: Math.random() * Math.PI * 2,
-    speed: 0.4 + Math.random() * 0.4
+    id: agent.id,
+    accent,
+    glow: [strip, ring, orb, glow]
   };
 
   scene.add(group);
   return group;
 }
 
-function ensureBots(data) {
+function ensureModules(data) {
   const positions = layoutPositions();
 
   data.agents.forEach((agent) => {
     if (!positions.has(agent.id)) return;
-    if (bots.has(agent.id)) return;
+    if (modules.has(agent.id)) return;
 
-    const bot = createBot(agent.id, positions.get(agent.id));
-    bots.set(agent.id, bot);
+    const module = createWorkspace(agent, positions.get(agent.id));
+    modules.set(agent.id, module);
   });
 }
 
-function updateBots() {
+function updateModules() {
   const elapsed = clock.getElapsedTime();
-  bots.forEach((bot, id) => {
+  modules.forEach((module, id) => {
     const agent = agentsById.get(id);
     if (!agent) return;
 
-    const status = agent.status || "idle";
-    if (bot.userData.status !== status) {
-      bot.children[0].material.color = statusColors[status] || statusColors.idle;
-      bot.children[1].material.color = statusColors[status] || statusColors.idle;
-      bot.userData.status = status;
-    }
-
-    const base = bot.userData.base;
-    const target = status === "busy" ? coolerPosition : base;
-    const roamRadius = status === "busy" ? 1.4 : status === "blocked" ? 0.1 : 0.35;
-    const speed = status === "busy" ? 1.2 : status === "blocked" ? 0.3 : 0.6;
-    const phase = bot.userData.phase;
-
-    bot.position.x = target.x + Math.sin(elapsed * speed + phase) * roamRadius;
-    bot.position.z = target.z + Math.cos(elapsed * speed + phase) * roamRadius;
-    bot.position.y = Math.sin(elapsed * speed * 2 + phase) * 0.05;
-
-    if (status === "blocked") {
-      bot.rotation.y = Math.sin(elapsed * 2 + phase) * 0.3;
-    } else {
-      bot.rotation.y = Math.sin(elapsed * 0.8 + phase) * 0.15;
-    }
+    const pulse = 0.6 + Math.sin(elapsed * 2 + id.length) * 0.2;
+    module.userData.glow.forEach((mesh) => {
+      if (mesh.material) {
+        mesh.material.emissiveIntensity = pulse + 0.2;
+      }
+      if (mesh.isLight) {
+        mesh.intensity = 0.6 + pulse * 0.6;
+      }
+    });
   });
 }
 
 function updateLabels() {
   labelsEl.innerHTML = "";
 
-  bots.forEach((bot, id) => {
+  modules.forEach((module, id) => {
     const agent = agentsById.get(id);
     if (!agent) return;
 
-    const vector = bot.position.clone();
-    vector.y += 1.2;
+    const vector = module.position.clone();
+    vector.y += 2.4;
     vector.project(camera);
 
     const x = (vector.x * 0.5 + 0.5) * floorEl.clientWidth;
@@ -280,7 +255,7 @@ function updateLabels() {
 
     const dot = document.createElement("span");
     dot.className = "dot";
-    dot.style.background = labelColors[agent.status] || labelColors.idle;
+    dot.style.background = roleColors[agent.id] || "#38bdf8";
 
     const name = document.createElement("span");
     name.textContent = `${agent.name} • ${agent.role}`;
@@ -292,7 +267,7 @@ function updateLabels() {
 
 function renderLoop() {
   requestAnimationFrame(renderLoop);
-  updateBots();
+  updateModules();
   updateLabels();
   renderer.render(scene, camera);
 }
@@ -328,7 +303,7 @@ function render(data) {
   }
 
   agentsById = new Map(data.agents.map((agent) => [agent.id, agent]));
-  ensureBots(data);
+  ensureModules(data);
   renderFeed(data);
 }
 

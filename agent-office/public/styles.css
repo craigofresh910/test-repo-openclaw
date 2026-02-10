@@ -47,8 +47,8 @@ body {
 .floor {
   position: relative;
   min-height: 680px;
-  background: radial-gradient(circle at center, #1b2130 0%, #0f1115 70%);
-  border: 1px solid #1f2430;
+  background: radial-gradient(circle at center, #111827 0%, #0b0f17 70%);
+  border: 1px solid #1f2937;
   border-radius: 20px;
   padding: 0;
   overflow: hidden;
