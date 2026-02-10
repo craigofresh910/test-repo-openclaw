@@ -32,6 +32,7 @@ const labelColors = {
 let scene, camera, renderer, clock;
 let agentsById = new Map();
 let bots = new Map();
+const coolerPosition = new THREE.Vector3(0, 0, 0);
 
 function initScene() {
   scene = new THREE.Scene();
@@ -70,6 +71,9 @@ function initScene() {
   grid.position.y = -0.49;
   scene.add(grid);
 
+  addDeskLayout();
+  addWaterCooler();
+
   clock = new THREE.Clock();
 
   window.addEventListener("resize", resizeScene);
@@ -101,21 +105,103 @@ function layoutPositions() {
   return positions;
 }
 
+function addDeskLayout() {
+  const positions = layoutPositions();
+  const deskTopMat = new THREE.MeshStandardMaterial({
+    color: "#1f2937",
+    roughness: 0.6,
+    metalness: 0.2
+  });
+  const legMat = new THREE.MeshStandardMaterial({ color: "#0f172a", roughness: 0.9 });
+  const monitorMat = new THREE.MeshStandardMaterial({ color: "#0b1020", roughness: 0.4 });
+
+  positions.forEach((pos) => {
+    const desk = new THREE.Group();
+
+    const top = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.18, 1.0), deskTopMat);
+    top.position.y = 0.1;
+    desk.add(top);
+
+    const legGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.5, 8);
+    const offsets = [
+      [-0.8, -0.15, -0.4],
+      [0.8, -0.15, -0.4],
+      [-0.8, -0.15, 0.4],
+      [0.8, -0.15, 0.4]
+    ];
+    offsets.forEach(([x, y, z]) => {
+      const leg = new THREE.Mesh(legGeo, legMat);
+      leg.position.set(x, y, z);
+      desk.add(leg);
+    });
+
+    const monitor = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.35, 0.05), monitorMat);
+    monitor.position.set(0, 0.45, -0.3);
+    desk.add(monitor);
+
+    desk.position.set(pos.x, -0.2, pos.z);
+    scene.add(desk);
+  });
+}
+
+function addWaterCooler() {
+  const cooler = new THREE.Group();
+
+  const baseMat = new THREE.MeshStandardMaterial({ color: "#334155", roughness: 0.5 });
+  const waterMat = new THREE.MeshStandardMaterial({ color: "#38bdf8", transparent: true, opacity: 0.65 });
+  const topMat = new THREE.MeshStandardMaterial({ color: "#94a3b8", roughness: 0.4 });
+
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 1.0, 16), baseMat);
+  base.position.y = 0.2;
+  cooler.add(base);
+
+  const water = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.55, 16), waterMat);
+  water.position.y = 0.8;
+  cooler.add(water);
+
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 16), topMat);
+  cap.position.y = 1.1;
+  cooler.add(cap);
+
+  const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.2, 12), topMat);
+  cup.position.set(0.4, 0.2, 0.0);
+  cooler.add(cup);
+
+  cooler.position.copy(coolerPosition);
+  scene.add(cooler);
+}
+
 function createBot(id, basePosition) {
   const group = new THREE.Group();
 
-  const bodyGeo = new THREE.CapsuleGeometry(0.5, 0.7, 4, 8);
-  const bodyMat = new THREE.MeshStandardMaterial({ color: statusColors.idle.clone() });
-  const body = new THREE.Mesh(bodyGeo, bodyMat);
-  group.add(body);
+  const bodyMat = new THREE.MeshStandardMaterial({
+    color: statusColors.idle.clone(),
+    roughness: 0.35,
+    metalness: 0.15
+  });
+  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.55, 0.8, 16), bodyMat);
+  torso.position.y = 0.5;
+  group.add(torso);
 
-  const eyeGeo = new THREE.SphereGeometry(0.08, 12, 12);
-  const eyeMat = new THREE.MeshStandardMaterial({ color: "#e2e8f0" });
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), bodyMat);
+  head.position.y = 1.05;
+  group.add(head);
+
+  const eyeGeo = new THREE.SphereGeometry(0.06, 12, 12);
+  const eyeMat = new THREE.MeshStandardMaterial({ color: "#0f172a" });
   const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
-  leftEye.position.set(-0.18, 0.3, 0.45);
+  leftEye.position.set(-0.12, 1.08, 0.3);
   const rightEye = leftEye.clone();
-  rightEye.position.set(0.18, 0.3, 0.45);
+  rightEye.position.set(0.12, 1.08, 0.3);
   group.add(leftEye, rightEye);
+
+  const legGeo = new THREE.CylinderGeometry(0.07, 0.07, 0.35, 10);
+  const legMat = new THREE.MeshStandardMaterial({ color: "#111827", roughness: 0.7 });
+  const leftLeg = new THREE.Mesh(legGeo, legMat);
+  leftLeg.position.set(-0.18, 0.05, 0);
+  const rightLeg = leftLeg.clone();
+  rightLeg.position.set(0.18, 0.05, 0);
+  group.add(leftLeg, rightLeg);
 
   group.position.copy(basePosition);
   group.userData = {
@@ -151,16 +237,18 @@ function updateBots() {
     const status = agent.status || "idle";
     if (bot.userData.status !== status) {
       bot.children[0].material.color = statusColors[status] || statusColors.idle;
+      bot.children[1].material.color = statusColors[status] || statusColors.idle;
       bot.userData.status = status;
     }
 
     const base = bot.userData.base;
-    const roamRadius = status === "busy" ? 0.6 : 0.35;
-    const speed = status === "busy" ? 1.5 : 0.6;
+    const target = status === "busy" ? coolerPosition : base;
+    const roamRadius = status === "busy" ? 1.4 : status === "blocked" ? 0.1 : 0.35;
+    const speed = status === "busy" ? 1.2 : status === "blocked" ? 0.3 : 0.6;
     const phase = bot.userData.phase;
 
-    bot.position.x = base.x + Math.sin(elapsed * speed + phase) * roamRadius;
-    bot.position.z = base.z + Math.cos(elapsed * speed + phase) * roamRadius;
+    bot.position.x = target.x + Math.sin(elapsed * speed + phase) * roamRadius;
+    bot.position.z = target.z + Math.cos(elapsed * speed + phase) * roamRadius;
     bot.position.y = Math.sin(elapsed * speed * 2 + phase) * 0.05;
 
     if (status === "blocked") {
