@@ -19,14 +19,14 @@ const layoutOrder = [
 ];
 
 const defaultAgents = [
-  { id: "builder", name: "Builder", role: "Senior Engineer" },
-  { id: "pm", name: "PM", role: "Execution Planner" },
-  { id: "research", name: "Research", role: "Analyst" },
-  { id: "craigo", name: "Craigo (Lead)", role: "Lead / CTO" },
-  { id: "qa", name: "QA", role: "Debugger" },
-  { id: "growth", name: "Growth", role: "Revenue" },
-  { id: "ops", name: "Ops", role: "DevOps" },
-  { id: "content", name: "Content", role: "Content Engine" }
+  { id: "builder", name: "Builder", role: "Senior Engineer", model: "deepseek-coder" },
+  { id: "pm", name: "PM", role: "Execution Planner", model: "dolphin" },
+  { id: "research", name: "Research", role: "Analyst", model: "dolphin" },
+  { id: "craigo", name: "Craigo (Lead)", role: "Lead / CTO", model: "gpt-4.1-mini" },
+  { id: "qa", name: "QA", role: "Debugger", model: "dolphin" },
+  { id: "growth", name: "Growth", role: "Revenue", model: "dolphin" },
+  { id: "ops", name: "Ops", role: "DevOps", model: "dolphin" },
+  { id: "content", name: "Content", role: "Content Engine", model: "dolphin" }
 ];
 
 const roleColors = {
@@ -375,7 +375,8 @@ function updateLabels() {
     dot.style.background = roleColors[agent.id] || "#38bdf8";
 
     const name = document.createElement("span");
-    name.textContent = `${agent.name} • ${agent.role}`;
+    const model = agent.model ? ` • ${agent.model}` : "";
+    name.textContent = `${agent.name} • ${agent.role}${model}`;
 
     label.append(dot, name);
     labelsEl.appendChild(label);
