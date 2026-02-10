@@ -51,7 +51,9 @@ function initScene() {
     0.1,
     100
   );
-  camera.position.set(12, 12, 12);
+  camera.position.set(11, 10, 11);
+  camera.zoom = 1.15;
+  camera.updateProjectionMatrix();
   camera.lookAt(0, 0, 0);
 
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
@@ -62,12 +64,22 @@ function initScene() {
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
   controls.enablePan = true;
-  controls.minZoom = 0.6;
-  controls.maxZoom = 2.2;
-  controls.minDistance = 8;
-  controls.maxDistance = 28;
+  controls.minZoom = 0.7;
+  controls.maxZoom = 2.5;
+  controls.minDistance = 6;
+  controls.maxDistance = 30;
   controls.target.set(0, 0, 0);
   controls.update();
+
+  window.addEventListener("keydown", (event) => {
+    if (event.key.toLowerCase() === "r") {
+      camera.position.set(11, 10, 11);
+      camera.zoom = 1.15;
+      camera.updateProjectionMatrix();
+      controls.target.set(0, 0, 0);
+      controls.update();
+    }
+  });
 
   const ambient = new THREE.AmbientLight(0xffffff, 0.7);
   scene.add(ambient);
