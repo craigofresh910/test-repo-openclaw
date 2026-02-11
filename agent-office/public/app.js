@@ -510,6 +510,13 @@ function createAvatar(agent, modulePosition) {
   group.position.copy(standBase);
   group.scale.setScalar(profile.scale * 1.0);
 
+  const fallback = new THREE.Mesh(
+    new THREE.CapsuleGeometry(0.22, 0.34, 6, 10),
+    new THREE.MeshStandardMaterial({ color: roleColors[agent.id] || "#94a3b8", roughness: 0.7 })
+  );
+  fallback.position.y = 0.35;
+  group.add(fallback);
+
   const modelSpec = modelMap[agent.id];
   const modelUrl = modelSpec?.url || modelSpec;
   const targetHeight = modelSpec?.height ?? 1.2;
@@ -538,6 +545,7 @@ function createAvatar(agent, modulePosition) {
       model.rotation.y = Math.PI;
       model.position.set(0, 0, 0);
       model.scale.multiplyScalar(1.2);
+      group.remove(fallback);
       group.add(model);
       group.userData.modelLoaded = true;
     })
