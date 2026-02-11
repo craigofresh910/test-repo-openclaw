@@ -324,17 +324,18 @@ function addNeonBanner() {
   ctx.fillStyle = "#0b0f17";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.font = "bold 110px 'Inter', sans-serif";
+  ctx.font = "bold 120px sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
   ctx.shadowColor = "#38bdf8";
-  ctx.shadowBlur = 24;
-  ctx.fillStyle = "#e2f2ff";
-  ctx.fillText("Ducks is a row!", canvas.width / 2, canvas.height / 2);
+  ctx.shadowBlur = 32;
+  ctx.fillStyle = "#f8fbff";
+  ctx.fillText("Ducks is a row!", canvas.width / 2, canvas.height / 2 + 6);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.anisotropy = 4;
+  texture.needsUpdate = true;
 
   const mat = new THREE.MeshStandardMaterial({
     map: texture,
