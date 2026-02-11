@@ -453,12 +453,19 @@ function createAvatar(agent, modulePosition) {
   const targetHeight = modelSpec?.height ?? 1.2;
   loadModel(modelUrl)
     .then((gltf) => {
-      group.remove(placeholder);
       const model = gltf.scene;
       model.traverse((node) => {
-        if (node.isMesh) {
+        if (node.isMesh || node.isSkinnedMesh) {
+          const color = roleColors[agent.id] || "#e2e8f0";
+          node.material = new THREE.MeshStandardMaterial({
+            color,
+            roughness: 0.7,
+            metalness: 0.0,
+            skinning: !!node.isSkinnedMesh
+          });
           node.castShadow = false;
           node.receiveShadow = false;
+          node.frustumCulled = false;
         }
       });
       fitModelToHeight(model, targetHeight);
