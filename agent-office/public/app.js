@@ -197,6 +197,7 @@ function initScene() {
   addWalkways();
   addCopyMachine();
   addWaterCooler();
+  addNeonBanner();
 
   clock = new THREE.Clock();
 
@@ -311,6 +312,49 @@ function addWaterCooler() {
   group.add(tap);
 
   group.position.set(-11.8, -0.6, -8.4);
+  scene.add(group);
+}
+
+function addNeonBanner() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#0b0f17";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.font = "bold 110px 'Inter', sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  ctx.shadowColor = "#38bdf8";
+  ctx.shadowBlur = 24;
+  ctx.fillStyle = "#e2f2ff";
+  ctx.fillText("Ducks is a row!", canvas.width / 2, canvas.height / 2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.anisotropy = 4;
+
+  const mat = new THREE.MeshStandardMaterial({
+    map: texture,
+    emissive: "#38bdf8",
+    emissiveIntensity: 1.2,
+    transparent: true
+  });
+
+  const frameMat = new THREE.MeshStandardMaterial({ color: "#0f172a", emissive: "#0f172a", roughness: 0.4 });
+
+  const group = new THREE.Group();
+  const panel = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 1.4), mat);
+  panel.position.set(0, 0.2, 0.05);
+  group.add(panel);
+
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(6.5, 1.7, 0.12), frameMat);
+  group.add(frame);
+
+  group.position.set(0, 1.9, -9.2);
+  group.rotation.y = Math.PI;
   scene.add(group);
 }
 
