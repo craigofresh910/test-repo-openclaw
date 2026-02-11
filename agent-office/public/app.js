@@ -339,6 +339,38 @@ function addNeonBanner() {
 
 // water cooler hub removed for minimal scene
 
+function createNameplate(text, accent) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 128;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  ctx.fillStyle = "#0b1220";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = accent.getStyle();
+  ctx.lineWidth = 6;
+  ctx.strokeRect(8, 8, canvas.width - 16, canvas.height - 16);
+
+  ctx.fillStyle = "#e2e8f0";
+  ctx.font = "600 44px 'Inter', 'Segoe UI', sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, canvas.width / 2, canvas.height / 2 + 2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.MeshStandardMaterial({
+    map: texture,
+    transparent: true,
+    roughness: 0.6,
+    metalness: 0.1
+  });
+  const plate = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 0.55), mat);
+  return plate;
+}
+
 function createWorkspace(agent, position) {
   const accent = new THREE.Color(roleColors[agent.id] || "#38bdf8");
   const group = new THREE.Group();
@@ -366,6 +398,12 @@ function createWorkspace(agent, position) {
   const backWall = new THREE.Mesh(new THREE.BoxGeometry(4.5, 2.6, 0.2), wallMat);
   backWall.position.set(0, 0.7, -1.7);
   group.add(backWall);
+
+  const nameplate = createNameplate(agent.name, accent);
+  if (nameplate) {
+    nameplate.position.set(0, 1.55, -1.59);
+    group.add(nameplate);
+  }
 
   const sideWall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.6, 3.6), wallMat);
   sideWall.position.set(-2.15, 0.7, 0);
