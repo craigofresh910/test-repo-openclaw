@@ -328,34 +328,67 @@ function addNeonBanner() {
   group.rotation.y = Math.PI;
   scene.add(group);
 
-  const loader = new FontLoader();
-  loader.load("/vendor/helvetiker_regular.typeface.json", (font) => {
-    const textGeo = new TextGeometry("Ducks is a row!", {
-      font,
-      size: 0.38,
-      depth: 0.08,
-      curveSegments: 8,
-      bevelEnabled: true,
-      bevelThickness: 0.02,
-      bevelSize: 0.01,
-      bevelSegments: 3
-    });
-    textGeo.computeBoundingBox();
-    const box = textGeo.boundingBox;
-    const width = box.max.x - box.min.x;
+  const fallbackCanvas = document.createElement("canvas");
+  fallbackCanvas.width = 1024;
+  fallbackCanvas.height = 256;
+  const ctx = fallbackCanvas.getContext("2d");
+  ctx.fillStyle = "#0b0f17";
+  ctx.fillRect(0, 0, fallbackCanvas.width, fallbackCanvas.height);
+  ctx.font = "bold 120px sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.shadowColor = "#38bdf8";
+  ctx.shadowBlur = 24;
+  ctx.fillStyle = "#f8fbff";
+  ctx.fillText("Ducks is a row!", fallbackCanvas.width / 2, fallbackCanvas.height / 2 + 6);
 
-    const textMat = new THREE.MeshStandardMaterial({
-      color: "#f8fbff",
-      emissive: "#38bdf8",
-      emissiveIntensity: 1.4,
-      metalness: 0.0,
-      roughness: 0.2
-    });
-
-    const textMesh = new THREE.Mesh(textGeo, textMat);
-    textMesh.position.set(-width / 2, -0.25, 0.12);
-    group.add(textMesh);
+  const fallbackTexture = new THREE.CanvasTexture(fallbackCanvas);
+  const fallbackMat = new THREE.MeshStandardMaterial({
+    map: fallbackTexture,
+    emissive: "#38bdf8",
+    emissiveIntensity: 1.0,
+    transparent: true
   });
+  const fallbackPanel = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 1.4), fallbackMat);
+  fallbackPanel.position.set(0, 0.1, 0.16);
+  group.add(fallbackPanel);
+
+  const loader = new FontLoader();
+  loader.load(
+    "/vendor/helvetiker_regular.typeface.json",
+    (font) => {
+      const textGeo = new TextGeometry("Ducks is a row!", {
+        font,
+        size: 0.38,
+        depth: 0.08,
+        curveSegments: 8,
+        bevelEnabled: true,
+        bevelThickness: 0.02,
+        bevelSize: 0.01,
+        bevelSegments: 3
+      });
+      textGeo.computeBoundingBox();
+      const box = textGeo.boundingBox;
+      const width = box.max.x - box.min.x;
+
+      const textMat = new THREE.MeshStandardMaterial({
+        color: "#f8fbff",
+        emissive: "#38bdf8",
+        emissiveIntensity: 1.4,
+        metalness: 0.0,
+        roughness: 0.2
+      });
+
+      const textMesh = new THREE.Mesh(textGeo, textMat);
+      textMesh.position.set(-width / 2, -0.25, 0.2);
+      group.add(textMesh);
+      group.remove(fallbackPanel);
+    },
+    undefined,
+    (err) => {
+      console.warn("font load failed", err);
+    }
+  );
 }
 
 // water cooler hub removed for minimal scene
@@ -555,9 +588,11 @@ function createAvatar(agent, modulePosition) {
           node.material = new THREE.MeshStandardMaterial({
             color,
             roughness: 0.7,
-            metalness: 0.0,
-            skinning: !!node.isSkinnedMesh
+            metalness: 0.0
           });
+          if (node.isSkinnedMesh) {
+            node.material.skinning = true;
+          }
           node.castShadow = false;
           node.receiveShadow = false;
           node.frustumCulled = false;
