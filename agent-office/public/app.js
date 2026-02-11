@@ -460,8 +460,8 @@ const rolePosture = {
 };
 
 const modelMap = {
-  craigo: { url: "/models/men-pack/Individual Characters/glTF/Suit.gltf", height: 2.0 },
-  builder: { url: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf", height: 2.0 },
+  craigo: { url: "/models/women-pack/FBX/Smooth_Female_Alternative.fbx", height: 2.0 },
+  builder: { url: "/models/women-pack/FBX/Smooth_Female_Casual.fbx", height: 2.0 },
   pm: { url: "/models/women-pack/FBX/Smooth_Female_Casual.fbx", height: 2.0 },
   qa: { url: "/models/women-pack/FBX/Smooth_Female_Alternative.fbx", height: 2.0 },
   ops: { url: "/models/men-pack/Individual Characters/glTF/Suit.gltf", height: 2.0 },
@@ -503,7 +503,7 @@ function createAvatar(agent, modulePosition) {
   const profile = rolePosture[agent.id] || { scale: 1, lean: 0, stanceX: 0 };
   const group = new THREE.Group();
 
-  const standBase = modulePosition.clone().add(new THREE.Vector3(1.1 + profile.stanceX, -0.2, 0.9));
+  const standBase = modulePosition.clone().add(new THREE.Vector3(0.55, -0.26, 0.95));
   const seatBase = modulePosition.clone().add(new THREE.Vector3(0.55, -0.26, 0.95));
   group.position.copy(standBase);
   group.scale.setScalar(profile.scale * 1.0);
@@ -569,18 +569,8 @@ function updateAvatars(elapsed) {
     const state = deriveState(agent, avatar);
     avatar.userData.state = state;
 
-    if (state === "walking") {
-      avatar.userData.target.copy(hub);
-    } else if (state === "returning") {
-      avatar.userData.base.copy(avatar.userData.standBase);
-      avatar.userData.target.copy(avatar.userData.standBase);
-    } else if (state === "working") {
-      avatar.userData.base.copy(avatar.userData.standBase);
-      avatar.userData.target.copy(avatar.userData.standBase);
-    } else {
-      avatar.userData.base.copy(avatar.userData.seatBase);
-      avatar.userData.target.copy(avatar.userData.seatBase);
-    }
+    avatar.userData.base.copy(avatar.userData.seatBase);
+    avatar.userData.target.copy(avatar.userData.seatBase);
 
     const target = avatar.userData.target;
     const moveSpeed = state === "walking" || state === "returning" ? 0.05 : 0.12;
