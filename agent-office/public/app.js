@@ -8,7 +8,6 @@ const canvas = document.getElementById("scene");
 const feed = document.getElementById("feed");
 const updatedAt = document.getElementById("updatedAt");
 const capabilitiesEl = document.getElementById("capabilities");
-const keymapEl = document.getElementById("keymap");
 
 const debugEl = document.createElement("div");
 debugEl.style.position = "absolute";
@@ -143,7 +142,7 @@ function initScene() {
     100
   );
   camera.position.set(11, 10, 11);
-  camera.zoom = 1.15;
+  camera.zoom = 1.3;
   camera.updateProjectionMatrix();
   camera.lookAt(0, 0, 0);
 
@@ -165,7 +164,7 @@ function initScene() {
   window.addEventListener("keydown", (event) => {
     if (event.key.toLowerCase() === "r") {
       camera.position.set(11, 10, 11);
-      camera.zoom = 1.15;
+      camera.zoom = 1.3;
       camera.updateProjectionMatrix();
       controls.target.set(0, 0, 0);
       controls.update();
@@ -697,27 +696,6 @@ function updateModules() {
   updateAvatars(elapsed);
 }
 
-function renderKeyMap(data) {
-  if (!keymapEl) return;
-  keymapEl.innerHTML = "";
-
-  data.agents.forEach((agent) => {
-    const row = document.createElement("div");
-    row.className = "keymap-row";
-
-    const dot = document.createElement("span");
-    dot.className = "keymap-dot";
-    dot.style.background = roleColors[agent.id] || "#38bdf8";
-
-    const text = document.createElement("span");
-    const model = agent.model ? ` • ${agent.model}` : "";
-    text.textContent = `${agent.name} • ${agent.role}${model}`;
-
-    row.append(dot, text);
-    keymapEl.appendChild(row);
-  });
-}
-
 function renderLoop() {
   requestAnimationFrame(renderLoop);
   updateModules();
@@ -796,7 +774,6 @@ function render(data) {
 
   agentsById = new Map(data.agents.map((agent) => [agent.id, agent]));
   ensureModules(data);
-  renderKeyMap(data);
   renderFeed(data);
   renderCapabilities(data);
 }
@@ -809,7 +786,6 @@ async function init() {
   const bootstrap = { agents: defaultAgents };
   agentsById = new Map(defaultAgents.map((agent) => [agent.id, agent]));
   ensureModules(bootstrap);
-  renderKeyMap(bootstrap);
   debugEl.textContent = `debug: modules ${modules.size}, avatars ${avatars.size}`;
 
   try {
