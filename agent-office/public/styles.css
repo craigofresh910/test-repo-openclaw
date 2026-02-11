@@ -44,6 +44,12 @@ body {
   padding: 24px 32px;
 }
 
+.floor-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .floor {
   position: relative;
   min-height: 680px;
@@ -112,8 +118,8 @@ body {
   font-size: 15px;
 }
 
-.cap-title {
-  margin-top: 20px;
+.cap-panel {
+  padding: 16px;
 }
 
 .cap-list {

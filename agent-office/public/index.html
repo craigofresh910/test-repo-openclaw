@@ -18,15 +18,18 @@
     </header>
 
     <main class="office">
-      <section class="floor" id="floor">
-        <canvas id="scene"></canvas>
-      </section>
+      <div class="floor-column">
+        <section class="floor" id="floor">
+          <canvas id="scene"></canvas>
+        </section>
+        <section class="panel cap-panel">
+          <h2>Agent Capabilities</h2>
+          <div id="capabilities"></div>
+        </section>
+      </div>
       <aside class="panel" id="panel">
         <h2>Agent Feed</h2>
         <div id="feed"></div>
-
-        <h2 class="cap-title">Agent Capabilities</h2>
-        <div id="capabilities"></div>
       </aside>
     </main>
 
