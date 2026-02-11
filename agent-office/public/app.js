@@ -410,7 +410,10 @@ function fitModelToHeight(model, targetHeight) {
   const box = new THREE.Box3().setFromObject(model);
   const size = new THREE.Vector3();
   box.getSize(size);
-  if (!size.y || !isFinite(size.y)) return;
+  if (!size.y || !isFinite(size.y)) {
+    model.scale.setScalar(1);
+    return;
+  }
 
   const scale = targetHeight / size.y;
   model.scale.setScalar(scale);
@@ -438,12 +441,19 @@ function createAvatar(agent, modulePosition) {
   placeholder.position.y = 0.5;
   group.add(placeholder);
 
+  const marker = new THREE.Mesh(
+    new THREE.SphereGeometry(0.06, 10, 10),
+    new THREE.MeshStandardMaterial({ color: roleColors[agent.id] || "#38bdf8", emissive: roleColors[agent.id] || "#38bdf8" })
+  );
+  marker.position.y = 1.4;
+  group.add(marker);
+
   const modelSpec = modelMap[agent.id];
   const modelUrl = modelSpec?.url || modelSpec;
   const targetHeight = modelSpec?.height ?? 1.2;
   loadModel(modelUrl)
     .then((gltf) => {
-      group.clear();
+      group.remove(placeholder);
       const model = gltf.scene;
       model.traverse((node) => {
         if (node.isMesh) {
