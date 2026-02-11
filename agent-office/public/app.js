@@ -339,7 +339,7 @@ function addNeonBanner() {
 
 // water cooler hub removed for minimal scene
 
-function createNameplate(text, accent) {
+function createNameplate(text, subtitle, accent) {
   const canvas = document.createElement("canvas");
   canvas.width = 512;
   canvas.height = 128;
@@ -353,11 +353,18 @@ function createNameplate(text, accent) {
   ctx.lineWidth = 6;
   ctx.strokeRect(8, 8, canvas.width - 16, canvas.height - 16);
 
-  ctx.fillStyle = "#e2e8f0";
-  ctx.font = "600 44px 'Inter', 'Segoe UI', sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(text, canvas.width / 2, canvas.height / 2 + 2);
+
+  ctx.fillStyle = "#e2e8f0";
+  ctx.font = "600 40px 'Inter', 'Segoe UI', sans-serif";
+  ctx.fillText(text, canvas.width / 2, canvas.height / 2 - 10);
+
+  if (subtitle) {
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "500 26px 'Inter', 'Segoe UI', sans-serif";
+    ctx.fillText(subtitle, canvas.width / 2, canvas.height / 2 + 26);
+  }
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
@@ -399,7 +406,7 @@ function createWorkspace(agent, position) {
   backWall.position.set(0, 0.7, -1.7);
   group.add(backWall);
 
-  const nameplate = createNameplate(agent.name, accent);
+  const nameplate = createNameplate(agent.name, agent.role, accent);
   if (nameplate) {
     nameplate.position.set(0, 1.55, -1.59);
     group.add(nameplate);
