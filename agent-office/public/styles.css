@@ -62,32 +62,32 @@ body {
   display: block;
 }
 
-.labels {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+.keymap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
 }
 
-.label {
-  position: absolute;
-  transform: translate(-50%, -50%);
+.keymap-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   background: rgba(12, 14, 20, 0.75);
   border: 1px solid rgba(148, 163, 184, 0.25);
   color: #e2e8f0;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 12px;
   backdrop-filter: blur(6px);
 }
 
-.label .dot {
-  width: 6px;
-  height: 6px;
+.keymap-dot {
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   display: inline-block;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
 }
 
 .panel {

@@ -5,10 +5,10 @@ import { FBXLoader } from "/vendor/FBXLoader.js";
 
 const floorEl = document.getElementById("floor");
 const canvas = document.getElementById("scene");
-const labelsEl = document.getElementById("labels");
 const feed = document.getElementById("feed");
 const updatedAt = document.getElementById("updatedAt");
 const capabilitiesEl = document.getElementById("capabilities");
+const keymapEl = document.getElementById("keymap");
 
 const debugEl = document.createElement("div");
 debugEl.style.position = "absolute";
@@ -417,12 +417,7 @@ function fitModelToHeight(model, targetHeight) {
 
   const scale = targetHeight / size.y;
   model.scale.setScalar(scale);
-
-  const centeredBox = new THREE.Box3().setFromObject(model);
-  const center = new THREE.Vector3();
-  centeredBox.getCenter(center);
-  model.position.sub(center);
-  model.position.y = -center.y + (targetHeight * 0.6);
+  model.position.set(0, 0, 0);
 }
 
 function createAvatar(agent, modulePosition) {
@@ -430,7 +425,7 @@ function createAvatar(agent, modulePosition) {
   const group = new THREE.Group();
 
   const standBase = modulePosition.clone().add(new THREE.Vector3(1.1 + profile.stanceX, -0.2, 0.9));
-  const seatBase = modulePosition.clone().add(new THREE.Vector3(0.6, -0.12, 0.95));
+  const seatBase = modulePosition.clone().add(new THREE.Vector3(0.55, -0.26, 0.95));
   group.position.copy(standBase);
   group.scale.setScalar(profile.scale * 1.0);
 
@@ -539,9 +534,12 @@ function updateAvatars(elapsed) {
 
     if (state === "idle") {
       avatar.rotation.y = Math.sin(elapsed * 0.4 + avatar.userData.phase) * 0.15;
+      avatar.rotation.x = -0.18;
     } else if (state === "working") {
       avatar.rotation.y = 0.2;
+      avatar.rotation.x = -0.18;
     } else if (state === "walking" || state === "returning") {
+      avatar.rotation.x = 0;
       const dir = target.clone().sub(avatar.position);
       if (dir.length() > 0.01) {
         avatar.rotation.y = Math.atan2(dir.x, dir.z);
@@ -587,42 +585,30 @@ function updateModules() {
   updateAvatars(elapsed);
 }
 
-function updateLabels() {
-  labelsEl.innerHTML = "";
+function renderKeyMap(data) {
+  if (!keymapEl) return;
+  keymapEl.innerHTML = "";
 
-  modules.forEach((module, id) => {
-    const agent = agentsById.get(id);
-    if (!agent) return;
-
-    const vector = module.position.clone();
-    vector.y += 2.4;
-    vector.project(camera);
-
-    const x = (vector.x * 0.5 + 0.5) * floorEl.clientWidth;
-    const y = (-vector.y * 0.5 + 0.5) * floorEl.clientHeight;
-
-    const label = document.createElement("div");
-    label.className = "label";
-    label.style.left = `${x}px`;
-    label.style.top = `${y}px`;
+  data.agents.forEach((agent) => {
+    const row = document.createElement("div");
+    row.className = "keymap-row";
 
     const dot = document.createElement("span");
-    dot.className = "dot";
+    dot.className = "keymap-dot";
     dot.style.background = roleColors[agent.id] || "#38bdf8";
 
-    const name = document.createElement("span");
+    const text = document.createElement("span");
     const model = agent.model ? ` • ${agent.model}` : "";
-    name.textContent = `${agent.name} • ${agent.role}${model}`;
+    text.textContent = `${agent.name} • ${agent.role}${model}`;
 
-    label.append(dot, name);
-    labelsEl.appendChild(label);
+    row.append(dot, text);
+    keymapEl.appendChild(row);
   });
 }
 
 function renderLoop() {
   requestAnimationFrame(renderLoop);
   updateModules();
-  updateLabels();
   if (controls) controls.update();
 
   const loaded = [];
@@ -698,6 +684,7 @@ function render(data) {
 
   agentsById = new Map(data.agents.map((agent) => [agent.id, agent]));
   ensureModules(data);
+  renderKeyMap(data);
   renderFeed(data);
   renderCapabilities(data);
 }
@@ -710,6 +697,7 @@ async function init() {
   const bootstrap = { agents: defaultAgents };
   agentsById = new Map(defaultAgents.map((agent) => [agent.id, agent]));
   ensureModules(bootstrap);
+  renderKeyMap(bootstrap);
   debugEl.textContent = `debug: modules ${modules.size}, avatars ${avatars.size}`;
 
   try {
