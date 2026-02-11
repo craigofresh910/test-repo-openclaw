@@ -333,7 +333,7 @@ function addNeonBanner() {
   group.add(panel);
 
   group.position.set(0, 2.0, -9.2);
-  group.rotation.y = Math.PI;
+  group.rotation.y = 0;
   scene.add(group);
 }
 
