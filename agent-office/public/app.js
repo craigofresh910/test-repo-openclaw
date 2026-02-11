@@ -460,8 +460,8 @@ const rolePosture = {
 };
 
 const modelMap = {
-  craigo: { url: "/models/women-pack/FBX/Smooth_Female_Alternative.fbx", height: 2.0 },
-  builder: { url: "/models/women-pack/FBX/Smooth_Female_Casual.fbx", height: 2.0 },
+  craigo: { url: "/models/men-pack/Individual Characters/glTF/Suit.gltf", height: 2.0 },
+  builder: { url: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf", height: 2.0 },
   pm: { url: "/models/women-pack/FBX/Smooth_Female_Casual.fbx", height: 2.0 },
   qa: { url: "/models/women-pack/FBX/Smooth_Female_Alternative.fbx", height: 2.0 },
   ops: { url: "/models/men-pack/Individual Characters/glTF/Suit.gltf", height: 2.0 },
@@ -556,16 +556,6 @@ function createAvatar(agent, modulePosition) {
 }
 
 function deriveState(agent, avatar) {
-  const status = (agent.status || "idle").toLowerCase();
-  const task = `${agent.task || ""} ${agent.lastMessage || ""}`.toLowerCase();
-  const wantsCollab = status === "busy" && /(meet|sync|collab|review|handoff)/.test(task);
-
-  if (wantsCollab) return "walking";
-  if (avatar.userData.state === "walking" && !wantsCollab) return "returning";
-  if (avatar.userData.state === "returning" && avatar.position.distanceTo(avatar.userData.base) > 0.2) {
-    return "returning";
-  }
-  if (status === "busy") return "working";
   return "idle";
 }
 
