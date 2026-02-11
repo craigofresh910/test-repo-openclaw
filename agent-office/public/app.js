@@ -195,6 +195,8 @@ function initScene() {
   scene.add(base);
 
   addWalkways();
+  addCopyMachine();
+  addWaterCooler();
 
   clock = new THREE.Clock();
 
@@ -256,6 +258,60 @@ function addWalkways() {
   const neonStrip = new THREE.Mesh(new THREE.BoxGeometry(22, 0.04, 0.08), neonMat);
   neonStrip.position.set(0, -0.4, 0.7);
   scene.add(neonStrip);
+}
+
+function addCopyMachine() {
+  const bodyMat = new THREE.MeshStandardMaterial({ color: "#1f2937", roughness: 0.5 });
+  const panelMat = new THREE.MeshStandardMaterial({ color: "#0f172a", roughness: 0.4 });
+  const accentMat = new THREE.MeshStandardMaterial({ color: "#38bdf8", emissive: "#38bdf8", emissiveIntensity: 0.4 });
+
+  const group = new THREE.Group();
+
+  const base = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.0, 0.9), bodyMat);
+  base.position.y = 0.5;
+  group.add(base);
+
+  const top = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.2, 0.95), panelMat);
+  top.position.y = 1.05;
+  group.add(top);
+
+  const tray = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.08, 0.5), panelMat);
+  tray.position.set(0, 0.85, 0.4);
+  group.add(tray);
+
+  const screen = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.18, 0.02), accentMat);
+  screen.position.set(0.35, 1.1, 0.48);
+  screen.rotation.x = -0.2;
+  group.add(screen);
+
+  group.position.set(-9.5, -0.45, 4.2);
+  scene.add(group);
+}
+
+function addWaterCooler() {
+  const baseMat = new THREE.MeshStandardMaterial({ color: "#0f172a", roughness: 0.5 });
+  const tankMat = new THREE.MeshStandardMaterial({ color: "#38bdf8", roughness: 0.2, metalness: 0.1, emissive: "#38bdf8", emissiveIntensity: 0.2 });
+
+  const group = new THREE.Group();
+
+  const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.3, 0.9, 16), baseMat);
+  stand.position.y = 0.45;
+  group.add(stand);
+
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.2, 0.15, 12), baseMat);
+  neck.position.y = 0.95;
+  group.add(neck);
+
+  const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.32, 0.55, 16), tankMat);
+  tank.position.y = 1.25;
+  group.add(tank);
+
+  const tap = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.06, 0.06), tankMat);
+  tap.position.set(0, 0.7, 0.3);
+  group.add(tap);
+
+  group.position.set(9.2, -0.45, -4.2);
+  scene.add(group);
 }
 
 // water cooler hub removed for minimal scene
