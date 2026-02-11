@@ -126,7 +126,8 @@ body {
   display: block;
 }
 
-.cap-collapse summary {
+.cap-collapse summary,
+.feed-collapse summary {
   cursor: pointer;
   font-size: 15px;
   font-weight: 600;
@@ -135,17 +136,20 @@ body {
   padding: 4px 0 10px;
 }
 
-.cap-collapse summary::-webkit-details-marker {
+.cap-collapse summary::-webkit-details-marker,
+.feed-collapse summary::-webkit-details-marker {
   display: none;
 }
 
-.cap-collapse summary::after {
+.cap-collapse summary::after,
+.feed-collapse summary::after {
   content: "▾";
   float: right;
   color: #94a3b8;
 }
 
-.cap-collapse[open] summary::after {
+.cap-collapse[open] summary::after,
+.feed-collapse[open] summary::after {
   content: "▴";
 }
 

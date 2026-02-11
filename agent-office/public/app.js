@@ -780,7 +780,7 @@ function renderFeed(data) {
       }))
     )
     .sort((a, b) => new Date(b.ts) - new Date(a.ts))
-    .slice(0, 20);
+    .slice(0, 10);
 
   feed.innerHTML = logs
     .map(
