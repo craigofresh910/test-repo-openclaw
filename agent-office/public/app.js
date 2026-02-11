@@ -460,8 +460,8 @@ const rolePosture = {
 };
 
 const modelMap = {
-  craigo: { url: "/models/men-pack/Individual Characters/glTF/Suit.gltf", height: 2.0 },
-  builder: { url: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf", height: 2.0 },
+  craigo: { url: "/models/women-pack/FBX/Smooth_Female_Alternative.fbx", height: 2.0 },
+  builder: { url: "/models/women-pack/FBX/Smooth_Female_Casual.fbx", height: 2.0 },
   pm: { url: "/models/women-pack/FBX/Smooth_Female_Casual.fbx", height: 2.0 },
   qa: { url: "/models/women-pack/FBX/Smooth_Female_Alternative.fbx", height: 2.0 },
   ops: { url: "/models/men-pack/Individual Characters/glTF/Suit.gltf", height: 2.0 },
