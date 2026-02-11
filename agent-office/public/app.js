@@ -310,7 +310,7 @@ function addWaterCooler() {
   tap.position.set(0, 0.7, 0.3);
   group.add(tap);
 
-  group.position.set(-16.8, -0.45, -9.4);
+  group.position.set(-16.8, -0.6, -9.4);
   scene.add(group);
 }
 
