@@ -503,8 +503,8 @@ function createAvatar(agent, modulePosition) {
   const profile = rolePosture[agent.id] || { scale: 1, lean: 0, stanceX: 0 };
   const group = new THREE.Group();
 
-  const standBase = modulePosition.clone().add(new THREE.Vector3(0.55, -0.26, 0.95));
-  const seatBase = modulePosition.clone().add(new THREE.Vector3(0.55, -0.26, 0.95));
+  const standBase = modulePosition.clone().add(new THREE.Vector3(1.1 + profile.stanceX, -0.2, 0.9));
+  const seatBase = modulePosition.clone().add(new THREE.Vector3(0.55, -0.12, 0.95));
   group.position.copy(standBase);
   group.scale.setScalar(profile.scale * 1.0);
 
@@ -532,8 +532,8 @@ function createAvatar(agent, modulePosition) {
       });
       fitModelToHeight(model, targetHeight);
       model.rotation.y = Math.PI;
-      model.position.y -= 0.55;
-      model.rotation.x = -0.08;
+      model.position.y = 0.0;
+      model.rotation.x = -0.12;
       group.add(model);
       group.userData.modelLoaded = true;
     })
