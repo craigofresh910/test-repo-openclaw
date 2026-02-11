@@ -496,31 +496,19 @@ function fitModelToHeight(model, targetHeight) {
 
   const scale = targetHeight / size.y;
   model.scale.setScalar(scale);
-  model.position.set(0, 0, 0);
+  const newBox = new THREE.Box3().setFromObject(model);
+  const minY = newBox.min.y;
+  model.position.set(0, -minY, 0);
 }
 
 function createAvatar(agent, modulePosition) {
   const profile = rolePosture[agent.id] || { scale: 1, lean: 0, stanceX: 0 };
   const group = new THREE.Group();
 
-  const standBase = modulePosition.clone().add(new THREE.Vector3(1.1 + profile.stanceX, -0.2, 0.9));
+  const standBase = modulePosition.clone().add(new THREE.Vector3(0.55, -0.12, 0.95));
   const seatBase = modulePosition.clone().add(new THREE.Vector3(0.55, -0.12, 0.95));
   group.position.copy(standBase);
   group.scale.setScalar(profile.scale * 1.0);
-
-  const placeholder = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.24, 0.36, 6, 10),
-    new THREE.MeshStandardMaterial({ color: roleColors[agent.id] || "#94a3b8", roughness: 0.8 })
-  );
-  placeholder.position.y = 0.4;
-  group.add(placeholder);
-
-  const marker = new THREE.Mesh(
-    new THREE.SphereGeometry(0.06, 10, 10),
-    new THREE.MeshStandardMaterial({ color: roleColors[agent.id] || "#38bdf8", emissive: roleColors[agent.id] || "#38bdf8" })
-  );
-  marker.position.y = 1.2;
-  group.add(marker);
 
   const modelSpec = modelMap[agent.id];
   const modelUrl = modelSpec?.url || modelSpec;
@@ -546,9 +534,8 @@ function createAvatar(agent, modulePosition) {
       });
       fitModelToHeight(model, targetHeight);
       model.rotation.y = Math.PI;
-      model.position.y = 0.0;
       model.rotation.x = -0.12;
-      model.scale.multiplyScalar(1.6);
+      model.position.add(new THREE.Vector3(0, -0.12, -0.1));
       group.add(model);
       group.userData.modelLoaded = true;
     })
