@@ -2,6 +2,8 @@ import * as THREE from "/vendor/three.module.js";
 import { OrbitControls } from "/vendor/OrbitControls.js";
 import { GLTFLoader } from "/vendor/GLTFLoader.js";
 import { FBXLoader } from "/vendor/FBXLoader.js";
+import { FontLoader } from "/vendor/FontLoader.js";
+import { TextGeometry } from "/vendor/TextGeometry.js";
 
 const floorEl = document.getElementById("floor");
 const canvas = document.getElementById("scene");
@@ -316,47 +318,44 @@ function addWaterCooler() {
 }
 
 function addNeonBanner() {
-  const canvas = document.createElement("canvas");
-  canvas.width = 1024;
-  canvas.height = 256;
-  const ctx = canvas.getContext("2d");
-
-  ctx.fillStyle = "#0b0f17";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  ctx.font = "bold 120px sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-
-  ctx.shadowColor = "#38bdf8";
-  ctx.shadowBlur = 32;
-  ctx.fillStyle = "#f8fbff";
-  ctx.fillText("Ducks is a row!", canvas.width / 2, canvas.height / 2 + 6);
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.anisotropy = 4;
-  texture.needsUpdate = true;
-
-  const mat = new THREE.MeshStandardMaterial({
-    map: texture,
-    emissive: "#38bdf8",
-    emissiveIntensity: 1.2,
-    transparent: true
-  });
-
   const frameMat = new THREE.MeshStandardMaterial({ color: "#0f172a", emissive: "#0f172a", roughness: 0.4 });
 
   const group = new THREE.Group();
-  const panel = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 1.4), mat);
-  panel.position.set(0, 0.2, 0.05);
-  group.add(panel);
-
-  const frame = new THREE.Mesh(new THREE.BoxGeometry(6.5, 1.7, 0.12), frameMat);
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(6.8, 1.9, 0.2), frameMat);
   group.add(frame);
 
-  group.position.set(0, 1.9, -9.2);
+  group.position.set(0, 2.0, -9.2);
   group.rotation.y = Math.PI;
   scene.add(group);
+
+  const loader = new FontLoader();
+  loader.load("/vendor/helvetiker_regular.typeface.json", (font) => {
+    const textGeo = new TextGeometry("Ducks is a row!", {
+      font,
+      size: 0.38,
+      depth: 0.08,
+      curveSegments: 8,
+      bevelEnabled: true,
+      bevelThickness: 0.02,
+      bevelSize: 0.01,
+      bevelSegments: 3
+    });
+    textGeo.computeBoundingBox();
+    const box = textGeo.boundingBox;
+    const width = box.max.x - box.min.x;
+
+    const textMat = new THREE.MeshStandardMaterial({
+      color: "#f8fbff",
+      emissive: "#38bdf8",
+      emissiveIntensity: 1.4,
+      metalness: 0.0,
+      roughness: 0.2
+    });
+
+    const textMesh = new THREE.Mesh(textGeo, textMat);
+    textMesh.position.set(-width / 2, -0.25, 0.12);
+    group.add(textMesh);
+  });
 }
 
 // water cooler hub removed for minimal scene
