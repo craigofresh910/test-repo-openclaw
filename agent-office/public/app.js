@@ -284,7 +284,7 @@ function addCopyMachine() {
   screen.rotation.x = -0.2;
   group.add(screen);
 
-  group.position.set(-14.8, -0.45, -8.6);
+  group.position.set(-14.2, -0.45, -8.4);
   scene.add(group);
 }
 
@@ -310,7 +310,7 @@ function addWaterCooler() {
   tap.position.set(0, 0.7, 0.3);
   group.add(tap);
 
-  group.position.set(-15.6, -0.45, -9.0);
+  group.position.set(-16.8, -0.45, -9.4);
   scene.add(group);
 }
 
