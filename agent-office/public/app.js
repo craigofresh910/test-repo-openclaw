@@ -519,12 +519,14 @@ function createAvatar(agent, modulePosition) {
       model.traverse((node) => {
         if (node.isMesh || node.isSkinnedMesh) {
           const color = roleColors[agent.id] || "#e2e8f0";
-          node.material = new THREE.MeshStandardMaterial({
-            color,
-            roughness: 0.7,
-            metalness: 0.0
-          });
-          if (node.isSkinnedMesh) {
+          if (!node.material) {
+            node.material = new THREE.MeshStandardMaterial({
+              color,
+              roughness: 0.7,
+              metalness: 0.0
+            });
+          }
+          if (node.isSkinnedMesh && node.material) {
             node.material.skinning = true;
           }
           node.castShadow = false;
@@ -534,8 +536,8 @@ function createAvatar(agent, modulePosition) {
       });
       fitModelToHeight(model, targetHeight);
       model.rotation.y = Math.PI;
-      model.rotation.x = -0.12;
-      model.position.add(new THREE.Vector3(0, -0.12, -0.1));
+      model.position.set(0, 0, 0);
+      model.scale.multiplyScalar(1.2);
       group.add(model);
       group.userData.modelLoaded = true;
     })
