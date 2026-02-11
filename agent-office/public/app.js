@@ -113,6 +113,13 @@ const roleColors = {
   content: "#f472b6"
 };
 
+const statusColors = {
+  idle: "#64748b",
+  working: "#22c55e",
+  walking: "#f59e0b",
+  returning: "#38bdf8"
+};
+
 let scene, camera, renderer, clock, controls;
 let agentsById = new Map();
 let modules = new Map();
@@ -487,11 +494,24 @@ function createWorkspace(agent, position) {
   glow.position.set(0.2, 1.2, -0.8);
   group.add(glow);
 
+  const statusOrb = new THREE.Mesh(
+    new THREE.SphereGeometry(0.12, 18, 18),
+    new THREE.MeshStandardMaterial({
+      color: statusColors.idle,
+      emissive: statusColors.idle,
+      emissiveIntensity: 0.9,
+      roughness: 0.3
+    })
+  );
+  statusOrb.position.set(1.6, 0.65, -0.9);
+  group.add(statusOrb);
+
   group.position.copy(position);
   group.userData = {
     id: agent.id,
     accent,
-    glow: [strip, strip2, glow]
+    glow: [strip, strip2, glow],
+    statusOrb
   };
 
   scene.add(group);
@@ -619,13 +639,35 @@ function createAvatar(agent, modulePosition) {
   return group;
 }
 
+function getDeskAnchor(agentId) {
+  const positions = layoutPositions();
+  const base = positions.get(agentId) || new THREE.Vector3(0, 0, 0);
+  return base.clone().add(new THREE.Vector3(0.55, -0.12, 0.95));
+}
+
+function resolveTarget(agent, avatar) {
+  if (agent.targetDesk && agent.targetDesk !== agent.id) {
+    return getDeskAnchor(agent.targetDesk);
+  }
+  if (agent.collabWith && agent.collabWith !== agent.id) {
+    return getDeskAnchor(agent.collabWith);
+  }
+  return avatar.userData.seatBase.clone();
+}
+
 function deriveState(agent, avatar) {
+  const status = agent.status || "idle";
+  const target = resolveTarget(agent, avatar);
+  const distance = avatar.position.distanceTo(target);
+
+  if (status === "returning") return "returning";
+  if ((agent.collabWith || agent.targetDesk) && distance > 0.25) return "walking";
+  if (status === "working" || agent.collabWith || agent.targetDesk) return "working";
+  if (status === "walking") return "walking";
   return "idle";
 }
 
 function updateAvatars(elapsed) {
-  const hub = new THREE.Vector3(0, -0.2, 0);
-
   avatars.forEach((avatar, id) => {
     const agent = agentsById.get(id);
     if (!agent) return;
@@ -633,12 +675,17 @@ function updateAvatars(elapsed) {
     const state = deriveState(agent, avatar);
     avatar.userData.state = state;
 
-    avatar.userData.base.copy(avatar.userData.seatBase);
-    avatar.userData.target.copy(avatar.userData.seatBase);
+    const target = resolveTarget(agent, avatar);
+    if (state === "returning" || (!agent.collabWith && !agent.targetDesk)) {
+      avatar.userData.base.copy(avatar.userData.seatBase);
+      avatar.userData.target.copy(avatar.userData.seatBase);
+    } else {
+      avatar.userData.base.copy(target);
+      avatar.userData.target.copy(target);
+    }
 
-    const target = avatar.userData.target;
     const moveSpeed = state === "walking" || state === "returning" ? 0.05 : 0.12;
-    avatar.position.lerp(target, moveSpeed);
+    avatar.position.lerp(avatar.userData.target, moveSpeed);
 
     const idleBreath = Math.sin(elapsed * 1.2 + avatar.userData.phase) * 0.01;
     avatar.position.y = avatar.userData.base.y + idleBreath;
@@ -651,7 +698,7 @@ function updateAvatars(elapsed) {
       avatar.rotation.x = -0.18;
     } else if (state === "walking" || state === "returning") {
       avatar.rotation.x = 0;
-      const dir = target.clone().sub(avatar.position);
+      const dir = avatar.userData.target.clone().sub(avatar.position);
       if (dir.length() > 0.01) {
         avatar.rotation.y = Math.atan2(dir.x, dir.z);
       }
@@ -691,6 +738,14 @@ function updateModules() {
         mesh.intensity = 0.6 + pulse * 0.6;
       }
     });
+
+    const state = agent.status || "idle";
+    const color = new THREE.Color(statusColors[state] || statusColors.idle);
+    if (module.userData.statusOrb?.material) {
+      module.userData.statusOrb.material.color = color;
+      module.userData.statusOrb.material.emissive = color;
+      module.userData.statusOrb.material.emissiveIntensity = state === "working" ? 1.2 : 0.9;
+    }
   });
 
   updateAvatars(elapsed);

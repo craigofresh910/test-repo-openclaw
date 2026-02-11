@@ -71,12 +71,14 @@ app.post("/api/agents/:id", (req, res) => {
     return res.status(404).json({ error: "agent_not_found" });
   }
 
-  const { status, task, lastMessage, filesChanged, log } = req.body || {};
+  const { status, task, lastMessage, filesChanged, log, collabWith, targetDesk } = req.body || {};
 
   if (status) agent.status = status;
   if (task !== undefined) agent.task = task;
   if (lastMessage !== undefined) agent.lastMessage = lastMessage;
   if (Array.isArray(filesChanged)) agent.filesChanged = filesChanged;
+  if (collabWith !== undefined) agent.collabWith = collabWith;
+  if (targetDesk !== undefined) agent.targetDesk = targetDesk;
   if (log) {
     agent.logs = [...agent.logs, { ts: new Date().toISOString(), text: log }].slice(-50);
   }
