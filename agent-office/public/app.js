@@ -464,9 +464,9 @@ const modelMap = {
   builder: { url: "/models/women-pack/FBX/Smooth_Female_Casual.fbx", height: 2.0 },
   pm: { url: "/models/women-pack/FBX/Smooth_Female_Casual.fbx", height: 2.0 },
   qa: { url: "/models/women-pack/FBX/Smooth_Female_Alternative.fbx", height: 2.0 },
-  ops: { url: "/models/men-pack/Individual Characters/glTF/Suit.gltf", height: 2.0 },
+  ops: { url: "/models/women-pack/FBX/Smooth_Female_Dress.fbx", height: 2.0 },
   research: { url: "/models/women-pack/FBX/Smooth_Female_Dress.fbx", height: 2.0 },
-  growth: { url: "/models/men-pack/Individual Characters/glTF/Casual_Hoodie.gltf", height: 2.0 },
+  growth: { url: "/models/women-pack/FBX/Smooth_Female_TankTop.fbx", height: 2.0 },
   content: { url: "/models/women-pack/FBX/Smooth_Female_TankTop.fbx", height: 2.0 }
 };
 
@@ -532,6 +532,8 @@ function createAvatar(agent, modulePosition) {
       });
       fitModelToHeight(model, targetHeight);
       model.rotation.y = Math.PI;
+      model.position.y -= 0.55;
+      model.rotation.x = -0.08;
       group.add(model);
       group.userData.modelLoaded = true;
     })
