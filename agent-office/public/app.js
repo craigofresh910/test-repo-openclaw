@@ -873,7 +873,7 @@ function wireDispatch() {
   if (dispatchReport) {
     dispatchReport.addEventListener("click", async () => {
       const prompt = "Generate a concise report of current agent tasks, latest replies, and next steps.";
-      await sendDispatch(prompt, { fanout: "builder,qa,pm,research,ops" });
+      await sendDispatch(prompt, { fanout: "builder,qa,pm,research,ops", report: true });
     });
   }
 }

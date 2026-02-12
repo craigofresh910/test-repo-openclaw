@@ -57,11 +57,12 @@ async function callOllama({ system, prompt, model = OLLAMA_MODEL }) {
 
 function buildSystemPrompt(agent) {
   const caps = (agent.capabilities || []).join(", ");
-  return `You are ${agent.name} (${agent.role}). Capabilities: ${caps}. Respond concisely and clearly.`;
+  return `You are ${agent.name} (${agent.role}). Capabilities: ${caps}. Respond concisely and clearly. Only use provided context; if unknown, say "No data". Do not invent people, tickets, or tasks.`;
 }
 
-async function runAgent(agent, text) {
-  return callOllama({ system: buildSystemPrompt(agent), prompt: text });
+async function runAgent(agent, text, context = "") {
+  const prompt = context ? `${context}\n\n${text}` : text;
+  return callOllama({ system: buildSystemPrompt(agent), prompt });
 }
 
 function markWorking(agent, collabWith) {
@@ -196,7 +197,26 @@ app.post("/api/office/message", async (req, res) => {
 
     markWorking(agent);
 
-    if (targetIds.length > 0) {
+    const context = `Context: Agents snapshot\n${data.agents
+      .map(
+        (a) =>
+          `- ${a.name} (${a.id}): status=${a.status || "idle"}; task=${a.task || ""}; lastMessage=${
+            a.lastMessage || ""
+          }`
+      )
+      .join("\n")}`;
+
+    const reportOnly = meta?.report === true;
+    const autoReturn = meta?.returnOnComplete !== false;
+
+    if ((reportOnly && targetIds.length === 0) || (targetIds.length === 0 && lower.includes("report"))) {
+      reply = data.agents
+        .map(
+          (a) =>
+            `${a.name} (${a.id}) — ${a.status || "idle"}${a.task ? ` — ${a.task}` : ""}`
+        )
+        .join("\n");
+    } else if (targetIds.length > 0) {
       delegated = await Promise.all(
         targetIds.map(async (id) => {
           const target = data.agents.find((a) => a.id === id);
@@ -204,10 +224,11 @@ app.post("/api/office/message", async (req, res) => {
           markWorking(target, to);
           const response = await runAgent(
             target,
-            `Lead request from ${agent.name}: ${text}\nReply with your status and a concise update.`
+            `Lead request from ${agent.name}: ${text}\nReply with your status and a concise update.`,
+            context
           );
           target.logs = [...target.logs, { ts, text: `Response: ${response.slice(0, 200)}` }].slice(-50);
-          if (meta?.returnOnComplete) {
+          if (autoReturn) {
             markReturning(target);
           }
           return { id: target.id, name: target.name, reply: response };
@@ -217,12 +238,12 @@ app.post("/api/office/message", async (req, res) => {
 
       const summaryPrompt = `Summarize the following agent responses for ${agent.name}:
 ${delegated.map((item) => `- ${item.name}: ${item.reply}`).join("\n")}`;
-      reply = await runAgent(agent, summaryPrompt);
+      reply = await runAgent(agent, summaryPrompt, context);
     } else {
-      reply = await runAgent(agent, text);
+      reply = await runAgent(agent, text, context);
     }
 
-    if (meta?.returnOnComplete) {
+    if (autoReturn) {
       markReturning(agent);
     }
 
