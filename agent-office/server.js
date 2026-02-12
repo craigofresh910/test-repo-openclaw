@@ -127,6 +127,16 @@ function validateAgentPayload(payload) {
   return { status, update, eta_minutes: etaMinutes };
 }
 
+function inferStatusFromText(text) {
+  const lower = String(text || "").toLowerCase();
+  if (!lower) return null;
+  if (lower.includes("done") || lower.includes("complete") || lower.includes("completed")) return "done";
+  if (lower.includes("return")) return "returning";
+  if (lower.includes("walk")) return "walking";
+  if (lower.includes("working") || lower.includes("in progress")) return "working";
+  return null;
+}
+
 async function runAgentJson(agent, text, context = "") {
   const system = `${buildSystemPrompt(agent)} Respond ONLY with JSON in this schema: {"status":"idle|working|walking|returning|done","update":"string","eta_minutes":number|null}. No extra text.`;
   const prompt = context ? `${context}\n\n${text}` : text;
@@ -135,7 +145,9 @@ async function runAgentJson(agent, text, context = "") {
     const parsed = JSON.parse(response);
     return validateAgentPayload(parsed);
   } catch (err) {
-    return null;
+    const inferred = inferStatusFromText(response) || "working";
+    const update = String(response || "").trim().split("\n").slice(0, 3).join(" ").trim();
+    return validateAgentPayload({ status: inferred, update, eta_minutes: null });
   }
 }
 
@@ -494,6 +506,7 @@ app.post("/api/office/message", async (req, res) => {
     let reply = "";
     let delegated = [];
 
+    agent.task = String(text).slice(0, 160);
     markWorking(agent);
 
     const context = `Context: Agents snapshot\n${data.agents
@@ -526,15 +539,13 @@ app.post("/api/office/message", async (req, res) => {
             `Lead request from ${agent.name}: ${text}\nReply with your status and a concise update.`,
             context
           );
+          target.task = String(text).slice(0, 160);
           if (response) {
             target.status = response.status;
             target.lastMessage = response.update || "";
             if (autoReturn && (response.status === "done" || response.status === "returning")) {
               markReturning(target);
             }
-          } else {
-            target.status = "working";
-            target.lastMessage = "No data";
           }
           target.logs = [...target.logs, { ts, text: `Response: ${response ? JSON.stringify(response) : "No data"}` }].slice(-50);
           return {
