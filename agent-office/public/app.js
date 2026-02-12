@@ -772,17 +772,21 @@ function updateModules() {
     const agent = agentsById.get(id);
     if (!agent) return;
 
+    const state = agent.status || "idle";
+    const active = state === "working" || state === "walking" || state === "returning";
     const pulse = 0.6 + Math.sin(elapsed * 2 + id.length) * 0.2;
+    const baseGlow = active ? 0.9 : 0.15;
+    const baseLight = active ? 1.0 : 0.2;
+
     module.userData.glow.forEach((mesh) => {
       if (mesh.material) {
-        mesh.material.emissiveIntensity = pulse + 0.2;
+        mesh.material.emissiveIntensity = baseGlow + pulse * 0.4;
       }
       if (mesh.isLight) {
-        mesh.intensity = 0.6 + pulse * 0.6;
+        mesh.intensity = baseLight + pulse * (active ? 0.6 : 0.2);
       }
     });
 
-    const state = agent.status || "idle";
     const color = new THREE.Color(statusColors[state] || statusColors.idle);
     if (module.userData.statusOrb?.material) {
       module.userData.statusOrb.material.color = color;
