@@ -29,6 +29,41 @@ app.use("/models", express.static(path.join(__dirname, "models")));
 
 const clients = new Set();
 
+const OLLAMA_HOST = process.env.OLLAMA_HOST || "http://localhost:11434";
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3.1:8b";
+
+async function callOllama({ system, prompt, model = OLLAMA_MODEL }) {
+  const res = await fetch(`${OLLAMA_HOST}/api/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model,
+      stream: false,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: prompt }
+      ]
+    })
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`ollama_error:${res.status} ${text}`);
+  }
+
+  const data = await res.json();
+  return data?.message?.content || data?.response || "";
+}
+
+function buildSystemPrompt(agent) {
+  const caps = (agent.capabilities || []).join(", ");
+  return `You are ${agent.name} (${agent.role}). Capabilities: ${caps}. Respond concisely and clearly.`;
+}
+
+async function runAgent(agent, text) {
+  return callOllama({ system: buildSystemPrompt(agent), prompt: text });
+}
+
 function loadData() {
   try {
     const raw = fs.readFileSync(DATA_PATH, "utf8");
@@ -115,7 +150,7 @@ app.post("/api/agents/:id/log", (req, res) => {
   res.json({ ok: true });
 });
 
-app.post("/api/office/message", (req, res) => {
+app.post("/api/office/message", async (req, res) => {
   const ts = new Date().toISOString();
   const { to, text, meta } = req.body || {};
 
@@ -129,27 +164,62 @@ app.post("/api/office/message", (req, res) => {
     return res.status(404).json({ ok: false, error: `unknown_agent:${to}`, ts });
   }
 
-  const reply = String(text).toLowerCase().includes("ping")
-    ? `pong — ${agent.name} — ${ts}`
-    : `ack — routed to ${agent.name}: ${String(text).slice(0, 160)}`;
+  try {
+    const lower = String(text).toLowerCase();
+    const targetIds = data.agents
+      .map((a) => a.id)
+      .filter((id) => id !== to && lower.includes(id));
 
-  if (meta) {
+    let reply = "";
+    let delegated = [];
+
+    if (targetIds.length > 0) {
+      delegated = await Promise.all(
+        targetIds.map(async (id) => {
+          const target = data.agents.find((a) => a.id === id);
+          if (!target) return null;
+          const response = await runAgent(
+            target,
+            `Lead request: ${text}\nReply with your status and a concise update.`
+          );
+          target.logs = [...target.logs, { ts, text: `Response: ${response.slice(0, 200)}` }].slice(-50);
+          return { id: target.id, name: target.name, reply: response };
+        })
+      );
+      delegated = delegated.filter(Boolean);
+
+      const summaryPrompt = `Summarize the following agent responses for ${agent.name}:
+${delegated
+  .map((item) => `- ${item.name}: ${item.reply}`)
+  .join("\n")}`;
+      reply = await runAgent(agent, summaryPrompt);
+    } else {
+      reply = await runAgent(agent, text);
+    }
+
     agent.lastMessage = String(text).slice(0, 160);
+    agent.logs = [...agent.logs, { ts, text: `Reply: ${reply.slice(0, 200)}` }].slice(-50);
+
+    data.updatedAt = ts;
+    saveData(data);
+
+    const payload = {
+      type: "office_message",
+      to,
+      text,
+      reply,
+      meta: meta || {},
+      ts,
+      agent: { id: agent.id, name: agent.name },
+      delegated
+    };
+
+    broadcast({ ...data, officeMessage: payload });
+
+    res.json({ ok: true, to, agent: { id: agent.id, name: agent.name }, reply, delegated, ts });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: String(err), ts });
   }
-
-  const payload = {
-    type: "office_message",
-    to,
-    text,
-    reply,
-    meta: meta || {},
-    ts,
-    agent: { id: agent.id, name: agent.name }
-  };
-
-  broadcast({ ...data, officeMessage: payload });
-
-  res.json({ ok: true, to, agent: { id: agent.id, name: agent.name }, reply, ts });
 });
 
 app.listen(PORT, () => {
