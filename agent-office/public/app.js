@@ -895,7 +895,15 @@ function renderStatusStrip(data) {
     const status = (agent.status || "idle").toLowerCase();
     const chip = document.createElement("div");
     chip.className = `status-chip status-${status}`;
-    chip.innerHTML = `<span class="dot"></span>${agent.name}`;
+
+    const rawSummary = agent.task || agent.lastMessage || "";
+    const summaryLine = rawSummary.split("\n")[0].trim();
+    const summary = summaryLine.length > 70 ? `${summaryLine.slice(0, 67)}…` : summaryLine;
+
+    chip.innerHTML = `<span class="dot"></span><span class="name">${agent.name}</span>${summary ? `<span class="summary">— ${summary}</span>` : ""}`;
+    if (summary) {
+      chip.title = summaryLine;
+    }
     statusStrip.appendChild(chip);
   });
 }

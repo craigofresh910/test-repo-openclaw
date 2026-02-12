@@ -80,6 +80,15 @@ body {
   border: 1px solid #1f2430;
   font-size: 11px;
   color: #e2e8f0;
+  max-width: 100%;
+}
+
+.status-chip .summary {
+  color: #94a3b8;
+  max-width: 320px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .status-chip .dot {
