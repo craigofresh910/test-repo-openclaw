@@ -622,6 +622,8 @@ function createAvatar(agent, modulePosition) {
     modelLoaded: false
   };
 
+  scene.add(group);
+
   if (!modelUrl) {
     return group;
   }
@@ -665,7 +667,6 @@ function createAvatar(agent, modulePosition) {
       console.warn("model load failed", modelUrl, err);
     });
 
-  scene.add(group);
   return group;
 }
 
