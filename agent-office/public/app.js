@@ -15,6 +15,7 @@ const dispatchReturn = document.getElementById("dispatchReturn");
 const dispatchSend = document.getElementById("dispatchSend");
 const dispatchReport = document.getElementById("dispatchReport");
 const dispatchOutput = document.getElementById("dispatchOutput");
+const focusToggle = document.getElementById("focusToggle");
 const searchQuery = document.getElementById("searchQuery");
 const searchScope = document.getElementById("searchScope");
 const searchRun = document.getElementById("searchRun");
@@ -27,28 +28,38 @@ const councilModels = document.getElementById("councilModels");
 const councilRun = document.getElementById("councilRun");
 const councilOutput = document.getElementById("councilOutput");
 
+const debugEnabled = new URLSearchParams(window.location.search).has("debug");
 const debugEl = document.createElement("div");
-debugEl.style.position = "absolute";
-debugEl.style.left = "12px";
-debugEl.style.bottom = "12px";
-debugEl.style.background = "rgba(15, 23, 42, 0.85)";
-debugEl.style.border = "1px solid rgba(56, 189, 248, 0.3)";
-debugEl.style.color = "#e2e8f0";
-debugEl.style.padding = "8px 10px";
-debugEl.style.borderRadius = "10px";
-debugEl.style.fontSize = "11px";
-debugEl.style.maxWidth = "320px";
-debugEl.style.zIndex = "10";
-debugEl.textContent = "debug: booting";
-floorEl.appendChild(debugEl);
 
-window.addEventListener("error", (event) => {
-  debugEl.textContent = `error: ${event.message}`;
-});
+function setDebug(text) {
+  if (debugEnabled) {
+    debugEl.textContent = text;
+  }
+}
 
-window.addEventListener("unhandledrejection", (event) => {
-  debugEl.textContent = `promise: ${event.reason}`;
-});
+if (debugEnabled) {
+  debugEl.style.position = "absolute";
+  debugEl.style.left = "12px";
+  debugEl.style.bottom = "12px";
+  debugEl.style.background = "rgba(15, 23, 42, 0.85)";
+  debugEl.style.border = "1px solid rgba(56, 189, 248, 0.3)";
+  debugEl.style.color = "#e2e8f0";
+  debugEl.style.padding = "8px 10px";
+  debugEl.style.borderRadius = "10px";
+  debugEl.style.fontSize = "11px";
+  debugEl.style.maxWidth = "320px";
+  debugEl.style.zIndex = "10";
+  debugEl.textContent = "debug: booting";
+  floorEl.appendChild(debugEl);
+
+  window.addEventListener("error", (event) => {
+    setDebug(`error: ${event.message}`);
+  });
+
+  window.addEventListener("unhandledrejection", (event) => {
+    setDebug(`promise: ${event.reason}`);
+  });
+}
 
 const layoutOrder = [
   "craigo",
@@ -151,7 +162,7 @@ function initScene() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color("#0b0f17");
   scene.fog = new THREE.Fog("#0b0f17", 16, 50);
-  debugEl.textContent = "debug: scene initialized";
+  setDebug("debug: scene initialized");
 
   const width = floorEl.clientWidth;
   const height = floorEl.clientHeight;
@@ -796,7 +807,7 @@ function renderLoop() {
       missing.push(id);
     }
   });
-  debugEl.textContent = `debug: modules ${modules.size}, avatars ${avatars.size}, loaded ${loaded.length}, missing ${missing.join(", ")}`;
+  setDebug(`debug: modules ${modules.size}, avatars ${avatars.size}, loaded ${loaded.length}, missing ${missing.join(", ")}`);
 
   renderer.render(scene, camera);
 }
@@ -811,7 +822,7 @@ function renderFeed(data) {
       }))
     )
     .sort((a, b) => new Date(b.ts) - new Date(a.ts))
-    .slice(0, 10);
+    .slice(0, 3);
 
   feed.innerHTML = logs
     .map(
@@ -968,6 +979,37 @@ function wireToolbox() {
   }
 }
 
+function applyFocusMode(enabled) {
+  document.body.classList.toggle("focus-mode", enabled);
+  if (focusToggle) {
+    focusToggle.classList.toggle("active", enabled);
+    focusToggle.textContent = enabled ? "Exit focus" : "Focus mode";
+  }
+}
+
+function wireFocusToggle() {
+  if (!focusToggle) return;
+  const saved = localStorage.getItem("officeFocusMode") === "1";
+  if (saved) applyFocusMode(true);
+  focusToggle.addEventListener("click", () => {
+    const enabled = !document.body.classList.contains("focus-mode");
+    applyFocusMode(enabled);
+    localStorage.setItem("officeFocusMode", enabled ? "1" : "0");
+  });
+}
+
+function wireAccordion() {
+  const items = Array.from(document.querySelectorAll(".accordion-item"));
+  items.forEach((item) => {
+    item.addEventListener("toggle", () => {
+      if (!item.open) return;
+      items.forEach((other) => {
+        if (other !== item) other.open = false;
+      });
+    });
+  });
+}
+
 function render(data) {
   if (!data) return;
   if (data.updatedAt) {
@@ -992,7 +1034,9 @@ async function init() {
   renderDispatchOptions(bootstrap);
   wireDispatch();
   wireToolbox();
-  debugEl.textContent = `debug: modules ${modules.size}, avatars ${avatars.size}`;
+  wireFocusToggle();
+  wireAccordion();
+  setDebug(`debug: modules ${modules.size}, avatars ${avatars.size}`);
 
   try {
     const res = await fetch("/api/agents", { credentials: "include" });

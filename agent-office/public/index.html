@@ -13,6 +13,7 @@
         <p class="subtitle">Live floor plan view of your team</p>
       </div>
       <div class="status">
+        <button id="focusToggle" class="focus-toggle">Focus mode</button>
         <span id="updatedAt">Last update: --</span>
       </div>
     </header>
@@ -23,86 +24,94 @@
           <canvas id="scene"></canvas>
         </section>
         <section class="panel cap-panel">
-          <details class="cap-collapse">
+          <details class="accordion-item">
             <summary>Agent Capabilities</summary>
             <div id="capabilities"></div>
           </details>
         </section>
       </div>
       <aside class="panel" id="panel">
-        <section class="dispatch">
-          <h2>Dispatch</h2>
-          <label>
-            Target
-            <select id="dispatchTarget"></select>
-          </label>
-          <label>
-            Fan-out (comma-separated agent ids)
-            <input id="dispatchFanout" type="text" placeholder="builder,qa" />
-          </label>
-          <label>
-            Message
-            <textarea id="dispatchText" rows="4" placeholder="What do you need?"></textarea>
-          </label>
-          <label class="inline">
-            <input id="dispatchReturn" type="checkbox" checked />
-            Return to desk when complete
-          </label>
-          <button id="dispatchSend">Send</button>
-          <button id="dispatchReport" class="secondary">Generate Report</button>
-          <pre id="dispatchOutput"></pre>
-        </section>
+        <details class="accordion-item" open>
+          <summary>Dispatch</summary>
+          <section class="dispatch">
+            <label>
+              Target
+              <select id="dispatchTarget"></select>
+            </label>
+            <label>
+              Fan-out (comma-separated agent ids)
+              <input id="dispatchFanout" type="text" placeholder="builder,qa" />
+            </label>
+            <label>
+              Message
+              <textarea id="dispatchText" rows="4" placeholder="What do you need?"></textarea>
+            </label>
+            <label class="inline">
+              <input id="dispatchReturn" type="checkbox" checked />
+              Return to desk when complete
+            </label>
+            <button id="dispatchSend">Send</button>
+            <button id="dispatchReport" class="secondary">Generate Report</button>
+            <pre id="dispatchOutput"></pre>
+          </section>
+        </details>
 
-        <section class="toolbox">
-          <h2>Global Search</h2>
-          <label>
-            Query
-            <input id="searchQuery" type="text" placeholder="Search memory / docs" />
-          </label>
-          <label>
-            Scope
-            <select id="searchScope">
-              <option value="memory">Memory</option>
-              <option value="office">Agent Office</option>
-              <option value="workspace">Workspace</option>
-              <option value="all">All</option>
-            </select>
-          </label>
-          <button id="searchRun">Search</button>
-          <pre id="searchOutput"></pre>
-        </section>
+        <details class="accordion-item">
+          <summary>Global Search</summary>
+          <section class="toolbox">
+            <label>
+              Query
+              <input id="searchQuery" type="text" placeholder="Search memory / docs" />
+            </label>
+            <label>
+              Scope
+              <select id="searchScope">
+                <option value="memory">Memory</option>
+                <option value="office">Agent Office</option>
+                <option value="workspace">Workspace</option>
+                <option value="all">All</option>
+              </select>
+            </label>
+            <button id="searchRun">Search</button>
+            <pre id="searchOutput"></pre>
+          </section>
+        </details>
 
-        <section class="toolbox">
-          <h2>Daily Journal</h2>
-          <label>
-            Entry
-            <textarea id="journalText" rows="3" placeholder="Add a quick entry..."></textarea>
-          </label>
-          <button id="journalAdd">Add entry</button>
-          <pre id="journalOutput"></pre>
-        </section>
+        <details class="accordion-item">
+          <summary>Daily Journal</summary>
+          <section class="toolbox">
+            <label>
+              Entry
+              <textarea id="journalText" rows="3" placeholder="Add a quick entry..."></textarea>
+            </label>
+            <button id="journalAdd">Add entry</button>
+            <pre id="journalOutput"></pre>
+          </section>
+        </details>
 
-        <section class="toolbox">
-          <h2>Council</h2>
-          <label>
-            Prompt
-            <textarea id="councilPrompt" rows="4" placeholder="Ask the council..."></textarea>
-          </label>
-          <label>
-            Models (optional)
-            <input id="councilModels" type="text" placeholder="llama3.1:8b,deepseek-coder:6.7b-instruct" />
-          </label>
-          <button id="councilRun">Run council</button>
-          <pre id="councilOutput"></pre>
-        </section>
+        <details class="accordion-item">
+          <summary>Council</summary>
+          <section class="toolbox">
+            <label>
+              Prompt
+              <textarea id="councilPrompt" rows="4" placeholder="Ask the council..."></textarea>
+            </label>
+            <label>
+              Models (optional)
+              <input id="councilModels" type="text" placeholder="llama3.1:8b,deepseek-coder:6.7b-instruct" />
+            </label>
+            <button id="councilRun">Run council</button>
+            <pre id="councilOutput"></pre>
+          </section>
+        </details>
 
-        <details class="feed-collapse" open>
+        <details class="accordion-item">
           <summary>Agent Feed</summary>
           <div id="feed"></div>
         </details>
       </aside>
     </main>
 
-    <script type="module" src="app.js?v=20260212-1319"></script>
+    <script type="module" src="app.js?v=20260212-1339"></script>
   </body>
 </html>
