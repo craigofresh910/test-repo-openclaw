@@ -95,6 +95,29 @@ async function runAgent(agent, text, context = "") {
 
 const VALID_STATUSES = new Set(["idle", "working", "walking", "returning", "done"]);
 
+const FANOUT_RULES = [
+  { agents: ["builder"], keywords: ["build", "implement", "feature", "api", "endpoint", "code", "refactor", "ship"] },
+  { agents: ["qa"], keywords: ["bug", "issue", "error", "crash", "test", "qa", "regression", "fix"] },
+  { agents: ["pm"], keywords: ["plan", "roadmap", "spec", "scope", "requirements", "milestone"] },
+  { agents: ["research"], keywords: ["research", "compare", "evaluate", "benchmark", "market", "competitive"] },
+  { agents: ["ops"], keywords: ["deploy", "docker", "infra", "server", "aws", "nginx", "monitor", "uptime"] },
+  { agents: ["growth"], keywords: ["growth", "revenue", "pricing", "funnel", "sales", "conversion", "acquisition"] },
+  { agents: ["content"], keywords: ["content", "write", "copy", "script", "blog", "post", "video", "tweet"] }
+];
+
+function inferFanout(text, agents) {
+  const lower = String(text || "").toLowerCase();
+  if (!lower) return [];
+  const matches = new Set();
+  FANOUT_RULES.forEach((rule) => {
+    if (rule.keywords.some((kw) => lower.includes(kw))) {
+      rule.agents.forEach((id) => matches.add(id));
+    }
+  });
+  const available = new Set(agents.map((a) => a.id));
+  return [...matches].filter((id) => available.has(id));
+}
+
 function validateAgentPayload(payload) {
   if (!payload || typeof payload !== "object") return null;
   const status = typeof payload.status === "string" ? payload.status.toLowerCase() : "";
@@ -447,6 +470,7 @@ app.post("/api/office/message", async (req, res) => {
     : typeof meta?.fanout === "string"
       ? meta.fanout.split(",").map((v) => v.trim()).filter(Boolean)
       : [];
+  const autoFanout = meta?.autoFanout !== false;
 
   if (!to || !text) {
     return res.status(400).json({ ok: false, error: "missing_to_or_text", ts });
@@ -460,8 +484,10 @@ app.post("/api/office/message", async (req, res) => {
 
   try {
     const lower = String(text).toLowerCase();
+    const inferred = autoFanout && fanoutList.length === 0 ? inferFanout(text, data.agents) : [];
     const targetIds = [...new Set([
       ...fanoutList,
+      ...inferred,
       ...data.agents.map((a) => a.id).filter((id) => id !== to && lower.includes(id))
     ])];
 

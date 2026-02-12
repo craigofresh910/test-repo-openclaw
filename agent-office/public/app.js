@@ -883,6 +883,7 @@ async function sendDispatch(message, override = {}) {
     text: message,
     meta: {
       fanout: dispatchFanout?.value || "",
+      autoFanout: !(dispatchFanout?.value || "").trim(),
       returnOnComplete: dispatchReturn?.checked ?? true,
       ...override
     }
