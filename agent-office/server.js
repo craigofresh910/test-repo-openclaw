@@ -65,6 +65,29 @@ async function runAgent(agent, text, context = "") {
   return callOllama({ system: buildSystemPrompt(agent), prompt });
 }
 
+const VALID_STATUSES = new Set(["idle", "working", "walking", "returning", "done"]);
+
+function validateAgentPayload(payload) {
+  if (!payload || typeof payload !== "object") return null;
+  const status = typeof payload.status === "string" ? payload.status.toLowerCase() : "";
+  if (!VALID_STATUSES.has(status)) return null;
+  const update = typeof payload.update === "string" ? payload.update : "";
+  const etaMinutes = Number.isFinite(payload.eta_minutes) ? payload.eta_minutes : null;
+  return { status, update, eta_minutes: etaMinutes };
+}
+
+async function runAgentJson(agent, text, context = "") {
+  const system = `${buildSystemPrompt(agent)} Respond ONLY with JSON in this schema: {"status":"idle|working|walking|returning|done","update":"string","eta_minutes":number|null}. No extra text.`;
+  const prompt = context ? `${context}\n\n${text}` : text;
+  const response = await callOllama({ system, prompt });
+  try {
+    const parsed = JSON.parse(response);
+    return validateAgentPayload(parsed);
+  } catch (err) {
+    return null;
+  }
+}
+
 function markWorking(agent, collabWith) {
   agent.status = "working";
   if (collabWith) agent.collabWith = collabWith;
@@ -138,6 +161,23 @@ app.post("/api/agents/:id", (req, res) => {
     agent.logs = [...agent.logs, { ts: new Date().toISOString(), text: log }].slice(-50);
   }
 
+  data.updatedAt = new Date().toISOString();
+  saveData(data);
+  broadcast(data);
+
+  res.json({ ok: true, agent });
+});
+
+app.post("/api/agents/:id/complete", (req, res) => {
+  const data = loadData();
+  const agent = data.agents.find((a) => a.id === req.params.id);
+
+  if (!agent) {
+    return res.status(404).json({ error: "agent_not_found" });
+  }
+
+  markReturning(agent);
+  agent.logs = [...agent.logs, { ts: new Date().toISOString(), text: "Marked complete." }].slice(-50);
   data.updatedAt = new Date().toISOString();
   saveData(data);
   broadcast(data);
@@ -222,22 +262,35 @@ app.post("/api/office/message", async (req, res) => {
           const target = data.agents.find((a) => a.id === id);
           if (!target) return null;
           markWorking(target, to);
-          const response = await runAgent(
+          const response = await runAgentJson(
             target,
             `Lead request from ${agent.name}: ${text}\nReply with your status and a concise update.`,
             context
           );
-          target.logs = [...target.logs, { ts, text: `Response: ${response.slice(0, 200)}` }].slice(-50);
+          if (response) {
+            target.status = response.status;
+            target.lastMessage = response.update || "";
+            if (response.status === "done" || response.status === "returning") {
+              markReturning(target);
+            }
+          }
+          target.logs = [...target.logs, { ts, text: `Response: ${response ? JSON.stringify(response) : "No data"}` }].slice(-50);
           if (autoReturn) {
             markReturning(target);
           }
-          return { id: target.id, name: target.name, reply: response };
+          return {
+            id: target.id,
+            name: target.name,
+            reply: response ? response.update || "No data" : "No data",
+            status: response?.status || "unknown",
+            eta_minutes: response?.eta_minutes ?? null
+          };
         })
       );
       delegated = delegated.filter(Boolean);
 
-      const summaryPrompt = `Summarize the following agent responses for ${agent.name}:
-${delegated.map((item) => `- ${item.name}: ${item.reply}`).join("\n")}`;
+      const summaryPrompt = `Summarize the following agent responses for ${agent.name} (use only provided updates, no inventions):
+${delegated.map((item) => `- ${item.name} [${item.status}]: ${item.reply}`).join("\n")}`;
       reply = await runAgent(agent, summaryPrompt, context);
     } else {
       reply = await runAgent(agent, text, context);
