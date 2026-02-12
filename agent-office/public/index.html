@@ -18,6 +18,15 @@
       </div>
     </header>
     <section class="status-strip" id="statusStrip"></section>
+    <div class="modal" id="agentModal" aria-hidden="true">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-card" role="dialog" aria-modal="true">
+        <button class="modal-close" data-modal-close>✕</button>
+        <h3 id="agentModalTitle">Agent Summary</h3>
+        <p id="agentModalStatus"></p>
+        <pre id="agentModalBody"></pre>
+      </div>
+    </div>
 
     <main class="office">
       <div class="floor-column">
@@ -113,6 +122,6 @@
       </aside>
     </main>
 
-    <script type="module" src="app.js?v=20260212-1411"></script>
+    <script type="module" src="app.js?v=20260212-1415"></script>
   </body>
 </html>

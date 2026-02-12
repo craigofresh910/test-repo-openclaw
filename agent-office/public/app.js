@@ -17,6 +17,10 @@ const dispatchReport = document.getElementById("dispatchReport");
 const dispatchOutput = document.getElementById("dispatchOutput");
 const focusToggle = document.getElementById("focusToggle");
 const statusStrip = document.getElementById("statusStrip");
+const agentModal = document.getElementById("agentModal");
+const agentModalTitle = document.getElementById("agentModalTitle");
+const agentModalStatus = document.getElementById("agentModalStatus");
+const agentModalBody = document.getElementById("agentModalBody");
 const searchQuery = document.getElementById("searchQuery");
 const searchScope = document.getElementById("searchScope");
 const searchRun = document.getElementById("searchRun");
@@ -895,16 +899,46 @@ function renderStatusStrip(data) {
     const status = (agent.status || "idle").toLowerCase();
     const chip = document.createElement("div");
     chip.className = `status-chip status-${status}`;
-
-    const rawSummary = agent.task || agent.lastMessage || "";
-    const summaryLine = rawSummary.split("\n")[0].trim();
-    const summary = summaryLine.length > 70 ? `${summaryLine.slice(0, 67)}…` : summaryLine;
-
-    chip.innerHTML = `<span class="dot"></span><span class="name">${agent.name}</span>${summary ? `<span class="summary">— ${summary}</span>` : ""}`;
-    if (summary) {
-      chip.title = summaryLine;
-    }
+    chip.dataset.agentId = agent.id;
+    chip.innerHTML = `<span class="dot"></span><span class="name">${agent.name}</span>`;
     statusStrip.appendChild(chip);
+  });
+}
+
+function openAgentModal(agent) {
+  if (!agentModal || !agent) return;
+  const status = (agent.status || "idle").toUpperCase();
+  const rawSummary = agent.task || agent.lastMessage || "";
+  const summaryLine = rawSummary.split("\n")[0].trim();
+  const lastLog = (agent.logs || []).slice(-1)[0]?.text || "";
+  const body = summaryLine || lastLog || "No recent updates.";
+
+  agentModalTitle.textContent = `${agent.name}`;
+  agentModalStatus.textContent = `Status: ${status}`;
+  agentModalBody.textContent = body;
+  agentModal.classList.add("open");
+  agentModal.setAttribute("aria-hidden", "false");
+}
+
+function closeAgentModal() {
+  if (!agentModal) return;
+  agentModal.classList.remove("open");
+  agentModal.setAttribute("aria-hidden", "true");
+}
+
+function wireAgentModal() {
+  if (!statusStrip || !agentModal) return;
+  statusStrip.addEventListener("click", (event) => {
+    const target = event.target.closest(".status-chip");
+    if (!target) return;
+    const agent = agentsById.get(target.dataset.agentId);
+    openAgentModal(agent);
+  });
+
+  agentModal.addEventListener("click", (event) => {
+    if (event.target?.dataset?.modalClose !== undefined) {
+      closeAgentModal();
+    }
   });
 }
 
@@ -1073,6 +1107,7 @@ async function init() {
   wireToolbox();
   wireFocusToggle();
   wireAccordion();
+  wireAgentModal();
   setDebug(`debug: modules ${modules.size}, avatars ${avatars.size}`);
 
   try {
