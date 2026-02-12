@@ -30,6 +30,29 @@
         </section>
       </div>
       <aside class="panel" id="panel">
+        <section class="dispatch">
+          <h2>Dispatch</h2>
+          <label>
+            Target
+            <select id="dispatchTarget"></select>
+          </label>
+          <label>
+            Fan-out (comma-separated agent ids)
+            <input id="dispatchFanout" type="text" placeholder="builder,qa" />
+          </label>
+          <label>
+            Message
+            <textarea id="dispatchText" rows="4" placeholder="What do you need?"></textarea>
+          </label>
+          <label class="inline">
+            <input id="dispatchReturn" type="checkbox" checked />
+            Return to desk when complete
+          </label>
+          <button id="dispatchSend">Send</button>
+          <button id="dispatchReport" class="secondary">Generate Report</button>
+          <pre id="dispatchOutput"></pre>
+        </section>
+
         <details class="feed-collapse" open>
           <summary>Agent Feed</summary>
           <div id="feed"></div>

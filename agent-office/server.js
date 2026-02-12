@@ -64,6 +64,17 @@ async function runAgent(agent, text) {
   return callOllama({ system: buildSystemPrompt(agent), prompt: text });
 }
 
+function markWorking(agent, collabWith) {
+  agent.status = "working";
+  if (collabWith) agent.collabWith = collabWith;
+}
+
+function markReturning(agent) {
+  agent.status = "returning";
+  agent.collabWith = null;
+  agent.targetDesk = null;
+}
+
 function loadData() {
   try {
     const raw = fs.readFileSync(DATA_PATH, "utf8");
@@ -112,7 +123,11 @@ app.post("/api/agents/:id", (req, res) => {
 
   const { status, task, lastMessage, filesChanged, log, collabWith, targetDesk } = req.body || {};
 
-  if (status) agent.status = status;
+  if (status === "done") {
+    markReturning(agent);
+  } else if (status) {
+    agent.status = status;
+  }
   if (task !== undefined) agent.task = task;
   if (lastMessage !== undefined) agent.lastMessage = lastMessage;
   if (Array.isArray(filesChanged)) agent.filesChanged = filesChanged;
@@ -153,6 +168,11 @@ app.post("/api/agents/:id/log", (req, res) => {
 app.post("/api/office/message", async (req, res) => {
   const ts = new Date().toISOString();
   const { to, text, meta } = req.body || {};
+  const fanoutList = Array.isArray(meta?.fanout)
+    ? meta.fanout
+    : typeof meta?.fanout === "string"
+      ? meta.fanout.split(",").map((v) => v.trim()).filter(Boolean)
+      : [];
 
   if (!to || !text) {
     return res.status(400).json({ ok: false, error: "missing_to_or_text", ts });
@@ -166,35 +186,44 @@ app.post("/api/office/message", async (req, res) => {
 
   try {
     const lower = String(text).toLowerCase();
-    const targetIds = data.agents
-      .map((a) => a.id)
-      .filter((id) => id !== to && lower.includes(id));
+    const targetIds = [...new Set([
+      ...fanoutList,
+      ...data.agents.map((a) => a.id).filter((id) => id !== to && lower.includes(id))
+    ])];
 
     let reply = "";
     let delegated = [];
+
+    markWorking(agent);
 
     if (targetIds.length > 0) {
       delegated = await Promise.all(
         targetIds.map(async (id) => {
           const target = data.agents.find((a) => a.id === id);
           if (!target) return null;
+          markWorking(target, to);
           const response = await runAgent(
             target,
-            `Lead request: ${text}\nReply with your status and a concise update.`
+            `Lead request from ${agent.name}: ${text}\nReply with your status and a concise update.`
           );
           target.logs = [...target.logs, { ts, text: `Response: ${response.slice(0, 200)}` }].slice(-50);
+          if (meta?.returnOnComplete) {
+            markReturning(target);
+          }
           return { id: target.id, name: target.name, reply: response };
         })
       );
       delegated = delegated.filter(Boolean);
 
       const summaryPrompt = `Summarize the following agent responses for ${agent.name}:
-${delegated
-  .map((item) => `- ${item.name}: ${item.reply}`)
-  .join("\n")}`;
+${delegated.map((item) => `- ${item.name}: ${item.reply}`).join("\n")}`;
       reply = await runAgent(agent, summaryPrompt);
     } else {
       reply = await runAgent(agent, text);
+    }
+
+    if (meta?.returnOnComplete) {
+      markReturning(agent);
     }
 
     agent.lastMessage = String(text).slice(0, 160);

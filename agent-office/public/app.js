@@ -8,6 +8,13 @@ const canvas = document.getElementById("scene");
 const feed = document.getElementById("feed");
 const updatedAt = document.getElementById("updatedAt");
 const capabilitiesEl = document.getElementById("capabilities");
+const dispatchTarget = document.getElementById("dispatchTarget");
+const dispatchFanout = document.getElementById("dispatchFanout");
+const dispatchText = document.getElementById("dispatchText");
+const dispatchReturn = document.getElementById("dispatchReturn");
+const dispatchSend = document.getElementById("dispatchSend");
+const dispatchReport = document.getElementById("dispatchReport");
+const dispatchOutput = document.getElementById("dispatchOutput");
 
 const debugEl = document.createElement("div");
 debugEl.style.position = "absolute";
@@ -821,6 +828,56 @@ function renderCapabilities(data) {
   capabilitiesEl.appendChild(wrapper);
 }
 
+function renderDispatchOptions(data) {
+  if (!dispatchTarget) return;
+  dispatchTarget.innerHTML = "";
+  data.agents.forEach((agent) => {
+    const option = document.createElement("option");
+    option.value = agent.id;
+    option.textContent = `${agent.name}`;
+    dispatchTarget.appendChild(option);
+  });
+}
+
+async function sendDispatch(message, override = {}) {
+  if (!dispatchOutput) return;
+  dispatchOutput.textContent = "Sending...";
+
+  const body = {
+    to: dispatchTarget?.value || "craigo",
+    text: message,
+    meta: {
+      fanout: dispatchFanout?.value || "",
+      returnOnComplete: dispatchReturn?.checked ?? true,
+      ...override
+    }
+  };
+
+  const res = await fetch("/api/office/message", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  dispatchOutput.textContent = JSON.stringify(data, null, 2);
+}
+
+function wireDispatch() {
+  if (dispatchSend) {
+    dispatchSend.addEventListener("click", async () => {
+      if (!dispatchText?.value) return;
+      await sendDispatch(dispatchText.value);
+    });
+  }
+
+  if (dispatchReport) {
+    dispatchReport.addEventListener("click", async () => {
+      const prompt = "Generate a concise report of current agent tasks, latest replies, and next steps.";
+      await sendDispatch(prompt, { fanout: "builder,qa,pm,research,ops" });
+    });
+  }
+}
+
 function render(data) {
   if (!data) return;
   if (data.updatedAt) {
@@ -829,6 +886,7 @@ function render(data) {
 
   agentsById = new Map(data.agents.map((agent) => [agent.id, agent]));
   ensureModules(data);
+  renderDispatchOptions(data);
   renderFeed(data);
   renderCapabilities(data);
 }
@@ -841,6 +899,8 @@ async function init() {
   const bootstrap = { agents: defaultAgents };
   agentsById = new Map(defaultAgents.map((agent) => [agent.id, agent]));
   ensureModules(bootstrap);
+  renderDispatchOptions(bootstrap);
+  wireDispatch();
   debugEl.textContent = `debug: modules ${modules.size}, avatars ${avatars.size}`;
 
   try {
@@ -848,6 +908,7 @@ async function init() {
     if (res.ok) {
       const data = await res.json();
       render(data);
+      wireDispatch();
     }
   } catch (err) {
     console.warn("Agent fetch failed", err);
