@@ -773,17 +773,26 @@ function updateModules() {
     if (!agent) return;
 
     const state = agent.status || "idle";
-    const active = state === "working" || state === "walking" || state === "returning";
+    const working = state === "working";
+    const active = working || state === "walking" || state === "returning";
     const pulse = 0.6 + Math.sin(elapsed * 2 + id.length) * 0.2;
+    const blink = working ? (Math.sin(elapsed * 6) > 0 ? 1.3 : 0.2) : 0;
     const baseGlow = active ? 0.9 : 0.15;
     const baseLight = active ? 1.0 : 0.2;
+    const blinkColor = working ? new THREE.Color("#22c55e") : null;
 
     module.userData.glow.forEach((mesh) => {
       if (mesh.material) {
-        mesh.material.emissiveIntensity = baseGlow + pulse * 0.4;
+        if (blinkColor) {
+          mesh.material.emissive = blinkColor;
+        }
+        mesh.material.emissiveIntensity = baseGlow + pulse * 0.4 + blink;
       }
       if (mesh.isLight) {
-        mesh.intensity = baseLight + pulse * (active ? 0.6 : 0.2);
+        if (blinkColor) {
+          mesh.color = blinkColor;
+        }
+        mesh.intensity = baseLight + pulse * (active ? 0.6 : 0.2) + blink * 0.6;
       }
     });
 
@@ -791,7 +800,7 @@ function updateModules() {
     if (module.userData.statusOrb?.material) {
       module.userData.statusOrb.material.color = color;
       module.userData.statusOrb.material.emissive = color;
-      module.userData.statusOrb.material.emissiveIntensity = state === "working" ? 1.2 : 0.9;
+      module.userData.statusOrb.material.emissiveIntensity = state === "working" ? 1.4 : 0.9;
     }
   });
 
