@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3030;
 const DATA_PATH = path.join(__dirname, "data", "agents.json");
+const OFFICE_DATA_PATH = path.join(__dirname, "data", "office.json");
 const WORKSPACE_ROOT = path.resolve(__dirname, "..");
 const MEMORY_ROOT = path.join(WORKSPACE_ROOT, "memory");
 const MEMORY_FILE = path.join(WORKSPACE_ROOT, "MEMORY.md");
@@ -175,6 +176,59 @@ function saveData(data) {
   fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2));
 }
 
+function defaultOfficeData() {
+  return {
+    personas: [
+      {
+        id: "guilfoyle",
+        name: "Guilfoyle",
+        role: "Engineering",
+        description: "Hard-nosed engineer persona for systems + automation.",
+        channels: ["engineering", "infra"]
+      },
+      {
+        id: "kevin",
+        name: "Kevin",
+        role: "Accounting",
+        description: "Finance and bookkeeping persona for money flows.",
+        channels: ["finance"]
+      },
+      {
+        id: "darlene",
+        name: "Darlene",
+        role: "Home Ops",
+        description: "Home management persona for logistics and errands.",
+        channels: ["home"]
+      }
+    ],
+    channels: ["engineering", "finance", "home", "support", "growth"],
+    threads: [],
+    templates: [
+      {
+        id: "feature-spec",
+        name: "Feature Spec",
+        description: "Turn a feature request into a scoped spec with acceptance criteria.",
+        prompt: "Write a scoped spec for: {{feature}}. Include goals, non-goals, risks, and acceptance criteria."
+      }
+    ]
+  };
+}
+
+function loadOfficeData() {
+  try {
+    const raw = fs.readFileSync(OFFICE_DATA_PATH, "utf8");
+    return JSON.parse(raw);
+  } catch (err) {
+    const defaults = defaultOfficeData();
+    fs.writeFileSync(OFFICE_DATA_PATH, JSON.stringify(defaults, null, 2));
+    return defaults;
+  }
+}
+
+function saveOfficeData(data) {
+  fs.writeFileSync(OFFICE_DATA_PATH, JSON.stringify(data, null, 2));
+}
+
 function broadcast(data) {
   const payload = `data: ${JSON.stringify(data)}\n\n`;
   for (const res of clients) {
@@ -287,6 +341,51 @@ function ensureDailyJournal(dateStamp) {
 
 app.get("/api/agents", (req, res) => {
   res.json(loadData());
+});
+
+app.get("/api/office/config", (req, res) => {
+  res.json(loadOfficeData());
+});
+
+app.post("/api/office/config", (req, res) => {
+  const current = loadOfficeData();
+  const update = req.body && typeof req.body === "object" ? req.body : {};
+  const next = {
+    ...current,
+    ...update,
+    personas: Array.isArray(update.personas) ? update.personas : current.personas,
+    channels: Array.isArray(update.channels) ? update.channels : current.channels,
+    threads: Array.isArray(update.threads) ? update.threads : current.threads,
+    templates: Array.isArray(update.templates) ? update.templates : current.templates
+  };
+  saveOfficeData(next);
+  broadcast({ ...loadData(), office: next });
+  res.json(next);
+});
+
+app.post("/api/office/threads", (req, res) => {
+  const office = loadOfficeData();
+  const title = String(req.body?.title || "").trim();
+  const channel = String(req.body?.channel || "").trim();
+  const summary = String(req.body?.summary || "").trim();
+
+  if (!title) {
+    return res.status(400).json({ ok: false, error: "missing_title" });
+  }
+
+  const thread = {
+    id: `thread_${Date.now().toString(36)}`,
+    title,
+    channel: channel || "general",
+    summary,
+    status: "open",
+    updatedAt: new Date().toISOString()
+  };
+
+  office.threads = [thread, ...(office.threads || [])].slice(0, 50);
+  saveOfficeData(office);
+  broadcast({ ...loadData(), office });
+  res.json({ ok: true, thread, office });
 });
 
 app.get("/api/search", (req, res) => {

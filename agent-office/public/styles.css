@@ -158,6 +158,50 @@ body {
   text-overflow: ellipsis;
 }
 
+.persona-item,
+.thread-item,
+.template-item {
+  border: 1px solid #1f2430;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #0b0f17;
+  margin-bottom: 10px;
+}
+
+.persona-title,
+.thread-title,
+.template-title {
+  font-weight: 600;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.persona-title span {
+  color: #94a3b8;
+  font-weight: 500;
+  margin-left: 6px;
+}
+
+.persona-desc,
+.thread-desc,
+.template-desc {
+  color: #9aa4b2;
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+
+.persona-channels,
+.thread-meta {
+  color: #64748b;
+  font-size: 10px;
+}
+
+.template-prompt {
+  color: #cbd5f5;
+  font-size: 11px;
+  white-space: pre-wrap;
+}
+
 .status-chip .dot {
   width: 8px;
   height: 8px;

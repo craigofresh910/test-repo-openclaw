@@ -67,6 +67,40 @@
         </details>
 
         <details class="accordion-item">
+          <summary>Personas</summary>
+          <section class="toolbox">
+            <div id="personaList"></div>
+          </section>
+        </details>
+
+        <details class="accordion-item">
+          <summary>Threads</summary>
+          <section class="toolbox">
+            <label>
+              Title
+              <input id="threadTitle" type="text" placeholder="New thread" />
+            </label>
+            <label>
+              Channel
+              <select id="threadChannel"></select>
+            </label>
+            <label>
+              Summary
+              <textarea id="threadSummary" rows="2" placeholder="What is this thread about?"></textarea>
+            </label>
+            <button id="threadAdd">Create thread</button>
+            <div id="threadList"></div>
+          </section>
+        </details>
+
+        <details class="accordion-item">
+          <summary>Spellbook</summary>
+          <section class="toolbox">
+            <div id="templateList"></div>
+          </section>
+        </details>
+
+        <details class="accordion-item">
           <summary>Global Search</summary>
           <section class="toolbox">
             <label>
@@ -122,6 +156,6 @@
       </aside>
     </main>
 
-    <script type="module" src="app.js?v=20260212-1500"></script>
+    <script type="module" src="app.js?v=20260212-1550"></script>
   </body>
 </html>

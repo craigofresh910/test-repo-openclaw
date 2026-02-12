@@ -21,6 +21,13 @@ const agentModal = document.getElementById("agentModal");
 const agentModalTitle = document.getElementById("agentModalTitle");
 const agentModalStatus = document.getElementById("agentModalStatus");
 const agentModalBody = document.getElementById("agentModalBody");
+const personaList = document.getElementById("personaList");
+const threadTitle = document.getElementById("threadTitle");
+const threadChannel = document.getElementById("threadChannel");
+const threadSummary = document.getElementById("threadSummary");
+const threadAdd = document.getElementById("threadAdd");
+const threadList = document.getElementById("threadList");
+const templateList = document.getElementById("templateList");
 const searchQuery = document.getElementById("searchQuery");
 const searchScope = document.getElementById("searchScope");
 const searchRun = document.getElementById("searchRun");
@@ -160,6 +167,7 @@ let modules = new Map();
 let avatars = new Map();
 let lastOfficeTs = null;
 const feedBuffer = [];
+let officeData = null;
 
 const loader = new GLTFLoader();
 const fbxLoader = new FBXLoader();
@@ -947,6 +955,64 @@ function renderStatusStrip(data) {
   });
 }
 
+function renderPersonas(personas = []) {
+  if (!personaList) return;
+  personaList.innerHTML = personas
+    .map(
+      (persona) => `
+      <div class="persona-item">
+        <div class="persona-title">${persona.name} <span>${persona.role || ""}</span></div>
+        <div class="persona-desc">${persona.description || ""}</div>
+        <div class="persona-channels">${(persona.channels || []).join(", ")}</div>
+      </div>
+    `
+    )
+    .join("");
+}
+
+function renderThreads(threads = []) {
+  if (!threadList) return;
+  threadList.innerHTML = threads
+    .map(
+      (thread) => `
+      <div class="thread-item">
+        <div class="thread-title">${thread.title}</div>
+        <div class="thread-meta">${thread.channel || "general"} • ${thread.status || "open"}</div>
+        <div class="thread-desc">${thread.summary || ""}</div>
+      </div>
+    `
+    )
+    .join("");
+}
+
+function renderTemplates(templates = []) {
+  if (!templateList) return;
+  templateList.innerHTML = templates
+    .map(
+      (tpl) => `
+      <div class="template-item">
+        <div class="template-title">${tpl.name}</div>
+        <div class="template-desc">${tpl.description || ""}</div>
+        <div class="template-prompt">${tpl.prompt || ""}</div>
+      </div>
+    `
+    )
+    .join("");
+}
+
+function renderOffice(data) {
+  if (!data) return;
+  renderPersonas(data.personas || []);
+  renderThreads(data.threads || []);
+  renderTemplates(data.templates || []);
+
+  if (threadChannel && Array.isArray(data.channels)) {
+    threadChannel.innerHTML = data.channels
+      .map((channel) => `<option value="${channel}">${channel}</option>`)
+      .join("");
+  }
+}
+
 function openAgentModal(agent) {
   if (!agentModal || !agent) return;
   const status = (agent.status || "idle").toUpperCase();
@@ -980,6 +1046,45 @@ function wireAgentModal() {
   agentModal.addEventListener("click", (event) => {
     if (event.target?.dataset?.modalClose !== undefined) {
       closeAgentModal();
+    }
+  });
+}
+
+async function fetchOffice() {
+  try {
+    const res = await fetch("/api/office/config");
+    if (!res.ok) return;
+    officeData = await res.json();
+    renderOffice(officeData);
+  } catch (err) {
+    // ignore
+  }
+}
+
+function wireThreads() {
+  if (!threadAdd) return;
+  threadAdd.addEventListener("click", async () => {
+    const title = threadTitle?.value?.trim();
+    if (!title) return;
+    const channel = threadChannel?.value || "general";
+    const summary = threadSummary?.value?.trim() || "";
+
+    const res = await fetch("/api/office/threads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, channel, summary })
+    });
+
+    if (res.ok) {
+      const payload = await res.json();
+      if (payload?.office) {
+        officeData = payload.office;
+        renderOffice(officeData);
+      } else {
+        await fetchOffice();
+      }
+      if (threadTitle) threadTitle.value = "";
+      if (threadSummary) threadSummary.value = "";
     }
   });
 }
@@ -1133,6 +1238,10 @@ function render(data) {
   renderStatusStrip(data);
   renderFeed(data);
   renderCapabilities(data);
+  if (data.office) {
+    officeData = data.office;
+    renderOffice(officeData);
+  }
 }
 
 async function init() {
@@ -1150,6 +1259,8 @@ async function init() {
   wireFocusToggle();
   wireAccordion();
   wireAgentModal();
+  wireThreads();
+  fetchOffice();
   setDebug(`debug: modules ${modules.size}, avatars ${avatars.size}`);
 
   try {
