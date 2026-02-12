@@ -15,6 +15,10 @@ const OFFICE_PASS = process.env.OFFICE_PASS;
 
 app.use(express.json({ limit: "1mb" }));
 
+app.get("/api/health", (req, res) => {
+  res.json({ ok: true, service: "agent-office", ts: new Date().toISOString() });
+});
+
 app.use((req, res, next) => {
   // auth disabled per user request
   return next();
@@ -109,6 +113,43 @@ app.post("/api/agents/:id/log", (req, res) => {
   broadcast(data);
 
   res.json({ ok: true });
+});
+
+app.post("/api/office/message", (req, res) => {
+  const ts = new Date().toISOString();
+  const { to, text, meta } = req.body || {};
+
+  if (!to || !text) {
+    return res.status(400).json({ ok: false, error: "missing_to_or_text", ts });
+  }
+
+  const data = loadData();
+  const agent = data.agents.find((a) => a.id === to);
+  if (!agent) {
+    return res.status(404).json({ ok: false, error: `unknown_agent:${to}`, ts });
+  }
+
+  const reply = String(text).toLowerCase().includes("ping")
+    ? `pong — ${agent.name} — ${ts}`
+    : `ack — routed to ${agent.name}: ${String(text).slice(0, 160)}`;
+
+  if (meta) {
+    agent.lastMessage = String(text).slice(0, 160);
+  }
+
+  const payload = {
+    type: "office_message",
+    to,
+    text,
+    reply,
+    meta: meta || {},
+    ts,
+    agent: { id: agent.id, name: agent.name }
+  };
+
+  broadcast({ ...data, officeMessage: payload });
+
+  res.json({ ok: true, to, agent: { id: agent.id, name: agent.name }, reply, ts });
 });
 
 app.listen(PORT, () => {
