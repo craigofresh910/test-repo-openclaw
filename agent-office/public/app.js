@@ -51,10 +51,10 @@ window.addEventListener("unhandledrejection", (event) => {
 });
 
 const layoutOrder = [
-  "builder",
+  "craigo",
   "pm",
   "research",
-  "craigo",
+  "builder",
   "qa",
   "growth",
   "ops",
