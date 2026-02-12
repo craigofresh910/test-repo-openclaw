@@ -577,9 +577,9 @@ function fitModelToHeight(model, targetHeight) {
   const box = new THREE.Box3().setFromObject(model);
   const size = new THREE.Vector3();
   box.getSize(size);
-  if (!size.y || !isFinite(size.y)) {
+  if (!size.y || !isFinite(size.y) || size.y < 0.1) {
     model.scale.setScalar(1);
-    return;
+    return false;
   }
 
   const scale = targetHeight / size.y;
@@ -587,6 +587,7 @@ function fitModelToHeight(model, targetHeight) {
   const newBox = new THREE.Box3().setFromObject(model);
   const minY = newBox.min.y;
   model.position.set(0, -minY, 0);
+  return true;
 }
 
 function createAvatar(agent, modulePosition) {
@@ -631,12 +632,15 @@ function createAvatar(agent, modulePosition) {
           node.frustumCulled = false;
         }
       });
-      fitModelToHeight(model, targetHeight);
+      const fitted = fitModelToHeight(model, targetHeight);
       model.rotation.y = Math.PI;
       model.position.set(0, 0, 0);
       model.scale.multiplyScalar(1.2);
+      if (!fitted) {
+        model.visible = false;
+      }
       group.add(model);
-      if (meshCount > 0) {
+      if (meshCount > 0 && fitted) {
         fallback.visible = false;
       }
       group.userData.modelLoaded = true;
