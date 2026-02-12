@@ -611,8 +611,10 @@ function createAvatar(agent, modulePosition) {
   loadModel(modelUrl)
     .then((gltf) => {
       const model = gltf.scene;
+      let meshCount = 0;
       model.traverse((node) => {
         if (node.isMesh || node.isSkinnedMesh) {
+          meshCount += 1;
           const color = roleColors[agent.id] || "#e2e8f0";
           if (!node.material) {
             node.material = new THREE.MeshStandardMaterial({
@@ -633,8 +635,10 @@ function createAvatar(agent, modulePosition) {
       model.rotation.y = Math.PI;
       model.position.set(0, 0, 0);
       model.scale.multiplyScalar(1.2);
-      group.remove(fallback);
       group.add(model);
+      if (meshCount > 0) {
+        fallback.visible = false;
+      }
       group.userData.modelLoaded = true;
     })
     .catch((err) => {
