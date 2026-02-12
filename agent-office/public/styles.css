@@ -60,7 +60,49 @@ body {
   display: grid;
   grid-template-columns: 2.2fr 1fr;
   gap: 20px;
-  padding: 24px 32px;
+  padding: 20px 32px 24px;
+}
+
+.status-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 32px 0;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #0f141f;
+  border: 1px solid #1f2430;
+  font-size: 11px;
+  color: #e2e8f0;
+}
+
+.status-chip .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #64748b;
+}
+
+.status-chip.status-working .dot {
+  background: #22c55e;
+}
+
+.status-chip.status-walking .dot {
+  background: #f59e0b;
+}
+
+.status-chip.status-returning .dot {
+  background: #38bdf8;
+}
+
+.status-chip.status-done .dot {
+  background: #a855f7;
 }
 
 .floor-column {
@@ -364,6 +406,10 @@ body.focus-mode .topbar {
   padding: 12px 20px;
 }
 
+body.focus-mode .status-strip {
+  padding: 8px 20px 0;
+}
+
 body.focus-mode .topbar h1 {
   font-size: 16px;
 }
@@ -388,6 +434,10 @@ body.focus-mode .subtitle {
     align-items: flex-start;
     gap: 12px;
     padding: 16px 18px;
+  }
+
+  .status-strip {
+    padding: 8px 18px 0;
   }
 
   .office {

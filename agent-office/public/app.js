@@ -16,6 +16,7 @@ const dispatchSend = document.getElementById("dispatchSend");
 const dispatchReport = document.getElementById("dispatchReport");
 const dispatchOutput = document.getElementById("dispatchOutput");
 const focusToggle = document.getElementById("focusToggle");
+const statusStrip = document.getElementById("statusStrip");
 const searchQuery = document.getElementById("searchQuery");
 const searchScope = document.getElementById("searchScope");
 const searchRun = document.getElementById("searchRun");
@@ -874,6 +875,18 @@ function renderDispatchOptions(data) {
   });
 }
 
+function renderStatusStrip(data) {
+  if (!statusStrip) return;
+  statusStrip.innerHTML = "";
+  data.agents.forEach((agent) => {
+    const status = (agent.status || "idle").toLowerCase();
+    const chip = document.createElement("div");
+    chip.className = `status-chip status-${status}`;
+    chip.innerHTML = `<span class="dot"></span>${agent.name}`;
+    statusStrip.appendChild(chip);
+  });
+}
+
 async function sendDispatch(message, override = {}) {
   if (!dispatchOutput) return;
   dispatchOutput.textContent = "Sending...";
@@ -1020,6 +1033,7 @@ function render(data) {
   agentsById = new Map(data.agents.map((agent) => [agent.id, agent]));
   ensureModules(data);
   renderDispatchOptions(data);
+  renderStatusStrip(data);
   renderFeed(data);
   renderCapabilities(data);
 }
@@ -1033,6 +1047,7 @@ async function init() {
   agentsById = new Map(defaultAgents.map((agent) => [agent.id, agent]));
   ensureModules(bootstrap);
   renderDispatchOptions(bootstrap);
+  renderStatusStrip(bootstrap);
   wireDispatch();
   wireToolbox();
   wireFocusToggle();
