@@ -548,14 +548,14 @@ const rolePosture = {
 };
 
 const modelMap = {
-  craigo: { url: "https://models.readyplayer.me/6185a4acfb622cf1cdc49348.glb", height: 2.0 },
-  builder: { url: "https://models.readyplayer.me/6185a4acfb622cf1cdc49348.glb", height: 2.0 },
-  pm: { url: "https://models.readyplayer.me/6185a4acfb622cf1cdc49348.glb", height: 2.0 },
-  qa: { url: "https://models.readyplayer.me/6185a4acfb622cf1cdc49348.glb", height: 2.0 },
-  ops: { url: "https://models.readyplayer.me/6185a4acfb622cf1cdc49348.glb", height: 2.0 },
-  research: { url: "https://models.readyplayer.me/6185a4acfb622cf1cdc49348.glb", height: 2.0 },
-  growth: { url: "https://models.readyplayer.me/6185a4acfb622cf1cdc49348.glb", height: 2.0 },
-  content: { url: "https://models.readyplayer.me/6185a4acfb622cf1cdc49348.glb", height: 2.0 }
+  craigo: { url: "/models/women-pack/FBX/Smooth_Female_Alternative.fbx", height: 1.7 },
+  builder: { url: "/models/women-pack/FBX/Smooth_Female_Casual.fbx", height: 1.7 },
+  pm: { url: "/models/women-pack/FBX/Female_Casual.fbx", height: 1.7 },
+  qa: { url: "/models/women-pack/FBX/Smooth_Female_TankTop.fbx", height: 1.7 },
+  ops: { url: "/models/women-pack/FBX/Female_Alternative.fbx", height: 1.7 },
+  research: { url: "/models/women-pack/FBX/Smooth_Female_Dress.fbx", height: 1.7 },
+  growth: { url: "/models/women-pack/FBX/Female_Dress.fbx", height: 1.7 },
+  content: { url: "/models/women-pack/FBX/Female_TankTop.fbx", height: 1.7 }
 };
 
 function loadModel(url) {
