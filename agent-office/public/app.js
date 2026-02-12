@@ -832,6 +832,20 @@ function renderLoop() {
   renderer.render(scene, camera);
 }
 
+function summarizeFeedText(text) {
+  if (!text) return "";
+  const lines = String(text)
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  let summary = lines[0] || "";
+  if (/^response:/i.test(summary) && lines[1]) summary = lines[1];
+  summary = summary.replace(/^(reply|response):\s*/i, "");
+  summary = summary.replace(/^status:\s*/i, "");
+  if (summary.length > 140) summary = `${summary.slice(0, 137)}…`;
+  return summary;
+}
+
 function renderFeed(data) {
   if (data.officeMessage?.ts && data.officeMessage.ts !== lastOfficeTs) {
     lastOfficeTs = data.officeMessage.ts;
@@ -869,14 +883,16 @@ function renderFeed(data) {
     .slice(0, 3);
 
   feed.innerHTML = merged
-    .map(
-      (item) => `
+    .map((item) => {
+      const summary = summarizeFeedText(item.text);
+      const safeTitle = (item.text || "").replace(/"/g, "&quot;");
+      return `
       <div class="feed-item">
         <div class="meta">${item.agent} • ${new Date(item.ts).toLocaleTimeString()}</div>
-        <div class="text">${item.text}</div>
+        <div class="text" title="${safeTitle}">${summary}</div>
       </div>
-    `
-    )
+    `;
+    })
     .join("");
 }
 
