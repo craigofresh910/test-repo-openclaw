@@ -609,8 +609,20 @@ function createAvatar(agent, modulePosition) {
   const modelSpec = modelMap[agent.id];
   const modelUrl = modelSpec?.url || modelSpec;
   const targetHeight = modelSpec?.height ?? 1.2;
+
+  group.userData = {
+    id: agent.id,
+    standBase,
+    seatBase,
+    base: standBase,
+    target: standBase.clone(),
+    state: "idle",
+    phase: Math.random() * Math.PI * 2,
+    baseLean: profile.lean,
+    modelLoaded: false
+  };
+
   if (!modelUrl) {
-    group.userData.modelLoaded = false;
     return group;
   }
   loadModel(modelUrl)
@@ -652,18 +664,6 @@ function createAvatar(agent, modulePosition) {
     .catch((err) => {
       console.warn("model load failed", modelUrl, err);
     });
-
-  group.userData = {
-    id: agent.id,
-    standBase,
-    seatBase,
-    base: standBase,
-    target: standBase.clone(),
-    state: "idle",
-    phase: Math.random() * Math.PI * 2,
-    baseLean: profile.lean,
-    modelLoaded: false
-  };
 
   scene.add(group);
   return group;
