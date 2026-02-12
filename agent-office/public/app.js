@@ -548,14 +548,14 @@ const rolePosture = {
 };
 
 const modelMap = {
-  craigo: { url: "/models/women-pack/FBX/Smooth_Female_Alternative.fbx", height: 1.7 },
-  builder: { url: "/models/women-pack/FBX/Smooth_Female_Casual.fbx", height: 1.7 },
-  pm: { url: "/models/women-pack/FBX/Female_Casual.fbx", height: 1.7 },
-  qa: { url: "/models/women-pack/FBX/Smooth_Female_TankTop.fbx", height: 1.7 },
-  ops: { url: "/models/women-pack/FBX/Female_Alternative.fbx", height: 1.7 },
-  research: { url: "/models/women-pack/FBX/Smooth_Female_Dress.fbx", height: 1.7 },
-  growth: { url: "/models/women-pack/FBX/Female_Dress.fbx", height: 1.7 },
-  content: { url: "/models/women-pack/FBX/Female_TankTop.fbx", height: 1.7 }
+  craigo: null,
+  builder: null,
+  pm: null,
+  qa: null,
+  ops: null,
+  research: null,
+  growth: null,
+  content: null
 };
 
 function loadModel(url) {
@@ -609,6 +609,10 @@ function createAvatar(agent, modulePosition) {
   const modelSpec = modelMap[agent.id];
   const modelUrl = modelSpec?.url || modelSpec;
   const targetHeight = modelSpec?.height ?? 1.2;
+  if (!modelUrl) {
+    group.userData.modelLoaded = false;
+    return group;
+  }
   loadModel(modelUrl)
     .then((gltf) => {
       const model = gltf.scene;
