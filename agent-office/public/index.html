@@ -53,6 +53,49 @@
           <pre id="dispatchOutput"></pre>
         </section>
 
+        <section class="toolbox">
+          <h2>Global Search</h2>
+          <label>
+            Query
+            <input id="searchQuery" type="text" placeholder="Search memory / docs" />
+          </label>
+          <label>
+            Scope
+            <select id="searchScope">
+              <option value="memory">Memory</option>
+              <option value="office">Agent Office</option>
+              <option value="workspace">Workspace</option>
+              <option value="all">All</option>
+            </select>
+          </label>
+          <button id="searchRun">Search</button>
+          <pre id="searchOutput"></pre>
+        </section>
+
+        <section class="toolbox">
+          <h2>Daily Journal</h2>
+          <label>
+            Entry
+            <textarea id="journalText" rows="3" placeholder="Add a quick entry..."></textarea>
+          </label>
+          <button id="journalAdd">Add entry</button>
+          <pre id="journalOutput"></pre>
+        </section>
+
+        <section class="toolbox">
+          <h2>Council</h2>
+          <label>
+            Prompt
+            <textarea id="councilPrompt" rows="4" placeholder="Ask the council..."></textarea>
+          </label>
+          <label>
+            Models (optional)
+            <input id="councilModels" type="text" placeholder="llama3.1:8b,deepseek-coder:6.7b-instruct" />
+          </label>
+          <button id="councilRun">Run council</button>
+          <pre id="councilOutput"></pre>
+        </section>
+
         <details class="feed-collapse" open>
           <summary>Agent Feed</summary>
           <div id="feed"></div>

@@ -9,6 +9,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3030;
 const DATA_PATH = path.join(__dirname, "data", "agents.json");
+const WORKSPACE_ROOT = path.resolve(__dirname, "..");
+const MEMORY_ROOT = path.join(WORKSPACE_ROOT, "memory");
+const MEMORY_FILE = path.join(WORKSPACE_ROOT, "MEMORY.md");
 
 const OFFICE_USER = process.env.OFFICE_USER;
 const OFFICE_PASS = process.env.OFFICE_PASS;
@@ -31,6 +34,31 @@ const clients = new Set();
 
 const OLLAMA_HOST = process.env.OLLAMA_HOST || "http://localhost:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3.1:8b";
+const COUNCIL_MODELS = (process.env.OFFICE_COUNCIL_MODELS || "llama3.1:8b,deepseek-coder:6.7b-instruct")
+  .split(",")
+  .map((model) => model.trim())
+  .filter(Boolean);
+
+const SEARCH_EXTENSIONS = new Set([
+  ".md",
+  ".txt",
+  ".json",
+  ".js",
+  ".ts",
+  ".tsx",
+  ".yml",
+  ".yaml"
+]);
+const SEARCH_IGNORE_DIRS = new Set([
+  ".git",
+  "node_modules",
+  ".venv",
+  "dist",
+  "build",
+  "vendor"
+]);
+const SEARCH_MAX_RESULTS = 200;
+const SEARCH_MAX_FILE_SIZE = 512 * 1024;
 
 async function callOllama({ system, prompt, model = OLLAMA_MODEL }) {
   const res = await fetch(`${OLLAMA_HOST}/api/chat`, {
@@ -119,8 +147,213 @@ function broadcast(data) {
   }
 }
 
+const LOCAL_DATE_FORMAT = new Intl.DateTimeFormat('en-CA', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
+const LOCAL_TIME_FORMAT = new Intl.DateTimeFormat('en-US', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+  timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+});
+
+function isSearchableFile(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  if (!SEARCH_EXTENSIONS.has(ext)) return false;
+  try {
+    const stat = fs.statSync(filePath);
+    if (!stat.isFile()) return false;
+    if (stat.size > SEARCH_MAX_FILE_SIZE) return false;
+  } catch {
+    return false;
+  }
+  return true;
+}
+
+function walkSearchTargets(targets, results) {
+  for (const target of targets) {
+    if (!target) continue;
+    try {
+      const stat = fs.statSync(target);
+      if (stat.isFile()) {
+        if (isSearchableFile(target)) results.push(target);
+        continue;
+      }
+      if (!stat.isDirectory()) continue;
+    } catch {
+      continue;
+    }
+
+    const queue = [target];
+    while (queue.length) {
+      const current = queue.pop();
+      if (!current) continue;
+      const name = path.basename(current);
+      if (SEARCH_IGNORE_DIRS.has(name)) continue;
+      let entries = [];
+      try {
+        entries = fs.readdirSync(current, { withFileTypes: true });
+      } catch {
+        continue;
+      }
+      for (const entry of entries) {
+        const fullPath = path.join(current, entry.name);
+        if (entry.isDirectory()) {
+          if (!SEARCH_IGNORE_DIRS.has(entry.name)) queue.push(fullPath);
+        } else if (entry.isFile()) {
+          if (isSearchableFile(fullPath)) results.push(fullPath);
+        }
+      }
+    }
+  }
+}
+
+function searchFiles(targets, query) {
+  const files = [];
+  walkSearchTargets(targets, files);
+  const matches = [];
+  const lowered = query.toLowerCase();
+
+  for (const file of files) {
+    if (matches.length >= SEARCH_MAX_RESULTS) break;
+    let content = "";
+    try {
+      content = fs.readFileSync(file, "utf8");
+    } catch {
+      continue;
+    }
+    const lines = content.split(/
+?
+/);
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (!line.toLowerCase().includes(lowered)) continue;
+      matches.push({
+        file: path.relative(WORKSPACE_ROOT, file),
+        line: i + 1,
+        text: line.trim().slice(0, 240)
+      });
+      if (matches.length >= SEARCH_MAX_RESULTS) break;
+    }
+  }
+  return matches;
+}
+
+function ensureDailyJournal(dateStamp) {
+  if (!fs.existsSync(MEMORY_ROOT)) {
+    fs.mkdirSync(MEMORY_ROOT, { recursive: true });
+  }
+  const filePath = path.join(MEMORY_ROOT, `${dateStamp}.md`);
+  if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, `# ${dateStamp}
+
+`);
+  }
+  return filePath;
+}
+
 app.get("/api/agents", (req, res) => {
   res.json(loadData());
+});
+
+app.get("/api/search", (req, res) => {
+  const q = String(req.query.q || "").trim();
+  const scope = String(req.query.scope || "memory").toLowerCase();
+  if (!q) {
+    return res.status(400).json({ ok: false, error: "missing_query" });
+  }
+
+  const targets = [];
+  const addTarget = (value) => {
+    if (value) targets.push(value);
+  };
+  const addMemory = () => {
+    addTarget(MEMORY_ROOT);
+    if (fs.existsSync(MEMORY_FILE)) addTarget(MEMORY_FILE);
+  };
+
+  if (scope === "workspace") {
+    addTarget(WORKSPACE_ROOT);
+  } else if (scope === "office") {
+    addTarget(path.join(__dirname, "data"));
+  } else if (scope === "all") {
+    addMemory();
+    addTarget(path.join(__dirname, "data"));
+    addTarget(WORKSPACE_ROOT);
+  } else {
+    addMemory();
+  }
+
+  const results = searchFiles(targets, q);
+  res.json({ ok: true, q, scope, count: results.length, results });
+});
+
+app.post("/api/journal", (req, res) => {
+  const text = String(req.body?.text || "").trim();
+  if (!text) {
+    return res.status(400).json({ ok: false, error: "missing_text" });
+  }
+
+  const now = new Date();
+  const dateStamp = LOCAL_DATE_FORMAT.format(now);
+  const timeStamp = LOCAL_TIME_FORMAT.format(now);
+  const filePath = ensureDailyJournal(dateStamp);
+  fs.appendFileSync(filePath, `- [${timeStamp}] ${text}
+`);
+
+  res.json({
+    ok: true,
+    date: dateStamp,
+    time: timeStamp,
+    file: path.relative(WORKSPACE_ROOT, filePath)
+  });
+});
+
+app.post("/api/council", async (req, res) => {
+  const prompt = String(req.body?.prompt || "").trim();
+  if (!prompt) {
+    return res.status(400).json({ ok: false, error: "missing_prompt" });
+  }
+
+  const providedModels = Array.isArray(req.body?.models)
+    ? req.body.models
+    : String(req.body?.models || "")
+        .split(",")
+        .map((model) => model.trim())
+        .filter(Boolean);
+
+  const models = providedModels.length ? providedModels : COUNCIL_MODELS;
+  if (!models.length) {
+    return res.status(400).json({ ok: false, error: "no_models_configured" });
+  }
+
+  try {
+    const responses = await Promise.all(
+      models.map(async (model) => {
+        const system = "You are a specialist advisor. Respond with concise bullet points and a clear recommendation.";
+        const reply = await callOllama({ system, prompt, model });
+        return { model, reply };
+      })
+    );
+
+    const summaryPrompt = `Prompt:
+${prompt}
+
+Responses:
+${responses
+      .map((item) => `- ${item.model}: ${item.reply.replace(/
+/g, " ")}`)
+      .join("
+")}`;
+
+    const summary = await callOllama({
+      system: "You are the council chair. Summarize the best combined answer and list next steps.",
+      prompt: summaryPrompt,
+      model: models[0] || OLLAMA_MODEL
+    });
+
+    res.json({ ok: true, prompt, models, responses, summary });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: String(err) });
+  }
 });
 
 app.get("/api/stream", (req, res) => {

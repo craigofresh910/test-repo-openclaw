@@ -15,6 +15,17 @@ const dispatchReturn = document.getElementById("dispatchReturn");
 const dispatchSend = document.getElementById("dispatchSend");
 const dispatchReport = document.getElementById("dispatchReport");
 const dispatchOutput = document.getElementById("dispatchOutput");
+const searchQuery = document.getElementById("searchQuery");
+const searchScope = document.getElementById("searchScope");
+const searchRun = document.getElementById("searchRun");
+const searchOutput = document.getElementById("searchOutput");
+const journalText = document.getElementById("journalText");
+const journalAdd = document.getElementById("journalAdd");
+const journalOutput = document.getElementById("journalOutput");
+const councilPrompt = document.getElementById("councilPrompt");
+const councilModels = document.getElementById("councilModels");
+const councilRun = document.getElementById("councilRun");
+const councilOutput = document.getElementById("councilOutput");
 
 const debugEl = document.createElement("div");
 debugEl.style.position = "absolute";
@@ -862,6 +873,52 @@ async function sendDispatch(message, override = {}) {
   dispatchOutput.textContent = JSON.stringify(data, null, 2);
 }
 
+async function runSearch() {
+  if (!searchOutput) return;
+  const query = searchQuery?.value?.trim();
+  if (!query) return;
+
+  searchOutput.textContent = "Searching...";
+  const scope = searchScope?.value || "memory";
+  const params = new URLSearchParams({ q: query, scope });
+
+  const res = await fetch(`/api/search?${params.toString()}`);
+  const data = await res.json();
+  searchOutput.textContent = JSON.stringify(data, null, 2);
+}
+
+async function addJournalEntry() {
+  if (!journalOutput) return;
+  const entry = journalText?.value?.trim();
+  if (!entry) return;
+
+  journalOutput.textContent = "Saving...";
+  const res = await fetch("/api/journal", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text: entry })
+  });
+  const data = await res.json();
+  journalOutput.textContent = JSON.stringify(data, null, 2);
+  if (res.ok && journalText) journalText.value = "";
+}
+
+async function runCouncil() {
+  if (!councilOutput) return;
+  const prompt = councilPrompt?.value?.trim();
+  if (!prompt) return;
+
+  councilOutput.textContent = "Running council...";
+  const models = councilModels?.value?.trim() || "";
+  const res = await fetch("/api/council", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt, models })
+  });
+  const data = await res.json();
+  councilOutput.textContent = JSON.stringify(data, null, 2);
+}
+
 function wireDispatch() {
   if (dispatchSend) {
     dispatchSend.addEventListener("click", async () => {
@@ -874,6 +931,26 @@ function wireDispatch() {
     dispatchReport.addEventListener("click", async () => {
       const prompt = "Generate a concise report of current agent tasks, latest replies, and next steps.";
       await sendDispatch(prompt, { fanout: "builder,qa,pm,research,ops", report: true });
+    });
+  }
+}
+
+function wireToolbox() {
+  if (searchRun) {
+    searchRun.addEventListener("click", async () => {
+      await runSearch();
+    });
+  }
+
+  if (journalAdd) {
+    journalAdd.addEventListener("click", async () => {
+      await addJournalEntry();
+    });
+  }
+
+  if (councilRun) {
+    councilRun.addEventListener("click", async () => {
+      await runCouncil();
     });
   }
 }
@@ -901,6 +978,7 @@ async function init() {
   ensureModules(bootstrap);
   renderDispatchOptions(bootstrap);
   wireDispatch();
+  wireToolbox();
   debugEl.textContent = `debug: modules ${modules.size}, avatars ${avatars.size}`;
 
   try {
@@ -909,6 +987,7 @@ async function init() {
       const data = await res.json();
       render(data);
       wireDispatch();
+      wireToolbox();
     }
   } catch (err) {
     console.warn("Agent fetch failed", err);

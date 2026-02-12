@@ -169,6 +169,61 @@ body {
   white-space: pre-wrap;
 }
 
+ .toolbox {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #0f141f;
+  border: 1px solid #1f2430;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.toolbox h2 {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+
+.toolbox label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: #9aa4b2;
+}
+
+.toolbox input,
+.toolbox textarea,
+.toolbox select {
+  background: #0b0f17;
+  border: 1px solid #243042;
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: #e2e8f0;
+  font-size: 12px;
+}
+
+.toolbox button {
+  background: #38bdf8;
+  color: #0b0f17;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.toolbox pre {
+  margin: 0;
+  padding: 10px;
+  background: #0b0f17;
+  border: 1px solid #1f2430;
+  border-radius: 10px;
+  font-size: 11px;
+  color: #cbd5f5;
+  white-space: pre-wrap;
+}
+
 #capabilities {
   overflow: hidden;
   padding-right: 0;
