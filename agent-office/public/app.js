@@ -1005,11 +1005,19 @@ async function init() {
     console.warn("Agent fetch failed", err);
   }
 
-  const stream = new EventSource("/api/stream");
-  stream.onmessage = (event) => {
-    const payload = JSON.parse(event.data);
-    render(payload);
+  let stream;
+  const openStream = () => {
+    stream = new EventSource("/api/stream");
+    stream.onmessage = (event) => {
+      const payload = JSON.parse(event.data);
+      render(payload);
+    };
+    stream.onerror = () => {
+      if (stream) stream.close();
+      setTimeout(openStream, 1500);
+    };
   };
+  openStream();
 }
 
 init();
