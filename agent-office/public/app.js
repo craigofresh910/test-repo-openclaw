@@ -1006,6 +1006,24 @@ async function init() {
   }
 
   let stream;
+  let pollTimer;
+  const poll = async () => {
+    try {
+      const res = await fetch("/api/agents", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        render(data);
+      }
+    } catch (err) {
+      // ignore polling errors
+    }
+  };
+
+  const startPolling = () => {
+    if (pollTimer) return;
+    pollTimer = setInterval(poll, 5000);
+  };
+
   const openStream = () => {
     stream = new EventSource("/api/stream");
     stream.onmessage = (event) => {
@@ -1014,9 +1032,12 @@ async function init() {
     };
     stream.onerror = () => {
       if (stream) stream.close();
-      setTimeout(openStream, 1500);
+      startPolling();
+      setTimeout(openStream, 2000);
     };
   };
+
+  startPolling();
   openStream();
 }
 
