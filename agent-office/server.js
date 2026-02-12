@@ -529,19 +529,19 @@ app.post("/api/office/message", async (req, res) => {
           if (response) {
             target.status = response.status;
             target.lastMessage = response.update || "";
-            if (response.status === "done" || response.status === "returning") {
+            if (autoReturn && (response.status === "done" || response.status === "returning")) {
               markReturning(target);
             }
+          } else {
+            target.status = "working";
+            target.lastMessage = "No data";
           }
           target.logs = [...target.logs, { ts, text: `Response: ${response ? JSON.stringify(response) : "No data"}` }].slice(-50);
-          if (autoReturn) {
-            markReturning(target);
-          }
           return {
             id: target.id,
             name: target.name,
             reply: response ? response.update || "No data" : "No data",
-            status: response?.status || "unknown",
+            status: response?.status || "working",
             eta_minutes: response?.eta_minutes ?? null
           };
         })
