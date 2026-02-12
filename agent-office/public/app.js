@@ -158,6 +158,8 @@ let scene, camera, renderer, clock, controls;
 let agentsById = new Map();
 let modules = new Map();
 let avatars = new Map();
+let lastOfficeTs = null;
+const feedBuffer = [];
 
 const loader = new GLTFLoader();
 const fbxLoader = new FBXLoader();
@@ -831,6 +833,28 @@ function renderLoop() {
 }
 
 function renderFeed(data) {
+  if (data.officeMessage?.ts && data.officeMessage.ts !== lastOfficeTs) {
+    lastOfficeTs = data.officeMessage.ts;
+    const lead = data.officeMessage.agent?.name || "Dispatch";
+    if (data.officeMessage.reply) {
+      feedBuffer.unshift({
+        agent: lead,
+        ts: data.officeMessage.ts,
+        text: data.officeMessage.reply
+      });
+    }
+    if (Array.isArray(data.officeMessage.delegated)) {
+      data.officeMessage.delegated.forEach((item) => {
+        feedBuffer.unshift({
+          agent: item.name || item.id,
+          ts: data.officeMessage.ts,
+          text: `[${item.status}] ${item.reply}`
+        });
+      });
+    }
+    feedBuffer.splice(15);
+  }
+
   const logs = data.agents
     .flatMap((agent) =>
       (agent.logs || []).map((log) => ({
@@ -838,11 +862,13 @@ function renderFeed(data) {
         ts: log.ts,
         text: log.text
       }))
-    )
+    );
+
+  const merged = [...feedBuffer, ...logs]
     .sort((a, b) => new Date(b.ts) - new Date(a.ts))
     .slice(0, 3);
 
-  feed.innerHTML = logs
+  feed.innerHTML = merged
     .map(
       (item) => `
       <div class="feed-item">
