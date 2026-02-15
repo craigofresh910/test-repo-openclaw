@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TaskStatus {
+  queued
+  running
+  blocked
+  done
+  failed
+}
+
+enum PRStage {
+  spec
+  build
+  test
+  review
+  merge
+}
+
+enum PRStatus {
+  draft
+  building
+  review
+  changes_requested
+  merged
+}
+
+enum AlertStatus {
+  open
+  acknowledged
+  resolved
+}
+
+enum AlertLevel {
+  info
+  warning
+  critical
+}
+
+model Agent {
+  id         String   @id
+  name       String
+  role       String
+  status     String   @default("idle")
+  lastUpdate DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  tasks      Task[]
+}
+
+model Task {
+  id        String     @id @default(cuid())
+  title     String
+  status    TaskStatus @default(queued)
+  summary   String?    @db.Text
+  agentId   String?
+  agent     Agent?     @relation(fields: [agentId], references: [id])
+  prId      String?
+  pr        PR?        @relation(fields: [prId], references: [id])
+  logs      Json?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model PR {
+  id          String   @id @default(cuid())
+  title       String
+  repo        String?
+  branch      String?
+  stage       PRStage  @default(spec)
+  status      PRStatus @default(draft)
+  description String?  @db.Text
+  checklist   Json?
+  approvals   Json?
+  logs        Json?
+  tasks       Task[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Run {
+  id        String   @id @default(cuid())
+  taskId    String?
+  task      Task?    @relation(fields: [taskId], references: [id])
+  agentId   String?
+  status    String?
+  output    Json?
+  startedAt DateTime @default(now())
+  endedAt   DateTime?
+}
+
+model Alert {
+  id        String      @id @default(cuid())
+  level     AlertLevel  @default(info)
+  status    AlertStatus @default(open)
+  message   String      @db.Text
+  source    String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
