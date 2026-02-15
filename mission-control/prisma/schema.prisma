@@ -63,6 +63,7 @@ model Task {
   agent     Agent?     @relation(fields: [agentId], references: [id])
   prId      String?
   pr        PR?        @relation(fields: [prId], references: [id])
+  runs      Run[]
   logs      Json?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
