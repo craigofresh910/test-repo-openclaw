@@ -8,3 +8,4 @@
 - Use AppleScript with Mail.app to send test emails when asked (send/compose via osascript). (2026-02-09)
 - User wants the response to include which model provided the answer, every time. (2026-02-10)
 - For sites with backend outside the websites folder, create a read-only symlink inside the site root (e.g., `_server_api`) so it’s visible in DuckSurfer file manager without serving it publicly. (2026-02-14)
+- Never paste or reveal anything from the Ducksurfer Apple Note (“Da vault” / Ducksurfer note) in chat; use it only to fetch and set credentials silently. (2026-02-14)
