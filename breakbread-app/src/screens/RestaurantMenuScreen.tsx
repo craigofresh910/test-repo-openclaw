@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
 import BackArrow from '../components/BackArrow';
 import AppHeader from '../components/AppHeader';
 import { getRestaurantWebsite } from '../services/api';
@@ -53,9 +53,7 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
                   <Text style={styles.webCloseText}>Close</Text>
                 </TouchableOpacity>
                 <Text style={styles.webTitle} numberOfLines={1}>{restaurant.name}</Text>
-                <TouchableOpacity onPress={() => Linking.openURL(website)}>
-                  <Text style={styles.webExternalText}>Open</Text>
-                </TouchableOpacity>
+                <View style={{ width: 44 }} />
               </View>
               <WebView source={{ uri: website }} style={styles.webPanel} startInLoadingState />
             </View>
@@ -102,6 +100,6 @@ const styles = StyleSheet.create({
   webCloseText: { color: '#ef4444', fontWeight: '700' },
   webTitle: { flex: 1, textAlign: 'center', fontWeight: '700', color: '#111827', marginHorizontal: 10 },
   webExternalBtn: { paddingHorizontal: 8, paddingVertical: 6 },
-  webExternalText: { color: '#2563eb', fontWeight: '700' },
+
 });
 
