@@ -20,33 +20,36 @@ export default function ProfileScreen({ navigation }: any) {
   const [paymentMethods, setPaymentMethods] = useState<string[]>(['Cash App']);
 
   const friends = useMemo(() => ['Jordan', 'Mia', 'Chris'], []);
-  const savedLocations = useMemo(() => ['Detroit, MI', 'Southfield, MI'], []);
+  const [favoriteLocation, setFavoriteLocation] = useState('Detroit, MI');
 
   useEffect(() => {
     (async () => {
       try {
-        const [u, a, n, p, photo] = await Promise.all([
+        const [u, a, n, p, photo, favLoc] = await Promise.all([
           AsyncStorage.getItem('profile.username'),
           AsyncStorage.getItem('profile.avatar'),
           AsyncStorage.getItem('profile.notifications'),
           AsyncStorage.getItem('profile.payments'),
           AsyncStorage.getItem('profile.photoUri'),
+          AsyncStorage.getItem('profile.favoriteLocation'),
         ]);
         if (u) setUsername(u);
         if (a) setAvatar(a);
         if (n) setNotificationsEnabled(n === 'true');
         if (p) setPaymentMethods(JSON.parse(p));
         if (photo) setPhotoUri(photo);
+        if (favLoc) setFavoriteLocation(favLoc);
       } catch {}
     })();
   }, []);
 
-  const persistProfile = async (next?: Partial<{ username: string; avatar: string; notifications: boolean; payments: string[]; photoUri: string | null }>) => {
+  const persistProfile = async (next?: Partial<{ username: string; avatar: string; notifications: boolean; payments: string[]; photoUri: string | null; favoriteLocation: string }>) => {
     try {
       if (next?.username !== undefined) await AsyncStorage.setItem('profile.username', next.username);
       if (next?.avatar !== undefined) await AsyncStorage.setItem('profile.avatar', next.avatar);
       if (next?.notifications !== undefined) await AsyncStorage.setItem('profile.notifications', String(next.notifications));
       if (next?.payments !== undefined) await AsyncStorage.setItem('profile.payments', JSON.stringify(next.payments));
+      if (next?.favoriteLocation !== undefined) await AsyncStorage.setItem('profile.favoriteLocation', next.favoriteLocation);
       if (next?.photoUri !== undefined) {
         if (next.photoUri) await AsyncStorage.setItem('profile.photoUri', next.photoUri);
         else await AsyncStorage.removeItem('profile.photoUri');
@@ -162,6 +165,7 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={styles.summaryTitle}>Current Settings</Text>
             <Text style={styles.summaryLine}>Payments: {paymentMethods.length ? paymentMethods.join(', ') : 'None selected'}</Text>
             <Text style={styles.summaryLine}>Notifications: {notificationsEnabled ? 'On' : 'Off'}</Text>
+            <Text style={styles.summaryLine}>Favorite Location: {favoriteLocation}</Text>
           </View>
         </View>
       </View>
@@ -204,12 +208,23 @@ export default function ProfileScreen({ navigation }: any) {
       <Modal visible={showLocationsModal} transparent animationType="slide" onRequestClose={() => setShowLocationsModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Saved Locations</Text>
-            {savedLocations.map((loc) => (
-              <Text key={loc} style={styles.locationItem}>📍 {loc}</Text>
-            ))}
-            <TouchableOpacity style={styles.closeBtn} onPress={() => setShowLocationsModal(false)}>
-              <Text style={styles.closeBtnText}>Done</Text>
+            <Text style={styles.modalTitle}>Favorite Location</Text>
+            <TextInput
+              style={styles.locationInput}
+              value={favoriteLocation}
+              onChangeText={setFavoriteLocation}
+              placeholder="City, ZIP, or address"
+              placeholderTextColor="#9ca3af"
+            />
+            <Text style={styles.locationHint}>This location is used as your default nearby area.</Text>
+            <TouchableOpacity
+              style={styles.closeBtn}
+              onPress={() => {
+                persistProfile({ favoriteLocation });
+                setShowLocationsModal(false);
+              }}
+            >
+              <Text style={styles.closeBtnText}>Save</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -270,7 +285,16 @@ const styles = StyleSheet.create({
   optionRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10 },
   optionText: { fontWeight: '600', color: '#111827' },
   optionCheck: { fontSize: 18 },
-  locationItem: { paddingVertical: 8, color: '#111827', fontWeight: '600' },
+  locationInput: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: '#111827',
+    fontWeight: '600',
+  },
+  locationHint: { marginTop: 8, color: '#6b7280', fontSize: 12 },
   closeBtn: { marginTop: 12, backgroundColor: '#111827', borderRadius: 10, alignItems: 'center', paddingVertical: 10 },
   closeBtnText: { color: '#fff', fontWeight: '800' },
 });
