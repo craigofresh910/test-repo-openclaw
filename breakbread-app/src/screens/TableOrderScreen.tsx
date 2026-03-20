@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, Alert } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, Alert, TextInput } from 'react-native';
 import BackArrow from '../components/BackArrow';
 import AppHeader from '../components/AppHeader';
 
@@ -14,6 +14,11 @@ export default function TableOrderScreen({ route, navigation }: any) {
   const incoming = route?.params?.tableCode;
   const tableCode = useMemo(() => incoming || generateTableCode(), [incoming]);
 
+  const [suggestionInput, setSuggestionInput] = useState('');
+  const [suggestions, setSuggestions] = useState<Array<{ id: string; name: string; by: string }>>([
+    { id: '1', name: 'Logan’s Roadhouse', by: 'You' },
+  ]);
+
   const shareInvite = async () => {
     try {
       await Share.share({
@@ -22,6 +27,16 @@ export default function TableOrderScreen({ route, navigation }: any) {
     } catch {
       Alert.alert('Share failed', 'Could not share invite right now.');
     }
+  };
+
+  const addSuggestion = () => {
+    const value = suggestionInput.trim();
+    if (!value) return;
+    setSuggestions((prev) => [
+      { id: String(Date.now()), name: value, by: 'You' },
+      ...prev,
+    ]);
+    setSuggestionInput('');
   };
 
   return (
@@ -47,6 +62,31 @@ export default function TableOrderScreen({ route, navigation }: any) {
           </View>
         </View>
 
+        <View style={styles.suggestBox}>
+          <Text style={styles.suggestTitle}>Restaurant Suggestions</Text>
+
+          <View style={styles.suggestInputRow}>
+            <TextInput
+              style={styles.suggestInput}
+              placeholder="Suggest a restaurant"
+              placeholderTextColor="#9ca3af"
+              value={suggestionInput}
+              onChangeText={setSuggestionInput}
+              onSubmitEditing={addSuggestion}
+            />
+            <TouchableOpacity style={styles.addBtn} onPress={addSuggestion}>
+              <Text style={styles.addBtnText}>Add</Text>
+            </TouchableOpacity>
+          </View>
+
+          {suggestions.map((s) => (
+            <View key={s.id} style={styles.suggestItem}>
+              <Text style={styles.suggestName}>🍽️ {s.name}</Text>
+              <Text style={styles.suggestBy}>by {s.by}</Text>
+            </View>
+          ))}
+        </View>
+
         <Text style={styles.waiting}>Waiting for others to join...</Text>
       </View>
     </ScrollView>
@@ -66,5 +106,41 @@ const styles = StyleSheet.create({
   participant: { flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: '#f9f9f9', borderRadius: 12, marginBottom: 8 },
   participantAvatar: { fontSize: 32, marginRight: 12 },
   participantName: { fontSize: 16, fontWeight: '600' },
+
+  suggestBox: {
+    marginBottom: 20,
+    backgroundColor: '#f9fafb',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    padding: 12,
+  },
+  suggestTitle: { fontSize: 16, fontWeight: '800', marginBottom: 10, color: '#111827' },
+  suggestInputRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
+  suggestInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    color: '#111827',
+    backgroundColor: '#fff',
+  },
+  addBtn: {
+    backgroundColor: '#f59e0b',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+  },
+  addBtnText: { color: '#fff', fontWeight: '800' },
+  suggestItem: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eceff1',
+  },
+  suggestName: { fontSize: 14, fontWeight: '700', color: '#111827' },
+  suggestBy: { marginTop: 2, fontSize: 12, color: '#6b7280' },
+
   waiting: { textAlign: 'center', color: '#888', fontSize: 15 },
 });
