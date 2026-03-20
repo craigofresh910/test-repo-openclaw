@@ -137,7 +137,7 @@ export default function TableOrderScreen({ route, navigation }: any) {
               <TouchableOpacity
                 key={t.code}
                 style={[styles.activeTableItem, t.code === tableCode && styles.activeTableItemCurrent]}
-                onPress={() => navigation.navigate('TableOrder', { tableCode: t.code })}
+                onPress={() => navigation.navigate('TableMain', { tableCode: t.code })}
               >
                 <Text style={styles.activeTableCode}>{t.code}</Text>
                 <Text style={styles.activeTableMeta}>{t.participants?.length || 0} people</Text>
