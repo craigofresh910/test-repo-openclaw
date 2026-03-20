@@ -343,16 +343,41 @@ export default function TableOrderScreen({ navigation }: any) {
           {activeTables.length === 0 ? (
             <Text style={styles.activeTablesEmpty}>No active tables yet.</Text>
           ) : (
-            activeTables.map((t) => (
-              <TouchableOpacity
-                key={t.code}
-                style={[styles.activeTableItem, t.code === tableCode && styles.activeTableItemCurrent]}
-                onPress={() => navigation.navigate('TableMain', { tableCode: t.code })}
-              >
-                <Text style={styles.activeTableCode}>{t.code}</Text>
-                <Text style={styles.activeTableMeta}>{t.participants?.length || 0} people</Text>
-              </TouchableOpacity>
-            ))
+            activeTables.map((t) => {
+              const isCurrent = t.code === tableCode;
+              const row = (
+                <TouchableOpacity
+                  key={t.code}
+                  style={[styles.activeTableItem, isCurrent && styles.activeTableItemCurrent]}
+                  onPress={() => navigation.navigate('TableMain', { tableCode: t.code })}
+                >
+                  <Text style={styles.activeTableCode}>{t.code}</Text>
+                  <Text style={styles.activeTableMeta}>{t.participants?.length || 0} people{isCurrent ? ' • swipe ← to leave' : ''}</Text>
+                </TouchableOpacity>
+              );
+
+              if (!isCurrent) return row;
+
+              return (
+                <Swipeable
+                  key={`swipe-${t.code}`}
+                  overshootLeft={false}
+                  overshootRight={false}
+                  friction={2}
+                  rightThreshold={42}
+                  onSwipeableOpen={(direction) => {
+                    if (direction === 'left') swipeLeavePrompt();
+                  }}
+                  renderRightActions={() => (
+                    <View style={[styles.swipeAction, styles.leaveSwipeActionInline]}>
+                      <Text style={styles.swipeActionText}>Release to Leave</Text>
+                    </View>
+                  )}
+                >
+                  {row}
+                </Swipeable>
+              );
+            })
           )}
         </View>
 
@@ -360,24 +385,6 @@ export default function TableOrderScreen({ navigation }: any) {
           <Text style={styles.shareBtnText}>📤 Share Invite</Text>
         </TouchableOpacity>
 
-        <Swipeable
-          overshootLeft={false}
-          overshootRight={false}
-          friction={2}
-          rightThreshold={42}
-          onSwipeableOpen={(direction) => {
-            if (direction === 'left') swipeLeavePrompt();
-          }}
-          renderRightActions={() => (
-            <View style={[styles.swipeAction, styles.leaveSwipeAction]}>
-              <Text style={styles.swipeActionText}>Release to Leave</Text>
-            </View>
-          )}
-        >
-          <View style={styles.leaveBtn}>
-            <Text style={styles.leaveBtnText}>Swipe ← to Leave Table</Text>
-          </View>
-        </Swipeable>
 
         <View style={styles.participants}>
           <Text style={styles.participantsTitle}>At the Table ({participants.length || 1})</Text>
@@ -741,7 +748,7 @@ const styles = StyleSheet.create({
   swipeAction: { justifyContent: 'center', borderRadius: 14, marginBottom: 10, paddingHorizontal: 14 },
   swipeEditAction: { backgroundColor: '#2563eb' },
   swipeDeleteAction: { backgroundColor: '#dc2626' },
-  leaveSwipeAction: { backgroundColor: '#dc2626', marginBottom: 20, alignItems: 'center' },
+  leaveSwipeActionInline: { backgroundColor: '#dc2626', alignItems: 'center' },
   swipeActionText: { color: '#fff', fontWeight: '800', fontSize: 12 },
 
   chatMsgRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 10 },
