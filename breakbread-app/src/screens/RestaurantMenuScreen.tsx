@@ -40,16 +40,14 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
             <Text style={styles.address}>{restaurant.address}</Text>
           </View>
           
-          <TouchableOpacity
-            style={styles.websiteBtn}
-            onPress={() => {
-              const directWebsite = restaurant.website;
-              const fallbackSearch = `https://www.google.com/search?q=${encodeURIComponent(`${restaurant.name} ${restaurant.address} official website`)}`;
-              Linking.openURL(directWebsite || fallbackSearch);
-            }}
-          >
-            <Text style={styles.websiteBtnText}>🌐 Visit Website</Text>
-          </TouchableOpacity>
+          {restaurant.website ? (
+            <TouchableOpacity
+              style={styles.websiteBtn}
+              onPress={() => Linking.openURL(restaurant.website)}
+            >
+              <Text style={styles.websiteBtnText}>🌐 Visit Website</Text>
+            </TouchableOpacity>
+          ) : null}
 
           <Text style={styles.sectionTitle}>Menu</Text>
           {MENU_ITEMS.length === 0 ? (
