@@ -107,31 +107,32 @@ export default function HomeScreen({ navigation }: any) {
     const n = item.name.toLowerCase();
     const t = (item.types || []).map(x => x.toLowerCase());
 
-    const keywordMap = [
-      { keys: ['pizza', 'pizzeria'], icon: '🍕', label: 'Pizza' },
-      { keys: ['sushi', 'ramen', 'japanese'], icon: '🍣', label: 'Japanese' },
-      { keys: ['taco', 'mex', 'burrito', 'taqueria'], icon: '🌮', label: 'Mexican' },
-      { keys: ['burger', 'grill', 'bbq'], icon: '🍔', label: 'Burgers' },
-      { keys: ['pasta', 'ital'], icon: '🍝', label: 'Italian' },
-      { keys: ['chinese', 'wok'], icon: '🥡', label: 'Chinese' },
-      { keys: ['thai'], icon: '🍜', label: 'Thai' },
-      { keys: ['salad', 'vegan', 'vegetarian'], icon: '🥗', label: 'Healthy' },
-      { keys: ['steak'], icon: '🥩', label: 'Steakhouse' },
-      { keys: ['seafood', 'fish'], icon: '🐟', label: 'Seafood' },
-      { keys: ['chicken', 'wings'], icon: '🍗', label: 'Chicken' },
-      { keys: ['sandwich', 'deli'], icon: '🥪', label: 'Sandwiches' },
-      { keys: ['coffee', 'cafe'], icon: '☕', label: 'Cafe' },
-      { keys: ['bakery', 'donut'], icon: '🥐', label: 'Bakery' },
-      { keys: ['ice cream', 'gelato', 'dessert'], icon: '🍨', label: 'Dessert' },
+    const casualChains = [
+      "logan's", 'logans', 'roadhouse', 'texas roadhouse', 'applebee', 'chili', 'outback',
+      'olive garden', 'red lobster', 'longhorn', 'tgi fridays', 'buffalo wild wings',
     ];
+    if (casualChains.some((k) => n.includes(k))) return { icon: '🍽️', label: 'Casual Dining' };
 
-    for (const m of keywordMap) {
-      if (m.keys.some(k => n.includes(k))) return m;
-    }
+    if (n.includes('pizza') || n.includes('pizzeria')) return { icon: '🍕', label: 'Pizza' };
+    if (n.includes('sushi') || n.includes('ramen') || n.includes('japanese')) return { icon: '🍣', label: 'Japanese' };
+    if (n.includes('mex') || n.includes('taco') || n.includes('burrito') || n.includes('taqueria')) return { icon: '🌮', label: 'Mexican' };
+    if (n.includes('burger') || n.includes('bbq') || n.includes('barbecue')) return { icon: '🍔', label: 'Burgers & BBQ' };
+    if (n.includes('thai')) return { icon: '🍜', label: 'Thai' };
+    if (n.includes('chinese') || n.includes('wok')) return { icon: '🥡', label: 'Chinese' };
+    if (n.includes('ital')) return { icon: '🍝', label: 'Italian' };
+    if (n.includes('seafood')) return { icon: '🐟', label: 'Seafood' };
+    if (n.includes('steak')) return { icon: '🥩', label: 'Steakhouse' };
+    if (n.includes('coffee') || n.includes('cafe')) return { icon: '☕', label: 'Cafe' };
+    if (n.includes('bakery') || n.includes('donut')) return { icon: '🥐', label: 'Bakery' };
+    if (n.includes('sandwich') || n.includes('deli')) return { icon: '🥪', label: 'Sandwiches' };
+    if (n.includes('ice cream') || n.includes('gelato') || n.includes('dessert')) return { icon: '🍨', label: 'Dessert' };
 
-    if (t.includes('bakery')) return { icon: '🥐', label: 'Bakery' };
+    if (t.includes('fast_food_restaurant')) return { icon: '🍟', label: 'Fast Food' };
+    if (t.includes('meal_takeaway')) return { icon: '🥡', label: 'Takeout' };
+    if (t.includes('meal_delivery')) return { icon: '🛵', label: 'Delivery' };
     if (t.includes('cafe')) return { icon: '☕', label: 'Cafe' };
-    if (t.includes('meal_takeaway') || t.includes('fast_food_restaurant')) return { icon: '🍟', label: 'Fast Food' };
+    if (t.includes('bakery')) return { icon: '🥐', label: 'Bakery' };
+    if (t.includes('bar')) return { icon: '🍺', label: 'Bar & Grill' };
     if (t.includes('restaurant')) return { icon: '🍽️', label: 'Restaurant' };
 
     return { icon: '🍴', label: 'Food' };
