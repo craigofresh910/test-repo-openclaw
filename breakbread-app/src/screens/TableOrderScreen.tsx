@@ -168,7 +168,6 @@ export default function TableOrderScreen({ route, navigation }: any) {
           ))}
         </View>
 
-        <Text style={styles.waiting}>Live sync active — participants update automatically.</Text>
       </View>
     </ScrollView>
   );
@@ -245,5 +244,4 @@ const styles = StyleSheet.create({
   voteBtnText: { color: '#fff', fontWeight: '700', fontSize: 12 },
   voteCount: { color: '#374151', fontWeight: '700', fontSize: 12 },
 
-  waiting: { textAlign: 'center', color: '#888', fontSize: 13 },
 });
