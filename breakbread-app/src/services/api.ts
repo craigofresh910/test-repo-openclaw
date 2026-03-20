@@ -146,5 +146,10 @@ export const getLiveTable = async (code: string) => {
   return res.json();
 };
 
+export const getUserLiveTables = async (userId: string) => {
+  const res = await fetch(`${API_BASE}/tables/user/${encodeURIComponent(userId)}`);
+  return res.json();
+};
+
 export const getOrders = async () => [];
 export const createOrder = async () => ({});

@@ -4,7 +4,7 @@ import BackArrow from '../components/BackArrow';
 import AppHeader from '../components/AppHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
-import { createLiveTable, getLiveTable, joinLiveTable, searchNearbyRestaurants } from '../services/api';
+import { createLiveTable, getLiveTable, getUserLiveTables, joinLiveTable, searchNearbyRestaurants } from '../services/api';
 
 function generateTableCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -28,6 +28,7 @@ export default function TableOrderScreen({ route, navigation }: any) {
   const [suggestionInput, setSuggestionInput] = useState('');
   const [restaurantCards, setRestaurantCards] = useState<Place[]>([]);
   const [participants, setParticipants] = useState<Array<{ userId: string; name: string }>>([]);
+  const [activeTables, setActiveTables] = useState<Array<{ code: string; createdAt: string; participants: Array<{ userId: string; name: string }> }>>([]);
   const [me, setMe] = useState<{ userId: string; name: string }>({ userId: 'guest', name: 'You' });
   const [votes, setVotes] = useState<Record<string, number>>({});
 
@@ -55,9 +56,18 @@ export default function TableOrderScreen({ route, navigation }: any) {
 
       const refresh = async () => {
         try {
-          const data = await getLiveTable(tableCode);
-          const list = data?.table?.participants || [];
-          if (mounted) setParticipants(list);
+          const [tableData, userTablesData] = await Promise.all([
+            getLiveTable(tableCode),
+            getUserLiveTables(userId),
+          ]);
+
+          const list = tableData?.table?.participants || [];
+          const tables = userTablesData?.tables || [];
+
+          if (mounted) {
+            setParticipants(list);
+            setActiveTables(tables);
+          }
         } catch {}
       };
 
@@ -116,6 +126,24 @@ export default function TableOrderScreen({ route, navigation }: any) {
 
         <View style={styles.codeBox}>
           <Text style={styles.code}>{tableCode}</Text>
+        </View>
+
+        <View style={styles.activeTablesBox}>
+          <Text style={styles.activeTablesTitle}>Your Active Tables</Text>
+          {activeTables.length === 0 ? (
+            <Text style={styles.activeTablesEmpty}>No active tables yet.</Text>
+          ) : (
+            activeTables.map((t) => (
+              <TouchableOpacity
+                key={t.code}
+                style={[styles.activeTableItem, t.code === tableCode && styles.activeTableItemCurrent]}
+                onPress={() => navigation.navigate('TableOrder', { tableCode: t.code })}
+              >
+                <Text style={styles.activeTableCode}>{t.code}</Text>
+                <Text style={styles.activeTableMeta}>{t.participants?.length || 0} people</Text>
+              </TouchableOpacity>
+            ))
+          )}
         </View>
 
         <TouchableOpacity style={styles.shareBtn} onPress={shareInvite}>
@@ -200,6 +228,27 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '800', textAlign: 'center', marginBottom: 20 },
   codeBox: { backgroundColor: '#f5f5f5', borderRadius: 16, padding: 24, alignItems: 'center', marginBottom: 20 },
   code: { fontSize: 40, fontWeight: '800', color: '#f59e0b', letterSpacing: 4 },
+  activeTablesBox: {
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    padding: 12,
+    backgroundColor: '#fafafa',
+  },
+  activeTablesTitle: { fontSize: 15, fontWeight: '800', color: '#111827', marginBottom: 8 },
+  activeTablesEmpty: { fontSize: 13, color: '#6b7280' },
+  activeTableItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eceff1',
+  },
+  activeTableItemCurrent: { backgroundColor: '#fff7ed' },
+  activeTableCode: { fontSize: 14, fontWeight: '800', color: '#111827' },
+  activeTableMeta: { fontSize: 12, color: '#6b7280', fontWeight: '600' },
   shareBtn: { backgroundColor: '#22c55e', borderRadius: 12, padding: 16, alignItems: 'center', marginBottom: 30 },
   shareBtnText: { color: '#fff', fontWeight: '700', fontSize: 17 },
   participants: { marginBottom: 20 },
