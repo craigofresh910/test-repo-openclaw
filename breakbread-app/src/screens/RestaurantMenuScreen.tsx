@@ -5,6 +5,22 @@ import AppHeader from '../components/AppHeader';
 import { getRestaurantWebsite, getRestaurantDetails } from '../services/api';
 import { WebView } from 'react-native-webview';
 
+const sendNoWebsiteAlert = async (restaurant: any) => {
+  try {
+    await fetch('https://lunchbreakapp.com/api/alerts/no-website', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        restaurantName: restaurant?.name,
+        address: restaurant?.address,
+        placeId: restaurant?.place_id,
+        notifyTo: '+13135023958',
+        message: `No website found for ${restaurant?.name} (${restaurant?.address})`,
+      }),
+    });
+  } catch {}
+};
+
 const getRestaurantCategory = (restaurant: any, details: any) => {
   const name = String(restaurant?.name || '').toLowerCase();
   const types = [
@@ -47,21 +63,35 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
   const [website, setWebsite] = useState<string | undefined>(restaurant?.website);
   const [showWebsitePanel, setShowWebsitePanel] = useState(false);
   const [details, setDetails] = useState<any>(null);
+  const [alertedNoWebsite, setAlertedNoWebsite] = useState(false);
 
   useEffect(() => {
     let active = true;
     (async () => {
+      let resolvedWebsite: string | undefined = website;
+
       if (restaurant?.place_id) {
         const d = await getRestaurantDetails(restaurant.place_id);
         if (active && d) {
           setDetails(d);
-          if (!website && d.website) setWebsite(d.website);
+          if (!resolvedWebsite && d.website) {
+            resolvedWebsite = d.website;
+            setWebsite(d.website);
+          }
         }
       }
 
-      if (!website && restaurant?.place_id) {
+      if (!resolvedWebsite && restaurant?.place_id) {
         const w = await getRestaurantWebsite(restaurant.place_id);
-        if (active && w) setWebsite(w);
+        if (active && w) {
+          resolvedWebsite = w;
+          setWebsite(w);
+        }
+      }
+
+      if (active && !resolvedWebsite && !alertedNoWebsite) {
+        setAlertedNoWebsite(true);
+        sendNoWebsiteAlert(restaurant);
       }
     })();
     return () => {
