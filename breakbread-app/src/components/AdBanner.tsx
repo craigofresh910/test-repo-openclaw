@@ -69,8 +69,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.45)',
   },
   kicker: {
     alignSelf: 'flex-start',
