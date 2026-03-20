@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, Alert, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, Alert, TextInput, Image } from 'react-native';
 import BackArrow from '../components/BackArrow';
 import AppHeader from '../components/AppHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createLiveTable, getLiveTable, joinLiveTable } from '../services/api';
+import * as Location from 'expo-location';
+import { createLiveTable, getLiveTable, joinLiveTable, searchNearbyRestaurants } from '../services/api';
 
 function generateTableCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -12,14 +13,23 @@ function generateTableCode() {
   return out;
 }
 
+interface Place {
+  place_id: string;
+  name: string;
+  address: string;
+  rating?: number;
+  photo?: string;
+}
+
 export default function TableOrderScreen({ route, navigation }: any) {
   const incoming = route?.params?.tableCode;
   const tableCode = useMemo(() => (incoming || generateTableCode()).toUpperCase(), [incoming]);
 
   const [suggestionInput, setSuggestionInput] = useState('');
-  const [suggestions, setSuggestions] = useState<Array<{ id: string; name: string; by: string }>>([]);
+  const [restaurantCards, setRestaurantCards] = useState<Place[]>([]);
   const [participants, setParticipants] = useState<Array<{ userId: string; name: string }>>([]);
   const [me, setMe] = useState<{ userId: string; name: string }>({ userId: 'guest', name: 'You' });
+  const [votes, setVotes] = useState<Record<string, number>>({});
 
   useEffect(() => {
     let mounted = true;
@@ -62,6 +72,27 @@ export default function TableOrderScreen({ route, navigation }: any) {
     };
   }, [incoming, tableCode]);
 
+  useEffect(() => {
+    loadRestaurantSuggestions();
+  }, []);
+
+  const loadRestaurantSuggestions = async (query?: string) => {
+    try {
+      let lat = 42.3314;
+      let lng = -83.0458;
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const pos = await Location.getCurrentPositionAsync({});
+        lat = pos.coords.latitude;
+        lng = pos.coords.longitude;
+      }
+      const res = await searchNearbyRestaurants(lat, lng, 12000, query);
+      setRestaurantCards((res.places || []).slice(0, 8));
+    } catch {
+      setRestaurantCards([]);
+    }
+  };
+
   const shareInvite = async () => {
     try {
       await Share.share({
@@ -72,11 +103,8 @@ export default function TableOrderScreen({ route, navigation }: any) {
     }
   };
 
-  const addSuggestion = () => {
-    const value = suggestionInput.trim();
-    if (!value) return;
-    setSuggestions((prev) => [{ id: String(Date.now()), name: value, by: me.name || 'You' }, ...prev]);
-    setSuggestionInput('');
+  const voteFor = (placeId: string) => {
+    setVotes((prev) => ({ ...prev, [placeId]: (prev[placeId] || 0) + 1 }));
   };
 
   return (
@@ -105,26 +133,37 @@ export default function TableOrderScreen({ route, navigation }: any) {
         </View>
 
         <View style={styles.suggestBox}>
-          <Text style={styles.suggestTitle}>Restaurant Suggestions</Text>
+          <Text style={styles.suggestTitle}>Restaurant Suggestions + Voting</Text>
 
           <View style={styles.suggestInputRow}>
             <TextInput
               style={styles.suggestInput}
-              placeholder="Suggest a restaurant"
+              placeholder="Search suggestions"
               placeholderTextColor="#9ca3af"
               value={suggestionInput}
               onChangeText={setSuggestionInput}
-              onSubmitEditing={addSuggestion}
+              onSubmitEditing={() => loadRestaurantSuggestions(suggestionInput.trim() || undefined)}
             />
-            <TouchableOpacity style={styles.addBtn} onPress={addSuggestion}>
-              <Text style={styles.addBtnText}>Add</Text>
+            <TouchableOpacity style={styles.addBtn} onPress={() => loadRestaurantSuggestions(suggestionInput.trim() || undefined)}>
+              <Text style={styles.addBtnText}>Go</Text>
             </TouchableOpacity>
           </View>
 
-          {suggestions.map((s) => (
-            <View key={s.id} style={styles.suggestItem}>
-              <Text style={styles.suggestName}>🍽️ {s.name}</Text>
-              <Text style={styles.suggestBy}>by {s.by}</Text>
+          {restaurantCards.map((item) => (
+            <View key={item.place_id} style={styles.card}>
+              <TouchableOpacity style={{ flex: 1 }} onPress={() => navigation.navigate('RestaurantMenu', { restaurant: item })}>
+                <Image source={{ uri: item.photo || 'https://via.placeholder.com/400' }} style={styles.cardImage} />
+                <View style={styles.cardContent}>
+                  <Text style={styles.cardTitle}>{item.name}</Text>
+                  <Text style={styles.cardAddress} numberOfLines={1}>{item.address}</Text>
+                </View>
+              </TouchableOpacity>
+              <View style={styles.voteRow}>
+                <TouchableOpacity style={styles.voteBtn} onPress={() => voteFor(item.place_id)}>
+                  <Text style={styles.voteBtnText}>Vote 👍</Text>
+                </TouchableOpacity>
+                <Text style={styles.voteCount}>Votes: {votes[item.place_id] || 0}</Text>
+              </View>
             </View>
           ))}
         </View>
@@ -176,13 +215,35 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addBtnText: { color: '#fff', fontWeight: '800' },
-  suggestItem: {
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eceff1',
+
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    marginBottom: 10,
+    overflow: 'hidden',
   },
-  suggestName: { fontSize: 14, fontWeight: '700', color: '#111827' },
-  suggestBy: { marginTop: 2, fontSize: 12, color: '#6b7280' },
+  cardImage: { width: '100%', height: 120 },
+  cardContent: { padding: 10 },
+  cardTitle: { fontSize: 15, fontWeight: '700', color: '#111827' },
+  cardAddress: { marginTop: 3, fontSize: 12, color: '#6b7280' },
+  voteRow: {
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  voteBtn: {
+    backgroundColor: '#111827',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+  },
+  voteBtnText: { color: '#fff', fontWeight: '700', fontSize: 12 },
+  voteCount: { color: '#374151', fontWeight: '700', fontSize: 12 },
 
   waiting: { textAlign: 'center', color: '#888', fontSize: 13 },
 });
