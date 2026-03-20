@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, TextInput, FlatList, Alert, Linking, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, TextInput, FlatList, Alert, Linking } from 'react-native';
 import BackArrow from '../components/BackArrow';
 import AppHeader from '../components/AppHeader';
 import { getRestaurantWebsite } from '../services/api';
@@ -11,7 +11,7 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
   const { restaurant } = route.params;
   const [orderItems, setOrderItems] = useState<any[]>([]);
   const [website, setWebsite] = useState<string | undefined>(restaurant?.website);
-  const [showWebsiteModal, setShowWebsiteModal] = useState(false);
+  const [showWebsitePanel, setShowWebsitePanel] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -60,10 +60,25 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
           {website ? (
             <TouchableOpacity
               style={styles.websiteBtn}
-              onPress={() => setShowWebsiteModal(true)}
+              onPress={() => setShowWebsitePanel(true)}
             >
               <Text style={styles.websiteBtnText}>🌐 Visit Website</Text>
             </TouchableOpacity>
+          ) : null}
+
+          {showWebsitePanel && website ? (
+            <View style={styles.webPanelWrap}>
+              <View style={styles.webPanelHeader}>
+                <TouchableOpacity onPress={() => setShowWebsitePanel(false)}>
+                  <Text style={styles.webCloseText}>Close</Text>
+                </TouchableOpacity>
+                <Text style={styles.webTitle} numberOfLines={1}>{restaurant.name}</Text>
+                <TouchableOpacity onPress={() => Linking.openURL(website)}>
+                  <Text style={styles.webExternalText}>Open</Text>
+                </TouchableOpacity>
+              </View>
+              <WebView source={{ uri: website }} style={styles.webPanel} startInLoadingState />
+            </View>
           ) : null}
 
           <Text style={styles.sectionTitle}>Menu</Text>
@@ -78,21 +93,7 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
         </View>
       </ScrollView>
 
-      <Modal visible={showWebsiteModal} animationType="slide" onRequestClose={() => setShowWebsiteModal(false)}>
-        <View style={styles.webModalWrap}>
-          <View style={styles.webModalHeader}>
-            <TouchableOpacity style={styles.webCloseBtn} onPress={() => setShowWebsiteModal(false)}>
-              <Text style={styles.webCloseText}>Close</Text>
-            </TouchableOpacity>
-            <Text style={styles.webTitle} numberOfLines={1}>{restaurant.name}</Text>
-            <TouchableOpacity style={styles.webExternalBtn} onPress={() => website && Linking.openURL(website)}>
-              <Text style={styles.webExternalText}>Open</Text>
-            </TouchableOpacity>
-          </View>
-          {website ? <WebView source={{ uri: website }} startInLoadingState /> : null}
-        </View>
-      </Modal>
-      
+
       {orderItems.length > 0 && (
         <TouchableOpacity style={styles.cartBtn} onPress={() => navigation.navigate('TableOrder', { orderItems })}>
           <Text style={styles.cartBtnText}>View Order ({orderItems.length})</Text>
@@ -125,9 +126,16 @@ const styles = StyleSheet.create({
   emptyMenuText: { fontSize: 15, fontWeight: '600', color: '#111827' },
   emptyMenuSub: { marginTop: 6, fontSize: 13, color: '#6b7280' },
 
-  webModalWrap: { flex: 1, backgroundColor: '#fff' },
-  webModalHeader: {
-    height: 56,
+  webPanelWrap: {
+    marginBottom: 14,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    backgroundColor: '#fff',
+  },
+  webPanelHeader: {
+    height: 48,
     paddingHorizontal: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
@@ -135,7 +143,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  webCloseBtn: { paddingHorizontal: 8, paddingVertical: 6 },
+  webPanel: { height: 420, backgroundColor: '#fff' },
   webCloseText: { color: '#ef4444', fontWeight: '700' },
   webTitle: { flex: 1, textAlign: 'center', fontWeight: '700', color: '#111827', marginHorizontal: 10 },
   webExternalBtn: { paddingHorizontal: 8, paddingVertical: 6 },
