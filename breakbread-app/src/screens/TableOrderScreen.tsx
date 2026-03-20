@@ -4,7 +4,7 @@ import BackArrow from '../components/BackArrow';
 import AppHeader from '../components/AppHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
-import { createLiveTable, getLiveTable, getUserLiveTables, joinLiveTable, searchNearbyRestaurants } from '../services/api';
+import { createLiveTable, getLiveTable, getUserLiveTables, joinLiveTable, leaveLiveTable, searchNearbyRestaurants } from '../services/api';
 
 function generateTableCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -113,6 +113,15 @@ export default function TableOrderScreen({ route, navigation }: any) {
     }
   };
 
+  const leaveTable = async () => {
+    try {
+      await leaveLiveTable({ code: tableCode, userId: me.userId });
+      navigation.navigate('HomeMain');
+    } catch {
+      Alert.alert('Leave failed', 'Could not leave table right now.');
+    }
+  };
+
   const voteFor = (placeId: string) => {
     setVotes((prev) => ({ ...prev, [placeId]: (prev[placeId] || 0) + 1 }));
   };
@@ -148,6 +157,10 @@ export default function TableOrderScreen({ route, navigation }: any) {
 
         <TouchableOpacity style={styles.shareBtn} onPress={shareInvite}>
           <Text style={styles.shareBtnText}>📤 Share Invite</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.leaveBtn} onPress={leaveTable}>
+          <Text style={styles.leaveBtnText}>Leave Table</Text>
         </TouchableOpacity>
 
         <View style={styles.participants}>
@@ -249,8 +262,10 @@ const styles = StyleSheet.create({
   activeTableItemCurrent: { backgroundColor: '#fff7ed' },
   activeTableCode: { fontSize: 14, fontWeight: '800', color: '#111827' },
   activeTableMeta: { fontSize: 12, color: '#6b7280', fontWeight: '600' },
-  shareBtn: { backgroundColor: '#22c55e', borderRadius: 12, padding: 16, alignItems: 'center', marginBottom: 30 },
+  shareBtn: { backgroundColor: '#22c55e', borderRadius: 12, padding: 16, alignItems: 'center', marginBottom: 10 },
   shareBtnText: { color: '#fff', fontWeight: '700', fontSize: 17 },
+  leaveBtn: { backgroundColor: '#ef4444', borderRadius: 12, padding: 12, alignItems: 'center', marginBottom: 20 },
+  leaveBtnText: { color: '#fff', fontWeight: '800', fontSize: 14 },
   participants: { marginBottom: 20 },
   participantsTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
   tableScene: {

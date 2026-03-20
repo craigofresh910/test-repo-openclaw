@@ -141,6 +141,15 @@ export const joinLiveTable = async (payload: { code: string; userId: string; nam
   return res.json();
 };
 
+export const leaveLiveTable = async (payload: { code: string; userId: string }) => {
+  const res = await fetch(`${API_BASE}/tables/leave`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+};
+
 export const getLiveTable = async (code: string) => {
   const res = await fetch(`${API_BASE}/tables/${encodeURIComponent(code)}`);
   return res.json();
