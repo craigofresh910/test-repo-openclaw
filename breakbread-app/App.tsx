@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator, BottomTabBar } from '@react-navigation/bottom-tabs';
-import { Text, View } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
 
 import HomeScreen from './src/screens/HomeScreen';
 import RestaurantMenuScreen from './src/screens/RestaurantMenuScreen';
@@ -24,6 +24,14 @@ function TabIcon({ icon }: { icon: string }) {
   );
 }
 
+function StickyBottomAd() {
+  return (
+    <View style={styles.stickyAdWrap}>
+      <Text style={styles.stickyAdLabel}>Advertisement</Text>
+      <Text style={styles.stickyAdText}>Sponsored</Text>
+    </View>
+  );
+}
 
 function HomeStackScreen() {
   return (
@@ -66,7 +74,12 @@ export default function App() {
   return (
     <NavigationContainer>
       <Tab.Navigator
-        tabBar={(props) => <BottomTabBar {...props} />}
+        tabBar={(props) => (
+          <View>
+            <StickyBottomAd />
+            <BottomTabBar {...props} />
+          </View>
+        )}
         screenOptions={{
           headerShown: false,
           tabBarStyle: { height: 80, paddingBottom: 20, paddingTop: 10 },
@@ -96,3 +109,27 @@ export default function App() {
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  stickyAdWrap: {
+    height: 54,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+    backgroundColor: '#f9fafb',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stickyAdLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    color: '#6b7280',
+    fontWeight: '700',
+  },
+  stickyAdText: {
+    fontSize: 13,
+    color: '#111827',
+    fontWeight: '600',
+    marginTop: 2,
+  },
+});
