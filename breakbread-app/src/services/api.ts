@@ -97,6 +97,7 @@ export const getRestaurantDetails = async (placeId?: string) => {
       'takeout',
       'dine_in',
       'name',
+      'types',
     ].join(',');
 
     const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=${fields}&key=${key}`;
@@ -115,6 +116,7 @@ export const getRestaurantDetails = async (placeId?: string) => {
       delivery: !!r.delivery,
       takeout: !!r.takeout,
       dineIn: !!r.dine_in,
+      types: r.types || [],
     };
   } catch {
     return undefined;

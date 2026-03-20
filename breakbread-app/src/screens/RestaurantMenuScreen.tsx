@@ -5,6 +5,43 @@ import AppHeader from '../components/AppHeader';
 import { getRestaurantWebsite, getRestaurantDetails } from '../services/api';
 import { WebView } from 'react-native-webview';
 
+const getRestaurantCategory = (restaurant: any, details: any) => {
+  const name = String(restaurant?.name || '').toLowerCase();
+  const types = [
+    ...(restaurant?.types || []),
+    ...(details?.types || []),
+  ].map((t: string) => String(t).toLowerCase());
+
+  // Known sit-down/casual chains that often get mislabeled.
+  const casualChains = [
+    "logan's", 'logans', 'roadhouse', 'texas roadhouse', 'applebee', 'chili', 'outback',
+    'olive garden', 'red lobster', 'longhorn', 'tgi fridays', 'buffalo wild wings',
+  ];
+  if (casualChains.some((k) => name.includes(k))) return 'Casual Dining';
+
+  if (name.includes('pizza') || name.includes('pizzeria')) return 'Pizza';
+  if (name.includes('sushi') || name.includes('ramen') || name.includes('japanese')) return 'Japanese';
+  if (name.includes('mex') || name.includes('taco') || name.includes('burrito')) return 'Mexican';
+  if (name.includes('burger') || name.includes('bbq') || name.includes('barbecue')) return 'Burgers & BBQ';
+  if (name.includes('thai')) return 'Thai';
+  if (name.includes('chinese') || name.includes('wok')) return 'Chinese';
+  if (name.includes('ital')) return 'Italian';
+  if (name.includes('seafood')) return 'Seafood';
+  if (name.includes('steak')) return 'Steakhouse';
+  if (name.includes('coffee') || name.includes('cafe')) return 'Cafe';
+  if (name.includes('bakery') || name.includes('donut')) return 'Bakery';
+
+  if (types.includes('fast_food_restaurant')) return 'Fast Food';
+  if (types.includes('meal_takeaway')) return 'Takeout';
+  if (types.includes('meal_delivery')) return 'Delivery';
+  if (types.includes('cafe')) return 'Cafe';
+  if (types.includes('bakery')) return 'Bakery';
+  if (types.includes('bar')) return 'Bar & Grill';
+  if (types.includes('restaurant')) return 'Restaurant';
+
+  return 'Restaurant';
+};
+
 export default function RestaurantMenuScreen({ route, navigation }: any) {
   const { restaurant } = route.params;
   const [website, setWebsite] = useState<string | undefined>(restaurant?.website);
@@ -41,6 +78,7 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
         <Image source={{ uri: restaurant.photo || 'https://via.placeholder.com/400' }} style={styles.hero} />
         <View style={styles.content}>
           <Text style={styles.title}>{restaurant.name}</Text>
+          <Text style={styles.categoryLine}>Category: {getRestaurantCategory(restaurant, details)}</Text>
           <View style={styles.row}>
             {(details?.rating || restaurant.rating) && <Text style={styles.rating}>⭐ {details?.rating || restaurant.rating}</Text>}
           </View>
@@ -132,7 +170,8 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   hero: { width: '100%', height: 120 },
   content: { padding: 16 },
-  title: { fontSize: 28, fontWeight: '800', marginBottom: 8 },
+  title: { fontSize: 28, fontWeight: '800', marginBottom: 4 },
+  categoryLine: { fontSize: 14, color: '#4b5563', fontWeight: '700', marginBottom: 10 },
   row: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   rating: { backgroundColor: '#22c55e', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginRight: 10, color: '#fff', fontWeight: '700' },
   websiteBtn: { backgroundColor: '#f59e0b', padding: 14, borderRadius: 12, alignItems: 'center', marginBottom: 20 },
