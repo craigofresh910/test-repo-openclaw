@@ -1,39 +1,34 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, Image, StyleSheet, Linking } from 'react-native';
+
+const AD_IMAGE = require('../../assets/tomorrows-yesterday-ad.jpg');
 
 export default function AdBanner() {
   return (
-    <View style={styles.wrap}>
-      <Text style={styles.label}>Advertisement</Text>
-      <Text style={styles.sub}>Ad slot active</Text>
-    </View>
+    <TouchableOpacity
+      activeOpacity={0.9}
+      style={styles.wrap}
+      onPress={() => Linking.openURL('https://historystartstoday.com')}
+    >
+      <Image source={AD_IMAGE} style={styles.image} resizeMode="cover" />
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: {
-    marginHorizontal: 16,
+    marginHorizontal: 8,
     marginTop: 10,
     marginBottom: 16,
-    height: 72,
+    height: 92,
     borderRadius: 12,
+    overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    backgroundColor: '#f9fafb',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#fff',
   },
-  label: {
-    fontSize: 12,
-    color: '#6b7280',
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-  sub: {
-    marginTop: 4,
-    fontSize: 13,
-    color: '#111827',
-    fontWeight: '600',
+  image: {
+    width: '100%',
+    height: '100%',
   },
 });
