@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, TextInput, FlatList, RefreshControl, ActivityIndicator, Modal, Alert, Linking } from 'react-native';
 import { searchNearbyRestaurants } from '../services/api';
 import * as Location from 'expo-location';
-import BackArrow from '../components/BackArrow';
 
 const HOME_LOGO = require('../../assets/breakbread-logo.png');
 
@@ -196,7 +195,6 @@ export default function HomeScreen({ navigation }: any) {
 
   return (
     <View style={{ flex: 1 }}>
-      <BackArrow navigation={navigation} />
       <ScrollView
         style={styles.container}
         stickyHeaderIndices={[0]}
@@ -204,6 +202,14 @@ export default function HomeScreen({ navigation }: any) {
       >
         <View style={styles.stickyHeaderWrap}>
           <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.headerBackBtn}
+              onPress={() => {
+                if (navigation?.canGoBack?.()) navigation.goBack();
+              }}
+            >
+              <Text style={styles.headerBackIcon}>←</Text>
+            </TouchableOpacity>
             <Image source={HOME_LOGO} style={styles.logo} resizeMode="contain" />
           </View>
 
@@ -364,7 +370,20 @@ export default function HomeScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   stickyHeaderWrap: { backgroundColor: '#fff', zIndex: 10 },
-  header: { backgroundColor: '#f59e0b', paddingTop: 50, paddingBottom: 16, alignItems: 'center' },
+  header: { backgroundColor: '#f59e0b', paddingTop: 50, paddingBottom: 16, alignItems: 'center', justifyContent: 'center' },
+  headerBackBtn: {
+    position: 'absolute',
+    left: 14,
+    top: 56,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 20,
+  },
+  headerBackIcon: { color: '#fff', fontSize: 20, fontWeight: '700' },
   headerTitle: { fontSize: 24, fontWeight: '800', color: '#fff' },
   logo: { width: 180, height: 44, borderRadius: 12, marginTop: 8 },
   searchBox: { padding: 16 },
