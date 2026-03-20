@@ -33,7 +33,7 @@ export const searchNearbyRestaurants = async (
       if (data.status === 'INVALID_REQUEST' && pageToken) {
         return { places: [], nextPageToken: undefined };
       }
-      console.warn('Places API warning:', data.status, data.error_message || '');
+      // Non-fatal API status; return empty list without crashing UI.
       return { places: [], nextPageToken: undefined };
     }
 
@@ -58,8 +58,8 @@ export const searchNearbyRestaurants = async (
     }
     return { places: [] };
   } catch (error) {
-    console.error('Error searching:', error);
-    return { places: [] };
+    // Network failures should not red-screen the app in production flow.
+    return { places: [], nextPageToken: undefined };
   }
 };
 
