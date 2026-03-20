@@ -165,9 +165,27 @@ export const getTableChat = async (code: string) => {
   return res.json();
 };
 
-export const sendTableChat = async (payload: { code: string; userId: string; name: string; avatar?: string; text: string }) => {
+export const sendTableChat = async (payload: { code: string; userId: string; name: string; avatar?: string; text: string; replyToId?: string; replyToName?: string; replyToText?: string }) => {
   const res = await fetch(`${API_BASE}/tables/chat`, {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+};
+
+export const editTableChat = async (payload: { code: string; messageId: string; userId: string; text: string }) => {
+  const res = await fetch(`${API_BASE}/tables/chat`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+};
+
+export const deleteTableChat = async (payload: { code: string; messageId: string; userId: string }) => {
+  const res = await fetch(`${API_BASE}/tables/chat`, {
+    method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });

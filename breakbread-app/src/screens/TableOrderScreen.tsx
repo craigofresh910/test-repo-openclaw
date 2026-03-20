@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import * as FileSystem from 'expo-file-system';
 import * as Notifications from 'expo-notifications';
-import { createLiveTable, getLiveTable, getTableChat, getUserLiveTables, joinLiveTable, leaveLiveTable, searchNearbyRestaurants, sendTableChat } from '../services/api';
+import { createLiveTable, deleteTableChat, editTableChat, getLiveTable, getTableChat, getUserLiveTables, joinLiveTable, leaveLiveTable, searchNearbyRestaurants, sendTableChat } from '../services/api';
 
 function generateTableCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -34,7 +34,9 @@ export default function TableOrderScreen({ route, navigation }: any) {
   const [me, setMe] = useState<{ userId: string; name: string; avatar?: string }>({ userId: 'guest', name: 'You', avatar: '👤' });
   const [votes, setVotes] = useState<Record<string, number>>({});
   const [chatInput, setChatInput] = useState('');
-  const [chatMessages, setChatMessages] = useState<Array<{ id: string; userId: string; name: string; avatar?: string; text: string; sentAt: string }>>([]);
+  const [chatMessages, setChatMessages] = useState<Array<{ id: string; userId: string; name: string; avatar?: string; text: string; sentAt: string; replyToId?: string; replyToName?: string; replyToText?: string; editedAt?: string }>>([]);
+  const [replyTo, setReplyTo] = useState<{ id: string; name: string; text: string } | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const lastSeenMessageIdRef = useRef<string | null>(null);
   const seenMessageIdsRef = useRef<Set<string>>(new Set());
@@ -188,6 +190,52 @@ export default function TableOrderScreen({ route, navigation }: any) {
     setVotes((prev) => ({ ...prev, [placeId]: (prev[placeId] || 0) + 1 }));
   };
 
+  const refreshChat = async () => {
+    const latest = await getTableChat(tableCode);
+    setChatMessages(latest?.messages || []);
+  };
+
+  const sendOrEditMessage = async () => {
+    const text = chatInput.trim();
+    if (!text) return;
+
+    if (editingMessageId) {
+      await editTableChat({ code: tableCode, messageId: editingMessageId, userId: me.userId, text });
+      setEditingMessageId(null);
+      setChatInput('');
+      await refreshChat();
+      return;
+    }
+
+    let finalReply = replyTo;
+    if (!finalReply && text.startsWith('@')) {
+      const mention = text.split(' ')[0].replace('@', '').trim().toLowerCase();
+      const target = [...chatMessages].reverse().find((m) => (m.name || '').toLowerCase() === mention);
+      if (target) finalReply = { id: target.id, name: target.name, text: target.text };
+    }
+
+    await sendTableChat({
+      code: tableCode,
+      userId: me.userId,
+      name: me.name,
+      avatar: me.avatar,
+      text,
+      replyToId: finalReply?.id,
+      replyToName: finalReply?.name,
+      replyToText: finalReply?.text,
+    });
+
+    setChatInput('');
+    setUnreadCount(0);
+    setReplyTo(null);
+    await refreshChat();
+  };
+
+  const removeMessage = async (messageId: string) => {
+    await deleteTableChat({ code: tableCode, messageId, userId: me.userId });
+    await refreshChat();
+  };
+
   return (
     <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
       <AppHeader />
@@ -269,6 +317,18 @@ export default function TableOrderScreen({ route, navigation }: any) {
               </TouchableOpacity>
             )}
           </View>
+          {replyTo && (
+            <View style={styles.replyPreviewBox}>
+              <Text style={styles.replyPreviewText}>Replying to @{replyTo.name}: {replyTo.text}</Text>
+              <TouchableOpacity onPress={() => setReplyTo(null)}><Text style={styles.replyPreviewCancel}>✕</Text></TouchableOpacity>
+            </View>
+          )}
+          {editingMessageId && (
+            <View style={styles.replyPreviewBox}>
+              <Text style={styles.replyPreviewText}>Editing your message</Text>
+              <TouchableOpacity onPress={() => { setEditingMessageId(null); setChatInput(''); }}><Text style={styles.replyPreviewCancel}>✕</Text></TouchableOpacity>
+            </View>
+          )}
           <View style={styles.chatInputRow}>
             <TextInput
               style={styles.chatInput}
@@ -276,27 +336,11 @@ export default function TableOrderScreen({ route, navigation }: any) {
               placeholderTextColor="#9ca3af"
               value={chatInput}
               onChangeText={setChatInput}
-              onSubmitEditing={async () => {
-                const text = chatInput.trim();
-                if (!text) return;
-                await sendTableChat({ code: tableCode, userId: me.userId, name: me.name, avatar: me.avatar, text });
-                setChatInput('');
-                setUnreadCount(0);
-                const latest = await getTableChat(tableCode);
-                setChatMessages(latest?.messages || []);
-              }}
+              onSubmitEditing={sendOrEditMessage}
             />
             <TouchableOpacity
               style={styles.chatSendBtn}
-              onPress={async () => {
-                const text = chatInput.trim();
-                if (!text) return;
-                await sendTableChat({ code: tableCode, userId: me.userId, name: me.name, avatar: me.avatar, text });
-                setChatInput('');
-                setUnreadCount(0);
-                const latest = await getTableChat(tableCode);
-                setChatMessages(latest?.messages || []);
-              }}
+              onPress={sendOrEditMessage}
             >
               <Text style={styles.chatSendText}>Send</Text>
             </TouchableOpacity>
@@ -310,8 +354,28 @@ export default function TableOrderScreen({ route, navigation }: any) {
                 <Text style={styles.chatAvatar}>{m.avatar || '👤'}</Text>
               )}
               <View style={styles.chatBubble}>
-                <Text style={styles.chatName}>{m.name}</Text>
-                <Text style={styles.chatText}>{m.text}</Text>
+                <View style={styles.chatMsgTopRow}>
+                  <Text style={styles.chatName}>{m.name}</Text>
+                  <TouchableOpacity onPress={() => { setReplyTo({ id: m.id, name: m.name, text: m.text }); setChatInput(`@${m.name} `); }}>
+                    <Text style={styles.chatAction}>Reply</Text>
+                  </TouchableOpacity>
+                </View>
+                {!!m.replyToName && !!m.replyToText && (
+                  <View style={styles.replyRefBox}>
+                    <Text style={styles.replyRefText}>↪ @{m.replyToName}: {m.replyToText}</Text>
+                  </View>
+                )}
+                <Text style={styles.chatText}>{m.text}{m.editedAt ? ' (edited)' : ''}</Text>
+                {m.userId === me.userId && (
+                  <View style={styles.chatOwnActions}>
+                    <TouchableOpacity onPress={() => { setEditingMessageId(m.id); setChatInput(m.text); setReplyTo(null); }}>
+                      <Text style={styles.chatAction}>Edit</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => removeMessage(m.id)}>
+                      <Text style={[styles.chatAction, { color: '#dc2626' }]}>Delete</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             </View>
           ))}
@@ -507,6 +571,9 @@ const styles = StyleSheet.create({
   unreadBadge: { backgroundColor: '#ef4444', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
   unreadBadgeText: { color: '#fff', fontWeight: '800', fontSize: 12 },
   chatInputRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
+  replyPreviewBox: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#eef2ff', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, marginBottom: 8 },
+  replyPreviewText: { flex: 1, fontSize: 12, color: '#1f2937', marginRight: 8 },
+  replyPreviewCancel: { fontSize: 13, fontWeight: '800', color: '#6b7280' },
   chatInput: {
     flex: 1,
     borderWidth: 1,
@@ -524,6 +591,11 @@ const styles = StyleSheet.create({
   chatAvatarPhoto: { width: 24, height: 24, borderRadius: 12, marginRight: 8, marginTop: 2 },
   chatBubble: { flex: 1, backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 10, padding: 8 },
   chatName: { fontSize: 12, fontWeight: '800', color: '#374151', marginBottom: 2 },
+  chatMsgTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  chatAction: { fontSize: 12, fontWeight: '700', color: '#2563eb' },
+  chatOwnActions: { flexDirection: 'row', gap: 12, marginTop: 6 },
+  replyRefBox: { backgroundColor: '#f3f4f6', borderLeftWidth: 3, borderLeftColor: '#9ca3af', paddingHorizontal: 8, paddingVertical: 5, borderRadius: 6, marginBottom: 6 },
+  replyRefText: { fontSize: 11, color: '#4b5563' },
   chatText: { fontSize: 13, color: '#111827' },
 
 });
