@@ -7,7 +7,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/icon.png",
+      "image": "./assets/breakbread-logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#f59e0b"
     },
