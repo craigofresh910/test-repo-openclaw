@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, Alert, TextInput, Image, Vibration } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, Alert, TextInput, Image, Vibration, PanResponder } from 'react-native';
 import BackArrow from '../components/BackArrow';
 import AppHeader from '../components/AppHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -236,6 +236,50 @@ export default function TableOrderScreen({ route, navigation }: any) {
     await refreshChat();
   };
 
+  const openMessageActions = (m: any) => {
+    const mine = m.userId === me.userId;
+    const buttons: any[] = [
+      {
+        text: 'Reply',
+        onPress: () => {
+          setReplyTo({ id: m.id, name: m.name, text: m.text });
+          setChatInput(`@${m.name} `);
+        },
+      },
+      mine
+        ? {
+            text: 'Edit',
+            onPress: () => {
+              setEditingMessageId(m.id);
+              setChatInput(m.text);
+              setReplyTo(null);
+            },
+          }
+        : null,
+      mine
+        ? {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => removeMessage(m.id),
+          }
+        : null,
+      { text: 'Cancel', style: 'cancel' },
+    ].filter(Boolean);
+
+    Alert.alert('Message actions', `@${m.name}`, buttons);
+  };
+
+  const makeSwipeResponder = (m: any) =>
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_evt, gestureState) => Math.abs(gestureState.dx) > 20,
+      onPanResponderRelease: (_evt, gestureState) => {
+        if (gestureState.dx > 70) {
+          setReplyTo({ id: m.id, name: m.name, text: m.text });
+          setChatInput(`@${m.name} `);
+        }
+      },
+    });
+
   return (
     <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
       <AppHeader />
@@ -346,8 +390,10 @@ export default function TableOrderScreen({ route, navigation }: any) {
             </TouchableOpacity>
           </View>
 
-          {chatMessages.slice(-20).map((m) => (
-            <View key={m.id} style={styles.chatMsgRow}>
+          {chatMessages.slice(-20).map((m) => {
+            const swipeResponder = makeSwipeResponder(m);
+            return (
+            <TouchableOpacity key={m.id} style={styles.chatMsgRow} onLongPress={() => openMessageActions(m)} activeOpacity={0.9} {...swipeResponder.panHandlers}>
               {String(m.avatar || '').startsWith('file:') || String(m.avatar || '').startsWith('http') || String(m.avatar || '').startsWith('data:') ? (
                 <Image source={{ uri: String(m.avatar) }} style={styles.chatAvatarPhoto} />
               ) : (
@@ -377,8 +423,9 @@ export default function TableOrderScreen({ route, navigation }: any) {
                   </View>
                 )}
               </View>
-            </View>
-          ))}
+            </TouchableOpacity>
+          );
+          })}
         </View>
 
         <View style={styles.suggestBox}>
