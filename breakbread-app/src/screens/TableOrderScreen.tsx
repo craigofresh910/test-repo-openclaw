@@ -133,17 +133,19 @@ export default function TableOrderScreen({ route, navigation }: any) {
             {(participants.length ? participants : [{ userId: me.userId, name: me.name }]).slice(0, 6).map((p, idx, arr) => {
               const total = Math.max(arr.length, 1);
               const angle = (-Math.PI / 2) + (idx * (2 * Math.PI / total));
-              const centerX = 140;
-              const centerY = 140;
-              const radius = 108;
-              const seatSize = 78;
+              const centerX = 150;
+              const centerY = 165;
+              const radius = 132;
+              const seatSize = 86;
               const left = centerX + Math.cos(angle) * radius - seatSize / 2;
               const top = centerY + Math.sin(angle) * radius - seatSize / 2;
 
               return (
                 <View key={p.userId} style={[styles.seat, { left, top, width: seatSize }]}>
-                  <Text style={styles.chair}>🪑</Text>
-                  <Text style={styles.seatAvatar}>👤</Text>
+                  <View style={styles.chairBack} />
+                  <View style={styles.personDot}>
+                    <Text style={styles.personInitial}>{(p.name || 'U').charAt(0).toUpperCase()}</Text>
+                  </View>
                   <Text style={styles.seatName} numberOfLines={1}>{p.name}</Text>
                 </View>
               );
@@ -203,9 +205,9 @@ const styles = StyleSheet.create({
   participants: { marginBottom: 20 },
   participantsTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
   tableScene: {
-    height: 300,
-    borderRadius: 16,
-    backgroundColor: '#f8fafc',
+    height: 340,
+    borderRadius: 18,
+    backgroundColor: '#eef2f7',
     borderWidth: 1,
     borderColor: '#e5e7eb',
     position: 'relative',
@@ -213,23 +215,39 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   roundTable: {
-    width: 170,
-    height: 170,
-    borderRadius: 85,
-    backgroundColor: '#111827',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: '#b68c69',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 4,
-    borderColor: '#f59e0b',
+    borderWidth: 6,
+    borderColor: '#8b5e3c',
   },
-  roundTableText: { color: '#fff', fontWeight: '800', fontSize: 11, textAlign: 'center', paddingHorizontal: 10 },
+  roundTableText: { color: '#fff', fontWeight: '800', fontSize: 11, textAlign: 'center', paddingHorizontal: 10, opacity: 0.9 },
   seat: {
     position: 'absolute',
     alignItems: 'center',
   },
-  chair: { fontSize: 20, marginBottom: -2 },
-  seatAvatar: { fontSize: 28 },
-  seatName: { marginTop: 2, fontSize: 12, fontWeight: '700', color: '#111827', maxWidth: 84, textAlign: 'center' },
+  chairBack: {
+    width: 44,
+    height: 20,
+    borderRadius: 6,
+    backgroundColor: '#2f3b4a',
+    marginBottom: 4,
+  },
+  personDot: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  personInitial: { fontWeight: '800', color: '#374151' },
+  seatName: { marginTop: 4, fontSize: 12, fontWeight: '700', color: '#111827', maxWidth: 86, textAlign: 'center' },
 
   suggestBox: {
     marginBottom: 20,
