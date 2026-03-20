@@ -104,7 +104,7 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  hero: { width: '100%', height: 200 },
+  hero: { width: '100%', height: 120 },
   content: { padding: 16 },
   title: { fontSize: 28, fontWeight: '800', marginBottom: 8 },
   row: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  webPanel: { height: 420, backgroundColor: '#fff' },
+  webPanel: { height: 640, backgroundColor: '#fff' },
   webCloseText: { color: '#ef4444', fontWeight: '700' },
   webTitle: { flex: 1, textAlign: 'center', fontWeight: '700', color: '#111827', marginHorizontal: 10 },
   webExternalBtn: { paddingHorizontal: 8, paddingVertical: 6 },
