@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 6,
-    borderColor: '#000000',
+    borderColor: '#f59e0b',
   },
   tableLogo: { width: 130, height: 60, borderRadius: 8 },
   seat: {
