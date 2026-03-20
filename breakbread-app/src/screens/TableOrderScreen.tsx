@@ -69,34 +69,38 @@ export default function TableOrderScreen({ navigation }: any) {
       }
       if (mounted) setMe({ userId, name, avatar });
 
-      if (!tableCode || tableMode === 'none') return;
-
-      try {
-        if (tableMode === 'join') {
-          await joinLiveTable({ code: tableCode, userId, name, avatar });
-        } else {
-          await createLiveTable({ code: tableCode, userId, name, avatar });
+      if (tableCode && tableMode !== 'none') {
+        try {
+          if (tableMode === 'join') {
+            await joinLiveTable({ code: tableCode, userId, name, avatar });
+          } else {
+            await createLiveTable({ code: tableCode, userId, name, avatar });
+          }
+        } catch {
+          Alert.alert('Table error', tableMode === 'join' ? 'Could not join table. Check code.' : 'Could not create table.');
+          setTableCode('');
+          setTableMode('none');
         }
-      } catch {
-        Alert.alert('Table error', tableMode === 'join' ? 'Could not join table. Check code.' : 'Could not create table.');
-        return;
       }
 
       const refresh = async () => {
         try {
-          const [tableData, userTablesData, chatData] = await Promise.all([
+          const userTablesData = await getUserLiveTables(userId);
+          const tables = userTablesData?.tables || [];
+          if (mounted) setActiveTables(tables);
+
+          if (!tableCode) return;
+
+          const [tableData, chatData] = await Promise.all([
             getLiveTable(tableCode),
-            getUserLiveTables(userId),
             getTableChat(tableCode),
           ]);
 
           const list = tableData?.table?.participants || [];
-          const tables = userTablesData?.tables || [];
           const messages = chatData?.messages || [];
 
           if (mounted) {
             setParticipants(list);
-            setActiveTables(tables);
             setChatMessages(messages);
 
             const latest = messages[messages.length - 1];
@@ -185,9 +189,13 @@ export default function TableOrderScreen({ navigation }: any) {
   const leaveTable = async () => {
     try {
       await leaveLiveTable({ code: tableCode, userId: me.userId });
-      const parent = navigation.getParent?.();
-      if (parent) parent.navigate('Home');
-      else navigation.navigate('TableMain');
+      setTableCode('');
+      setTableMode('none');
+      setParticipants([]);
+      setChatMessages([]);
+      setReplyTo(null);
+      setEditingMessageId(null);
+      setUnreadCount(0);
     } catch {
       Alert.alert('Leave failed', 'Could not leave table right now.');
     }
@@ -329,6 +337,27 @@ export default function TableOrderScreen({ navigation }: any) {
                 <Text style={styles.joinBtnText}>Join</Text>
               </TouchableOpacity>
             </View>
+
+            <View style={[styles.activeTablesBox, { marginTop: 14, marginBottom: 0 }]}> 
+              <Text style={styles.activeTablesTitle}>Your Active Tables</Text>
+              {activeTables.length === 0 ? (
+                <Text style={styles.activeTablesEmpty}>No active tables yet.</Text>
+              ) : (
+                activeTables.map((t) => (
+                  <TouchableOpacity
+                    key={`lobby-${t.code}`}
+                    style={styles.activeTableItem}
+                    onPress={() => {
+                      setTableMode('join');
+                      setTableCode(t.code);
+                    }}
+                  >
+                    <Text style={styles.activeTableCode}>{t.code}</Text>
+                    <Text style={styles.activeTableMeta}>{t.participants?.length || 0} people</Text>
+                  </TouchableOpacity>
+                ))
+              )}
+            </View>
           </View>
         ) : (
           <View style={styles.codeBox}>
@@ -351,7 +380,10 @@ export default function TableOrderScreen({ navigation }: any) {
                   <TouchableOpacity
                     key={t.code}
                     style={styles.activeTableItem}
-                    onPress={() => navigation.navigate('TableMain', { tableCode: t.code })}
+                    onPress={() => {
+                      setTableMode('join');
+                      setTableCode(t.code);
+                    }}
                   >
                     <Text style={styles.activeTableCode}>{t.code}</Text>
                     <Text style={styles.activeTableMeta}>{t.participants?.length || 0} people</Text>
@@ -366,8 +398,8 @@ export default function TableOrderScreen({ navigation }: any) {
                   overshootRight={false}
                   friction={2}
                   rightThreshold={36}
-                  onSwipeableOpen={(direction) => {
-                    if (direction === 'left') swipeLeavePrompt();
+                  onSwipeableOpen={() => {
+                    swipeLeavePrompt();
                   }}
                   renderRightActions={() => (
                     <View style={[styles.swipeAction, styles.leaveSwipeActionInline]}>
