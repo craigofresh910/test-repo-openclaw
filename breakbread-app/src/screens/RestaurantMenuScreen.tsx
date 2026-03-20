@@ -62,6 +62,7 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
   const { restaurant } = route.params;
   const [website, setWebsite] = useState<string | undefined>(restaurant?.website);
   const [showWebsitePanel, setShowWebsitePanel] = useState(false);
+  const [websiteUri, setWebsiteUri] = useState<string | undefined>(undefined);
   const [details, setDetails] = useState<any>(null);
   const [alertedNoWebsite, setAlertedNoWebsite] = useState(false);
 
@@ -99,6 +100,13 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
     };
   }, [restaurant?.place_id]);
 
+  const openMenuInPanel = () => {
+    if (!website) return;
+    const base = website.replace(/\/+$/, '');
+    const menuCandidate = `${base}/menu`;
+    setWebsiteUri(menuCandidate);
+    setShowWebsitePanel(true);
+  };
 
   return (
     <View style={{ flex: 1 }}>
@@ -170,13 +178,13 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
           {website ? (
             <TouchableOpacity
               style={styles.websiteBtn}
-              onPress={() => setShowWebsitePanel(true)}
+              onPress={openMenuInPanel}
             >
-              <Text style={styles.websiteBtnText}>🌐 Visit Website</Text>
+              <Text style={styles.websiteBtnText}>📋 View Website Menu</Text>
             </TouchableOpacity>
           ) : null}
 
-          {showWebsitePanel && website ? (
+          {showWebsitePanel && (websiteUri || website) ? (
             <View style={styles.webPanelWrap}>
               <View style={styles.webPanelHeader}>
                 <TouchableOpacity onPress={() => setShowWebsitePanel(false)}>
@@ -185,7 +193,16 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
                 <Text style={styles.webTitle} numberOfLines={1}>{restaurant.name}</Text>
                 <View style={{ width: 44 }} />
               </View>
-              <WebView source={{ uri: website }} style={styles.webPanel} startInLoadingState />
+              <WebView
+                source={{ uri: websiteUri || website || '' }}
+                style={styles.webPanel}
+                startInLoadingState
+                onError={() => {
+                  if (websiteUri && website && websiteUri !== website) {
+                    setWebsiteUri(website);
+                  }
+                }}
+              />
             </View>
           ) : null}
 
