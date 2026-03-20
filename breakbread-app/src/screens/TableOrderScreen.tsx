@@ -155,7 +155,7 @@ export default function TableOrderScreen({ route, navigation }: any) {
 
           <View style={styles.tableScene}>
             <View style={styles.roundTable}>
-              <Text style={styles.roundTableText}>BREAKBREAD TABLE</Text>
+              <Image source={require('../../assets/breakbread-logo.png')} style={styles.tableLogo} resizeMode="contain" />
             </View>
 
             {(participants.length ? participants : [{ userId: me.userId, name: me.name }]).slice(0, 6).map((p, idx, arr) => {
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
     borderWidth: 6,
     borderColor: '#8b5e3c',
   },
-  roundTableText: { color: '#fff', fontWeight: '800', fontSize: 11, textAlign: 'center', paddingHorizontal: 10, opacity: 0.9 },
+  tableLogo: { width: 130, height: 60, borderRadius: 8 },
   seat: {
     position: 'absolute',
     alignItems: 'center',
