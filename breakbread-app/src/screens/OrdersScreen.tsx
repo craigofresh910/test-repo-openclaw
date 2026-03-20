@@ -1,15 +1,41 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import * as Location from 'expo-location';
+import { searchNearbyRestaurants } from '../services/api';
 
-const SUGGESTIONS = [
-  '🍕 Pizza night with friends',
-  '🍣 Sushi table split',
-  '🍔 Burger combo table',
-  '🌮 Taco Tuesday group order',
-  '☕ Coffee + breakfast run',
-];
+interface Place {
+  place_id: string;
+  name: string;
+  address: string;
+  rating?: number;
+}
 
 export default function OrdersScreen() {
+  const [suggestedRestaurants, setSuggestedRestaurants] = useState<Place[]>([]);
+
+  useEffect(() => {
+    loadSuggestions();
+  }, []);
+
+  const loadSuggestions = async () => {
+    try {
+      let lat = 42.3314;
+      let lng = -83.0458;
+
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const pos = await Location.getCurrentPositionAsync({});
+        lat = pos.coords.latitude;
+        lng = pos.coords.longitude;
+      }
+
+      const res = await searchNearbyRestaurants(lat, lng, 12000);
+      setSuggestedRestaurants((res.places || []).slice(0, 8));
+    } catch (e) {
+      setSuggestedRestaurants([]);
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
@@ -22,12 +48,17 @@ export default function OrdersScreen() {
         </View>
 
         <View style={styles.suggestionsBox}>
-          <Text style={styles.suggestionsTitle}>Suggestions</Text>
-          {SUGGESTIONS.map((item, idx) => (
-            <View key={idx} style={styles.suggestionItem}>
-              <Text style={styles.suggestionText}>{item}</Text>
-            </View>
-          ))}
+          <Text style={styles.suggestionsTitle}>Suggested Restaurants Near You</Text>
+          {suggestedRestaurants.length === 0 ? (
+            <Text style={styles.emptySuggestion}>No suggestions found yet.</Text>
+          ) : (
+            suggestedRestaurants.map((item) => (
+              <View key={item.place_id} style={styles.suggestionItem}>
+                <Text style={styles.suggestionText}>{item.name}</Text>
+                <Text style={styles.suggestionSub} numberOfLines={1}>{item.address}</Text>
+              </View>
+            ))
+          )}
         </View>
       </View>
     </ScrollView>
@@ -57,5 +88,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eceff1',
   },
-  suggestionText: { fontSize: 15, color: '#111827', fontWeight: '600' },
+  suggestionText: { fontSize: 15, color: '#111827', fontWeight: '700' },
+  suggestionSub: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  emptySuggestion: { fontSize: 14, color: '#6b7280' },
 });
