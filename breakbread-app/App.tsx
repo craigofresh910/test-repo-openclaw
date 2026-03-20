@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator, BottomTabBar } from '@react-navigation/bottom-tabs';
 import { Text, View, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import HomeScreen from './src/screens/HomeScreen';
 import RestaurantMenuScreen from './src/screens/RestaurantMenuScreen';
@@ -72,41 +73,43 @@ function ProfileStackScreen() {
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Tab.Navigator
-        tabBar={(props) => (
-          <View>
-            <StickyBottomAd />
-            <BottomTabBar {...props} />
-          </View>
-        )}
-        screenOptions={{
-          headerShown: false,
-          tabBarStyle: { height: 80, paddingBottom: 20, paddingTop: 10 },
-        }}
-      >
-        <Tab.Screen
-          name="Home"
-          component={HomeStackScreen}
-          options={{ tabBarIcon: () => <TabIcon icon="🏠" />, tabBarLabel: () => null }}
-        />
-        <Tab.Screen
-          name="Orders"
-          component={OrdersStackScreen}
-          options={{ tabBarIcon: () => <TabIcon icon="📋" />, tabBarLabel: () => null }}
-        />
-        <Tab.Screen
-          name="Table"
-          component={TableStackScreen}
-          options={{ tabBarIcon: () => <TabIcon icon="👥" />, tabBarLabel: () => null }}
-        />
-        <Tab.Screen
-          name="Profile"
-          component={ProfileStackScreen}
-          options={{ tabBarIcon: () => <TabIcon icon="👤" />, tabBarLabel: () => null }}
-        />
-      </Tab.Navigator>
-    </NavigationContainer>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <NavigationContainer>
+        <Tab.Navigator
+          tabBar={(props) => (
+            <View>
+              <StickyBottomAd />
+              <BottomTabBar {...props} />
+            </View>
+          )}
+          screenOptions={{
+            headerShown: false,
+            tabBarStyle: { height: 80, paddingBottom: 20, paddingTop: 10 },
+          }}
+        >
+          <Tab.Screen
+            name="Home"
+            component={HomeStackScreen}
+            options={{ tabBarIcon: () => <TabIcon icon="🏠" />, tabBarLabel: () => null }}
+          />
+          <Tab.Screen
+            name="Orders"
+            component={OrdersStackScreen}
+            options={{ tabBarIcon: () => <TabIcon icon="📋" />, tabBarLabel: () => null }}
+          />
+          <Tab.Screen
+            name="Table"
+            component={TableStackScreen}
+            options={{ tabBarIcon: () => <TabIcon icon="👥" />, tabBarLabel: () => null }}
+          />
+          <Tab.Screen
+            name="Profile"
+            component={ProfileStackScreen}
+            options={{ tabBarIcon: () => <TabIcon icon="👤" />, tabBarLabel: () => null }}
+          />
+        </Tab.Navigator>
+      </NavigationContainer>
+    </GestureHandlerRootView>
   );
 }
 
