@@ -43,6 +43,7 @@ export default function HomeScreen({ navigation }: any) {
   const [priceFilter, setPriceFilter] = useState<number | null>(null);
   const [displayCount, setDisplayCount] = useState(5);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showFeedAd, setShowFeedAd] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -198,6 +199,11 @@ export default function HomeScreen({ navigation }: any) {
       <ScrollView
         style={styles.container}
         stickyHeaderIndices={[0]}
+        scrollEventThrottle={16}
+        onScroll={(e) => {
+          const y = e.nativeEvent.contentOffset.y;
+          if (!showFeedAd && y > 120) setShowFeedAd(true);
+        }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); setRefreshing(false); }} />}
       >
         <View style={styles.stickyHeaderWrap}>
@@ -256,6 +262,7 @@ export default function HomeScreen({ navigation }: any) {
         </View>
 
         <View style={styles.section}>
+          {showFeedAd ? <AdBanner /> : null}
           <Text style={styles.sectionTitle}>Nearby</Text>
           {loading ? <ActivityIndicator size="large" color="#f59e0b" style={{ margin: 20 }} /> : (
             <>
@@ -269,7 +276,6 @@ export default function HomeScreen({ navigation }: any) {
           )}
         </View>
 
-        <AdBanner />
       </ScrollView>
 
       <Modal
