@@ -246,33 +246,29 @@ export default function TableOrderScreen({ route, navigation }: any) {
           setChatInput(`@${m.name} `);
         },
       },
-      mine
-        ? {
-            text: 'Edit',
-            onPress: () => {
-              setEditingMessageId(m.id);
-              setChatInput(m.text);
-              setReplyTo(null);
-            },
-          }
-        : null,
-      mine
-        ? {
-            text: 'Delete',
-            style: 'destructive',
-            onPress: () => removeMessage(m.id),
-          }
-        : null,
       { text: 'Cancel', style: 'cancel' },
     ].filter(Boolean);
 
-    Alert.alert('Message actions', `@${m.name}`, buttons);
+    Alert.alert('Message actions', `@${m.name}${mine ? ' • swipe → edit, swipe ← delete' : ''}`, buttons);
   };
 
   const makeSwipeResponder = (m: any) =>
     PanResponder.create({
       onMoveShouldSetPanResponder: (_evt, gestureState) => Math.abs(gestureState.dx) > 20,
       onPanResponderRelease: (_evt, gestureState) => {
+        if (m.userId === me.userId) {
+          if (gestureState.dx > 70) {
+            setEditingMessageId(m.id);
+            setChatInput(m.text);
+            setReplyTo(null);
+            return;
+          }
+          if (gestureState.dx < -70) {
+            removeMessage(m.id);
+            return;
+          }
+        }
+
         if (gestureState.dx > 70) {
           setReplyTo({ id: m.id, name: m.name, text: m.text });
           setChatInput(`@${m.name} `);
@@ -425,14 +421,7 @@ export default function TableOrderScreen({ route, navigation }: any) {
                   <View style={styles.chatMetaRow}>
                     <Text style={[styles.chatTime, mine && styles.chatTimeMine]}>{time}</Text>
                     {mine && (
-                      <View style={styles.chatOwnActions}>
-                        <TouchableOpacity onPress={() => { setEditingMessageId(m.id); setChatInput(m.text); setReplyTo(null); }}>
-                          <Text style={[styles.chatAction, styles.chatActionMine]}>Edit</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => removeMessage(m.id)}>
-                          <Text style={[styles.chatAction, { color: mine ? '#fee2e2' : '#dc2626' }]}>Delete</Text>
-                        </TouchableOpacity>
-                      </View>
+                      <Text style={styles.gestureHint}>Swipe → edit • Swipe ← delete</Text>
                     )}
                   </View>
                 </View>
@@ -680,6 +669,7 @@ const styles = StyleSheet.create({
   chatAction: { fontSize: 11, fontWeight: '700', color: '#2563eb' },
   chatActionMine: { color: '#93c5fd' },
   chatOwnActions: { flexDirection: 'row', gap: 10, marginLeft: 10 },
+  gestureHint: { fontSize: 10, color: '#9ca3af', marginLeft: 10, fontWeight: '600' },
   replyRefBox: { backgroundColor: '#f3f4f6', borderLeftWidth: 3, borderLeftColor: '#9ca3af', paddingHorizontal: 8, paddingVertical: 5, borderRadius: 6, marginBottom: 6 },
   replyRefBoxMine: { backgroundColor: '#1f2937', borderLeftColor: '#9ca3af' },
   replyRefText: { fontSize: 11, color: '#4b5563' },
