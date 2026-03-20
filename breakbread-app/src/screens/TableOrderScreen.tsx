@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, Alert, TextInput, Image } from 'react-native';
 import BackArrow from '../components/BackArrow';
 import AppHeader from '../components/AppHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import * as FileSystem from 'expo-file-system';
+import * as Notifications from 'expo-notifications';
 import { createLiveTable, getLiveTable, getTableChat, getUserLiveTables, joinLiveTable, leaveLiveTable, searchNearbyRestaurants, sendTableChat } from '../services/api';
 
 function generateTableCode() {
@@ -34,6 +35,7 @@ export default function TableOrderScreen({ route, navigation }: any) {
   const [votes, setVotes] = useState<Record<string, number>>({});
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<Array<{ id: string; userId: string; name: string; avatar?: string; text: string; sentAt: string }>>([]);
+  const lastSeenMessageIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -85,6 +87,25 @@ export default function TableOrderScreen({ route, navigation }: any) {
             setParticipants(list);
             setActiveTables(tables);
             setChatMessages(messages);
+
+            const latest = messages[messages.length - 1];
+            if (latest) {
+              if (!lastSeenMessageIdRef.current) {
+                lastSeenMessageIdRef.current = latest.id;
+              } else if (latest.id !== lastSeenMessageIdRef.current) {
+                lastSeenMessageIdRef.current = latest.id;
+                if (latest.userId !== userId) {
+                  Notifications.scheduleNotificationAsync({
+                    content: {
+                      title: `${latest.name} in table ${tableCode}`,
+                      body: latest.text,
+                      sound: true,
+                    },
+                    trigger: null,
+                  }).catch(() => {});
+                }
+              }
+            }
           }
         } catch {}
       };
@@ -102,6 +123,17 @@ export default function TableOrderScreen({ route, navigation }: any) {
 
   useEffect(() => {
     loadRestaurantSuggestions();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const settings = await Notifications.getPermissionsAsync();
+        if (settings.status !== 'granted') {
+          await Notifications.requestPermissionsAsync();
+        }
+      } catch {}
+    })();
   }, []);
 
   const loadRestaurantSuggestions = async (query?: string) => {
