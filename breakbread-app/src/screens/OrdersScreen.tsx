@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import * as Location from 'expo-location';
 import { searchNearbyRestaurants } from '../services/api';
 
@@ -10,7 +10,7 @@ interface Place {
   rating?: number;
 }
 
-export default function OrdersScreen() {
+export default function OrdersScreen({ navigation }: any) {
   const [suggestedRestaurants, setSuggestedRestaurants] = useState<Place[]>([]);
 
   useEffect(() => {
@@ -53,10 +53,14 @@ export default function OrdersScreen() {
             <Text style={styles.emptySuggestion}>No suggestions found yet.</Text>
           ) : (
             suggestedRestaurants.map((item) => (
-              <View key={item.place_id} style={styles.suggestionItem}>
+              <TouchableOpacity
+                key={item.place_id}
+                style={styles.suggestionItem}
+                onPress={() => navigation.navigate('RestaurantMenu', { restaurant: item })}
+              >
                 <Text style={styles.suggestionText}>{item.name}</Text>
                 <Text style={styles.suggestionSub} numberOfLines={1}>{item.address}</Text>
-              </View>
+              </TouchableOpacity>
             ))
           )}
         </View>
