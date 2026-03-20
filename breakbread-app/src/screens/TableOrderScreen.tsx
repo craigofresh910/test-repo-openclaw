@@ -142,6 +142,7 @@ export default function TableOrderScreen({ route, navigation }: any) {
 
               return (
                 <View key={p.userId} style={[styles.seat, { left, top, width: seatSize }]}>
+                  <Text style={styles.chair}>🪑</Text>
                   <Text style={styles.seatAvatar}>👤</Text>
                   <Text style={styles.seatName} numberOfLines={1}>{p.name}</Text>
                 </View>
@@ -202,7 +203,7 @@ const styles = StyleSheet.create({
   participants: { marginBottom: 20 },
   participantsTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
   tableScene: {
-    height: 280,
+    height: 300,
     borderRadius: 16,
     backgroundColor: '#f8fafc',
     borderWidth: 1,
@@ -212,9 +213,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   roundTable: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
+    width: 170,
+    height: 170,
+    borderRadius: 85,
     backgroundColor: '#111827',
     alignItems: 'center',
     justifyContent: 'center',
@@ -226,6 +227,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     alignItems: 'center',
   },
+  chair: { fontSize: 20, marginBottom: -2 },
   seatAvatar: { fontSize: 28 },
   seatName: { marginTop: 2, fontSize: 12, fontWeight: '700', color: '#111827', maxWidth: 84, textAlign: 'center' },
 
