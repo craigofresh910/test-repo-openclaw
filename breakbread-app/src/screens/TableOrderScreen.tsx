@@ -392,39 +392,59 @@ export default function TableOrderScreen({ route, navigation }: any) {
 
           {chatMessages.slice(-20).map((m) => {
             const swipeResponder = makeSwipeResponder(m);
+            const mine = m.userId === me.userId;
+            const time = new Date(m.sentAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
             return (
-            <TouchableOpacity key={m.id} style={styles.chatMsgRow} onLongPress={() => openMessageActions(m)} activeOpacity={0.9} {...swipeResponder.panHandlers}>
-              {String(m.avatar || '').startsWith('file:') || String(m.avatar || '').startsWith('http') || String(m.avatar || '').startsWith('data:') ? (
-                <Image source={{ uri: String(m.avatar) }} style={styles.chatAvatarPhoto} />
-              ) : (
-                <Text style={styles.chatAvatar}>{m.avatar || '👤'}</Text>
-              )}
-              <View style={styles.chatBubble}>
-                <View style={styles.chatMsgTopRow}>
-                  <Text style={styles.chatName}>{m.name}</Text>
-                  <TouchableOpacity onPress={() => { setReplyTo({ id: m.id, name: m.name, text: m.text }); setChatInput(`@${m.name} `); }}>
-                    <Text style={styles.chatAction}>Reply</Text>
-                  </TouchableOpacity>
+              <TouchableOpacity
+                key={m.id}
+                style={[styles.chatMsgRow, mine && styles.chatMsgRowMine]}
+                onLongPress={() => openMessageActions(m)}
+                activeOpacity={0.9}
+                {...swipeResponder.panHandlers}
+              >
+                {!mine && (
+                  String(m.avatar || '').startsWith('file:') || String(m.avatar || '').startsWith('http') || String(m.avatar || '').startsWith('data:') ? (
+                    <Image source={{ uri: String(m.avatar) }} style={styles.chatAvatarPhoto} />
+                  ) : (
+                    <Text style={styles.chatAvatar}>{m.avatar || '👤'}</Text>
+                  )
+                )}
+                <View style={[styles.chatBubble, mine && styles.chatBubbleMine]}>
+                  <View style={styles.chatMsgTopRow}>
+                    <Text style={[styles.chatName, mine && styles.chatNameMine]}>{mine ? 'You' : m.name}</Text>
+                    <TouchableOpacity onPress={() => { setReplyTo({ id: m.id, name: m.name, text: m.text }); setChatInput(`@${m.name} `); }}>
+                      <Text style={[styles.chatAction, mine && styles.chatActionMine]}>Reply</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {!!m.replyToName && !!m.replyToText && (
+                    <View style={[styles.replyRefBox, mine && styles.replyRefBoxMine]}>
+                      <Text style={[styles.replyRefText, mine && styles.replyRefTextMine]}>↪ @{m.replyToName}: {m.replyToText}</Text>
+                    </View>
+                  )}
+                  <Text style={[styles.chatText, mine && styles.chatTextMine]}>{m.text}{m.editedAt ? ' (edited)' : ''}</Text>
+                  <View style={styles.chatMetaRow}>
+                    <Text style={[styles.chatTime, mine && styles.chatTimeMine]}>{time}</Text>
+                    {mine && (
+                      <View style={styles.chatOwnActions}>
+                        <TouchableOpacity onPress={() => { setEditingMessageId(m.id); setChatInput(m.text); setReplyTo(null); }}>
+                          <Text style={[styles.chatAction, styles.chatActionMine]}>Edit</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => removeMessage(m.id)}>
+                          <Text style={[styles.chatAction, { color: mine ? '#fee2e2' : '#dc2626' }]}>Delete</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
                 </View>
-                {!!m.replyToName && !!m.replyToText && (
-                  <View style={styles.replyRefBox}>
-                    <Text style={styles.replyRefText}>↪ @{m.replyToName}: {m.replyToText}</Text>
-                  </View>
+                {mine && (
+                  String(m.avatar || '').startsWith('file:') || String(m.avatar || '').startsWith('http') || String(m.avatar || '').startsWith('data:') ? (
+                    <Image source={{ uri: String(m.avatar) }} style={styles.chatAvatarPhoto} />
+                  ) : (
+                    <Text style={styles.chatAvatar}>{m.avatar || '👤'}</Text>
+                  )
                 )}
-                <Text style={styles.chatText}>{m.text}{m.editedAt ? ' (edited)' : ''}</Text>
-                {m.userId === me.userId && (
-                  <View style={styles.chatOwnActions}>
-                    <TouchableOpacity onPress={() => { setEditingMessageId(m.id); setChatInput(m.text); setReplyTo(null); }}>
-                      <Text style={styles.chatAction}>Edit</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => removeMessage(m.id)}>
-                      <Text style={[styles.chatAction, { color: '#dc2626' }]}>Delete</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-            </TouchableOpacity>
-          );
+              </TouchableOpacity>
+            );
           })}
         </View>
 
@@ -633,16 +653,41 @@ const styles = StyleSheet.create({
   },
   chatSendBtn: { backgroundColor: '#111827', borderRadius: 10, paddingHorizontal: 14, justifyContent: 'center' },
   chatSendText: { color: '#fff', fontWeight: '800' },
-  chatMsgRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
-  chatAvatar: { fontSize: 20, marginRight: 8, marginTop: 2 },
-  chatAvatarPhoto: { width: 24, height: 24, borderRadius: 12, marginRight: 8, marginTop: 2 },
-  chatBubble: { flex: 1, backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 10, padding: 8 },
-  chatName: { fontSize: 12, fontWeight: '800', color: '#374151', marginBottom: 2 },
-  chatMsgTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  chatAction: { fontSize: 12, fontWeight: '700', color: '#2563eb' },
-  chatOwnActions: { flexDirection: 'row', gap: 12, marginTop: 6 },
+  chatMsgRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 10 },
+  chatMsgRowMine: { justifyContent: 'flex-end' },
+  chatAvatar: { fontSize: 19, marginHorizontal: 8, marginBottom: 2 },
+  chatAvatarPhoto: { width: 24, height: 24, borderRadius: 12, marginHorizontal: 8, marginBottom: 2 },
+  chatBubble: {
+    maxWidth: '78%',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  chatBubbleMine: {
+    backgroundColor: '#111827',
+    borderColor: '#111827',
+  },
+  chatName: { fontSize: 11, fontWeight: '800', color: '#4b5563', marginBottom: 2 },
+  chatNameMine: { color: '#d1d5db' },
+  chatMsgTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
+  chatAction: { fontSize: 11, fontWeight: '700', color: '#2563eb' },
+  chatActionMine: { color: '#93c5fd' },
+  chatOwnActions: { flexDirection: 'row', gap: 10, marginLeft: 10 },
   replyRefBox: { backgroundColor: '#f3f4f6', borderLeftWidth: 3, borderLeftColor: '#9ca3af', paddingHorizontal: 8, paddingVertical: 5, borderRadius: 6, marginBottom: 6 },
+  replyRefBoxMine: { backgroundColor: '#1f2937', borderLeftColor: '#9ca3af' },
   replyRefText: { fontSize: 11, color: '#4b5563' },
-  chatText: { fontSize: 13, color: '#111827' },
+  replyRefTextMine: { color: '#d1d5db' },
+  chatText: { fontSize: 14, color: '#111827', lineHeight: 19 },
+  chatTextMine: { color: '#f9fafb' },
+  chatMetaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 },
+  chatTime: { fontSize: 10, color: '#9ca3af', fontWeight: '600' },
+  chatTimeMine: { color: '#9ca3af' },
 
 });
