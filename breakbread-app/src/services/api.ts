@@ -63,5 +63,22 @@ export const searchNearbyRestaurants = async (
   }
 };
 
+export const getRestaurantWebsite = async (placeId?: string) => {
+  if (!placeId) return undefined;
+  try {
+    const key = 'AIzaSyBXL7xl4adq0YzUzjWHrlgrLZ4BJq-jidk';
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=website,url,name&key=${key}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.status === 'OK') {
+      return data.result?.website || data.result?.url;
+    }
+    return undefined;
+  } catch (e) {
+    return undefined;
+  }
+};
+
 export const getOrders = async () => [];
 export const createOrder = async () => ({});

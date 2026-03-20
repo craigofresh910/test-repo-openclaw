@@ -2,12 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, TextInput, FlatList, Alert, Linking } from 'react-native';
 import BackArrow from '../components/BackArrow';
 import AppHeader from '../components/AppHeader';
+import { getRestaurantWebsite } from '../services/api';
 
 const MENU_ITEMS: any[] = [];
 
 export default function RestaurantMenuScreen({ route, navigation }: any) {
   const { restaurant } = route.params;
   const [orderItems, setOrderItems] = useState<any[]>([]);
+  const [website, setWebsite] = useState<string | undefined>(restaurant?.website);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      if (!website && restaurant?.place_id) {
+        const w = await getRestaurantWebsite(restaurant.place_id);
+        if (active && w) setWebsite(w);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [restaurant?.place_id]);
 
   const addItem = (item: any) => {
     setOrderItems([...orderItems, item]);
@@ -40,10 +55,10 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
             <Text style={styles.address}>{restaurant.address}</Text>
           </View>
           
-          {restaurant.website ? (
+          {website ? (
             <TouchableOpacity
               style={styles.websiteBtn}
-              onPress={() => Linking.openURL(restaurant.website)}
+              onPress={() => Linking.openURL(website)}
             >
               <Text style={styles.websiteBtnText}>🌐 Visit Website</Text>
             </TouchableOpacity>
