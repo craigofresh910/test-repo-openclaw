@@ -1,16 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, TextInput, FlatList, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, TextInput, FlatList, Alert, Linking } from 'react-native';
 
-const MENU_ITEMS = [
-  { id: '1', name: 'Classic Burger', price: 12.99, description: 'Beef patty, lettuce, tomato, onion' },
-  { id: '2', name: 'Cheeseburger', price: 13.99, description: 'Classic with cheddar' },
-  { id: '3', name: 'French Fries', price: 4.99, description: 'Crispy golden fries' },
-  { id: '4', name: 'Onion Rings', price: 5.99, description: 'Crispy battered rings' },
-  { id: '5', name: 'Milkshake', price: 6.99, description: 'Vanilla, chocolate, strawberry' },
-  { id: '6', name: 'Caesar Salad', price: 9.99, description: 'Romaine, parmesan, croutons' },
-  { id: '7', name: 'Grilled Chicken', price: 14.99, description: 'Herb grilled chicken breast' },
-  { id: '8', name: 'Fish & Chips', price: 15.99, description: 'Beer battered cod, fries' },
-];
+const MENU_ITEMS: any[] = [];
 
 export default function RestaurantMenuScreen({ route, navigation }: any) {
   const { restaurant } = route.params;
@@ -52,7 +43,14 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
           )}
 
           <Text style={styles.sectionTitle}>Menu</Text>
-          <FlatList data={MENU_ITEMS} renderItem={renderItem} keyExtractor={item => item.id} scrollEnabled={false} />
+          {MENU_ITEMS.length === 0 ? (
+            <View style={styles.emptyMenuBox}>
+              <Text style={styles.emptyMenuText}>No menu loaded yet for this restaurant.</Text>
+              <Text style={styles.emptyMenuSub}>Use custom item entry while we fetch live menu data.</Text>
+            </View>
+          ) : (
+            <FlatList data={MENU_ITEMS} renderItem={renderItem} keyExtractor={item => item.id} scrollEnabled={false} />
+          )}
         </View>
       </ScrollView>
       
@@ -84,5 +82,8 @@ const styles = StyleSheet.create({
   addBtnText: { color: '#fff', fontSize: 24, fontWeight: '700' },
   cartBtn: { backgroundColor: '#22c55e', padding: 16, alignItems: 'center' },
   cartBtnText: { color: '#fff', fontWeight: '700', fontSize: 17 },
+  emptyMenuBox: { backgroundColor: '#f9fafb', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#e5e7eb' },
+  emptyMenuText: { fontSize: 15, fontWeight: '600', color: '#111827' },
+  emptyMenuSub: { marginTop: 6, fontSize: 13, color: '#6b7280' },
 });
 
