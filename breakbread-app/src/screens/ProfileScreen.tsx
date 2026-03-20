@@ -1,14 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Switch, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Switch, TextInput, Image } from 'react-native';
 import BackArrow from '../components/BackArrow';
 import AppHeader from '../components/AppHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 
 const AVATARS = ['🍔', '🍕', '🌮', '🍣', '🍜', '🥗', '🍗', '🥐'];
 const PAYMENT_OPTIONS = ['Cash', 'Cash App', 'Zelle'];
 
 export default function ProfileScreen({ navigation }: any) {
   const [avatar, setAvatar] = useState('🍔');
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [username, setUsername] = useState('Demo User');
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -23,26 +25,32 @@ export default function ProfileScreen({ navigation }: any) {
   useEffect(() => {
     (async () => {
       try {
-        const [u, a, n, p] = await Promise.all([
+        const [u, a, n, p, photo] = await Promise.all([
           AsyncStorage.getItem('profile.username'),
           AsyncStorage.getItem('profile.avatar'),
           AsyncStorage.getItem('profile.notifications'),
           AsyncStorage.getItem('profile.payments'),
+          AsyncStorage.getItem('profile.photoUri'),
         ]);
         if (u) setUsername(u);
         if (a) setAvatar(a);
         if (n) setNotificationsEnabled(n === 'true');
         if (p) setPaymentMethods(JSON.parse(p));
+        if (photo) setPhotoUri(photo);
       } catch {}
     })();
   }, []);
 
-  const persistProfile = async (next?: Partial<{ username: string; avatar: string; notifications: boolean; payments: string[] }>) => {
+  const persistProfile = async (next?: Partial<{ username: string; avatar: string; notifications: boolean; payments: string[]; photoUri: string | null }>) => {
     try {
       if (next?.username !== undefined) await AsyncStorage.setItem('profile.username', next.username);
       if (next?.avatar !== undefined) await AsyncStorage.setItem('profile.avatar', next.avatar);
       if (next?.notifications !== undefined) await AsyncStorage.setItem('profile.notifications', String(next.notifications));
       if (next?.payments !== undefined) await AsyncStorage.setItem('profile.payments', JSON.stringify(next.payments));
+      if (next?.photoUri !== undefined) {
+        if (next.photoUri) await AsyncStorage.setItem('profile.photoUri', next.photoUri);
+        else await AsyncStorage.removeItem('profile.photoUri');
+      }
     } catch {}
   };
 
@@ -54,6 +62,24 @@ export default function ProfileScreen({ navigation }: any) {
     });
   };
 
+  const pickProfilePhoto = async () => {
+    try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (perm.status !== 'granted') return;
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        quality: 0.85,
+        aspect: [1, 1],
+      });
+      if (!result.canceled && result.assets?.[0]?.uri) {
+        const uri = result.assets[0].uri;
+        setPhotoUri(uri);
+        persistProfile({ photoUri: uri });
+      }
+    } catch {}
+  };
+
   return (
     <ScrollView style={styles.container}>
       <AppHeader />
@@ -61,8 +87,19 @@ export default function ProfileScreen({ navigation }: any) {
       <View style={styles.content}>
         <Text style={styles.title}>Profile</Text>
 
-        <TouchableOpacity style={styles.avatarSection} onPress={() => setShowAvatarPicker(true)}>
-          <Text style={styles.avatar}>{avatar}</Text>
+        <View style={styles.avatarSection}>
+          <TouchableOpacity onPress={pickProfilePhoto}>
+            {photoUri ? (
+              <Image source={{ uri: photoUri }} style={styles.photoAvatar} />
+            ) : (
+              <Text style={styles.avatar}>{avatar}</Text>
+            )}
+          </TouchableOpacity>
+          <View style={styles.avatarActionsRow}>
+            <TouchableOpacity onPress={pickProfilePhoto}><Text style={styles.inlineAction}>Upload Photo</Text></TouchableOpacity>
+            <Text style={styles.inlineDot}>•</Text>
+            <TouchableOpacity onPress={() => setShowAvatarPicker(true)}><Text style={styles.inlineAction}>Use Emoji</Text></TouchableOpacity>
+          </View>
           <TextInput
             style={styles.usernameInput}
             value={username}
@@ -73,8 +110,8 @@ export default function ProfileScreen({ navigation }: any) {
             placeholder="Your name"
             placeholderTextColor="#9ca3af"
           />
-          <Text style={styles.changeAvatar}>Tap avatar to change • Name is editable</Text>
-        </TouchableOpacity>
+          <Text style={styles.changeAvatar}>Name is editable</Text>
+        </View>
 
         <View style={styles.stats}>
           <View style={styles.stat}>
@@ -135,7 +172,7 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={styles.modalTitle}>Choose Avatar</Text>
             <View style={styles.avatarGrid}>
               {AVATARS.map((a) => (
-                <TouchableOpacity key={a} style={styles.avatarChoice} onPress={() => { setAvatar(a); persistProfile({ avatar: a }); setShowAvatarPicker(false); }}>
+                <TouchableOpacity key={a} style={styles.avatarChoice} onPress={() => { setAvatar(a); setPhotoUri(null); persistProfile({ avatar: a, photoUri: null }); setShowAvatarPicker(false); }}>
                   <Text style={styles.avatarChoiceText}>{a}</Text>
                 </TouchableOpacity>
               ))}
@@ -187,6 +224,17 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '800', marginBottom: 20 },
   avatarSection: { alignItems: 'center', marginBottom: 24 },
   avatar: { fontSize: 80, marginBottom: 8 },
+  photoAvatar: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    marginBottom: 8,
+    borderWidth: 2,
+    borderColor: '#f59e0b',
+  },
+  avatarActionsRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+  inlineAction: { fontSize: 12, color: '#2563eb', fontWeight: '700' },
+  inlineDot: { marginHorizontal: 8, color: '#9ca3af' },
   usernameInput: {
     minWidth: 160,
     textAlign: 'center',
