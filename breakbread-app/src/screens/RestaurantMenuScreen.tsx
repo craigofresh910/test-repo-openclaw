@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, TextInput, FlatList, Alert, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Linking } from 'react-native';
 import BackArrow from '../components/BackArrow';
 import AppHeader from '../components/AppHeader';
 import { getRestaurantWebsite } from '../services/api';
 import { WebView } from 'react-native-webview';
 
-const MENU_ITEMS: any[] = [];
 
 export default function RestaurantMenuScreen({ route, navigation }: any) {
   const { restaurant } = route.params;
-  const [orderItems, setOrderItems] = useState<any[]>([]);
   const [website, setWebsite] = useState<string | undefined>(restaurant?.website);
   const [showWebsitePanel, setShowWebsitePanel] = useState(false);
 
@@ -26,23 +24,6 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
     };
   }, [restaurant?.place_id]);
 
-  const addItem = (item: any) => {
-    setOrderItems([...orderItems, item]);
-    Alert.alert('Added', `${item.name} added to order`);
-  };
-
-  const renderItem = ({ item }: any) => (
-    <View style={styles.menuItem}>
-      <View style={styles.menuInfo}>
-        <Text style={styles.menuName}>{item.name}</Text>
-        <Text style={styles.menuDesc}>{item.description}</Text>
-        <Text style={styles.menuPrice}>${item.price.toFixed(2)}</Text>
-      </View>
-      <TouchableOpacity style={styles.addBtn} onPress={() => addItem(item)}>
-        <Text style={styles.addBtnText}>+</Text>
-      </TouchableOpacity>
-    </View>
-  );
 
   return (
     <View style={{ flex: 1 }}>
@@ -81,24 +62,10 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
             </View>
           ) : null}
 
-          <Text style={styles.sectionTitle}>Menu</Text>
-          {MENU_ITEMS.length === 0 ? (
-            <View style={styles.emptyMenuBox}>
-              <Text style={styles.emptyMenuText}>No menu loaded yet for this restaurant.</Text>
-              <Text style={styles.emptyMenuSub}>Use custom item entry while we fetch live menu data.</Text>
-            </View>
-          ) : (
-            <FlatList data={MENU_ITEMS} renderItem={renderItem} keyExtractor={item => item.id} scrollEnabled={false} />
-          )}
+
         </View>
       </ScrollView>
 
-
-      {orderItems.length > 0 && (
-        <TouchableOpacity style={styles.cartBtn} onPress={() => navigation.navigate('TableOrder', { orderItems })}>
-          <Text style={styles.cartBtnText}>View Order ({orderItems.length})</Text>
-        </TouchableOpacity>
-      )}
     </View>
   );
 }
@@ -112,19 +79,7 @@ const styles = StyleSheet.create({
   address: { color: '#666', flex: 1 },
   websiteBtn: { backgroundColor: '#f59e0b', padding: 14, borderRadius: 12, alignItems: 'center', marginBottom: 20 },
   websiteBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-  sectionTitle: { fontSize: 22, fontWeight: '800', marginBottom: 16 },
-  menuItem: { flexDirection: 'row', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  menuInfo: { flex: 1 },
-  menuName: { fontSize: 16, fontWeight: '700' },
-  menuDesc: { color: '#888', fontSize: 13, marginTop: 2 },
-  menuPrice: { fontSize: 15, fontWeight: '600', color: '#22c55e', marginTop: 4 },
-  addBtn: { backgroundColor: '#f59e0b', width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', alignSelf: 'center' },
-  addBtnText: { color: '#fff', fontSize: 24, fontWeight: '700' },
-  cartBtn: { backgroundColor: '#22c55e', padding: 16, alignItems: 'center' },
-  cartBtnText: { color: '#fff', fontWeight: '700', fontSize: 17 },
-  emptyMenuBox: { backgroundColor: '#f9fafb', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#e5e7eb' },
-  emptyMenuText: { fontSize: 15, fontWeight: '600', color: '#111827' },
-  emptyMenuSub: { marginTop: 6, fontSize: 13, color: '#6b7280' },
+
 
   webPanelWrap: {
     marginBottom: 14,
