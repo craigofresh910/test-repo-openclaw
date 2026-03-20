@@ -24,10 +24,9 @@ interface Place {
   photo?: string;
 }
 
-export default function TableOrderScreen({ route, navigation }: any) {
-  const incoming = route?.params?.tableCode;
-  const [tableCode, setTableCode] = useState<string>(incoming ? String(incoming).toUpperCase() : '');
-  const [tableMode, setTableMode] = useState<'create' | 'join' | 'none'>(incoming ? 'join' : 'none');
+export default function TableOrderScreen({ navigation }: any) {
+  const [tableCode, setTableCode] = useState<string>('');
+  const [tableMode, setTableMode] = useState<'create' | 'join' | 'none'>('none');
   const [joinCodeInput, setJoinCodeInput] = useState('');
 
   const [suggestionInput, setSuggestionInput] = useState('');
