@@ -39,7 +39,7 @@ export default function OrdersScreen({ navigation }: any) {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
       <AppHeader />
       <BackArrow navigation={navigation} />
       <View style={styles.content}>

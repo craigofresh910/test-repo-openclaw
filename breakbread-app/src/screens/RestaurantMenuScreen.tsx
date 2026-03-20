@@ -72,9 +72,9 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
 
   return (
     <View style={{ flex: 1 }}>
-      <AppHeader />
       <BackArrow navigation={navigation} />
-      <ScrollView>
+      <ScrollView stickyHeaderIndices={[0]}>
+        <AppHeader />
         <Image source={{ uri: restaurant.photo || 'https://via.placeholder.com/400' }} style={styles.hero} />
         <View style={styles.content}>
           <Text style={styles.title}>{restaurant.name}</Text>
