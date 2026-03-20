@@ -218,42 +218,6 @@ export default function TableOrderScreen({ route, navigation }: any) {
           </View>
         </View>
 
-        <View style={styles.suggestBox}>
-          <Text style={styles.suggestTitle}>Restaurant Suggestions + Voting</Text>
-
-          <View style={styles.suggestInputRow}>
-            <TextInput
-              style={styles.suggestInput}
-              placeholder="Search suggestions"
-              placeholderTextColor="#9ca3af"
-              value={suggestionInput}
-              onChangeText={setSuggestionInput}
-              onSubmitEditing={() => loadRestaurantSuggestions(suggestionInput.trim() || undefined)}
-            />
-            <TouchableOpacity style={styles.addBtn} onPress={() => loadRestaurantSuggestions(suggestionInput.trim() || undefined)}>
-              <Text style={styles.addBtnText}>Go</Text>
-            </TouchableOpacity>
-          </View>
-
-          {restaurantCards.map((item) => (
-            <View key={item.place_id} style={styles.card}>
-              <TouchableOpacity style={{ flex: 1 }} onPress={() => navigation.navigate('RestaurantMenu', { restaurant: item })}>
-                <Image source={{ uri: item.photo || 'https://via.placeholder.com/400' }} style={styles.cardImage} />
-                <View style={styles.cardContent}>
-                  <Text style={styles.cardTitle}>{item.name}</Text>
-                  <Text style={styles.cardAddress} numberOfLines={1}>{item.address}</Text>
-                </View>
-              </TouchableOpacity>
-              <View style={styles.voteRow}>
-                <TouchableOpacity style={styles.voteBtn} onPress={() => voteFor(item.place_id)}>
-                  <Text style={styles.voteBtnText}>Vote 👍</Text>
-                </TouchableOpacity>
-                <Text style={styles.voteCount}>Votes: {votes[item.place_id] || 0}</Text>
-              </View>
-            </View>
-          ))}
-        </View>
-
         <View style={styles.chatBox}>
           <Text style={styles.chatTitle}>Table Chat</Text>
           <View style={styles.chatInputRow}>
@@ -297,6 +261,42 @@ export default function TableOrderScreen({ route, navigation }: any) {
               <View style={styles.chatBubble}>
                 <Text style={styles.chatName}>{m.name}</Text>
                 <Text style={styles.chatText}>{m.text}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.suggestBox}>
+          <Text style={styles.suggestTitle}>Restaurant Suggestions + Voting</Text>
+
+          <View style={styles.suggestInputRow}>
+            <TextInput
+              style={styles.suggestInput}
+              placeholder="Search suggestions"
+              placeholderTextColor="#9ca3af"
+              value={suggestionInput}
+              onChangeText={setSuggestionInput}
+              onSubmitEditing={() => loadRestaurantSuggestions(suggestionInput.trim() || undefined)}
+            />
+            <TouchableOpacity style={styles.addBtn} onPress={() => loadRestaurantSuggestions(suggestionInput.trim() || undefined)}>
+              <Text style={styles.addBtnText}>Go</Text>
+            </TouchableOpacity>
+          </View>
+
+          {restaurantCards.map((item) => (
+            <View key={item.place_id} style={styles.card}>
+              <TouchableOpacity style={{ flex: 1 }} onPress={() => navigation.navigate('RestaurantMenu', { restaurant: item })}>
+                <Image source={{ uri: item.photo || 'https://via.placeholder.com/400' }} style={styles.cardImage} />
+                <View style={styles.cardContent}>
+                  <Text style={styles.cardTitle}>{item.name}</Text>
+                  <Text style={styles.cardAddress} numberOfLines={1}>{item.address}</Text>
+                </View>
+              </TouchableOpacity>
+              <View style={styles.voteRow}>
+                <TouchableOpacity style={styles.voteBtn} onPress={() => voteFor(item.place_id)}>
+                  <Text style={styles.voteBtnText}>Vote 👍</Text>
+                </TouchableOpacity>
+                <Text style={styles.voteCount}>Votes: {votes[item.place_id] || 0}</Text>
               </View>
             </View>
           ))}
