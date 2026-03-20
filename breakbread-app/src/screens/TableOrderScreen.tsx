@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, Alert, TextInput, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, Alert, TextInput, Image, Vibration } from 'react-native';
 import BackArrow from '../components/BackArrow';
 import AppHeader from '../components/AppHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -35,7 +35,9 @@ export default function TableOrderScreen({ route, navigation }: any) {
   const [votes, setVotes] = useState<Record<string, number>>({});
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<Array<{ id: string; userId: string; name: string; avatar?: string; text: string; sentAt: string }>>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const lastSeenMessageIdRef = useRef<string | null>(null);
+  const seenMessageIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     let mounted = true;
@@ -92,13 +94,21 @@ export default function TableOrderScreen({ route, navigation }: any) {
             if (latest) {
               if (!lastSeenMessageIdRef.current) {
                 lastSeenMessageIdRef.current = latest.id;
-              } else if (latest.id !== lastSeenMessageIdRef.current) {
-                lastSeenMessageIdRef.current = latest.id;
-                if (latest.userId !== userId) {
+                messages.forEach((m: any) => seenMessageIdsRef.current.add(m.id));
+              } else {
+                const newMessages = messages.filter((m: any) => !seenMessageIdsRef.current.has(m.id));
+                newMessages.forEach((m: any) => seenMessageIdsRef.current.add(m.id));
+                const newFromOthers = newMessages.filter((m: any) => m.userId !== userId);
+
+                if (newFromOthers.length > 0) {
+                  const lastIncoming = newFromOthers[newFromOthers.length - 1];
+                  setUnreadCount((c) => c + newFromOthers.length);
+                  lastSeenMessageIdRef.current = lastIncoming.id;
+                  Vibration.vibrate(200);
                   Notifications.scheduleNotificationAsync({
                     content: {
-                      title: `${latest.name} in table ${tableCode}`,
-                      body: latest.text,
+                      title: `${lastIncoming.name} in table ${tableCode}`,
+                      body: newFromOthers.length > 1 ? `${newFromOthers.length} new messages` : lastIncoming.text,
                       sound: true,
                     },
                     trigger: null,
@@ -251,7 +261,14 @@ export default function TableOrderScreen({ route, navigation }: any) {
         </View>
 
         <View style={styles.chatBox}>
-          <Text style={styles.chatTitle}>Table Chat</Text>
+          <View style={styles.chatHeaderRow}>
+            <Text style={styles.chatTitle}>Table Chat</Text>
+            {unreadCount > 0 && (
+              <TouchableOpacity style={styles.unreadBadge} onPress={() => setUnreadCount(0)}>
+                <Text style={styles.unreadBadgeText}>{unreadCount} new</Text>
+              </TouchableOpacity>
+            )}
+          </View>
           <View style={styles.chatInputRow}>
             <TextInput
               style={styles.chatInput}
@@ -264,6 +281,7 @@ export default function TableOrderScreen({ route, navigation }: any) {
                 if (!text) return;
                 await sendTableChat({ code: tableCode, userId: me.userId, name: me.name, avatar: me.avatar, text });
                 setChatInput('');
+                setUnreadCount(0);
                 const latest = await getTableChat(tableCode);
                 setChatMessages(latest?.messages || []);
               }}
@@ -275,6 +293,7 @@ export default function TableOrderScreen({ route, navigation }: any) {
                 if (!text) return;
                 await sendTableChat({ code: tableCode, userId: me.userId, name: me.name, avatar: me.avatar, text });
                 setChatInput('');
+                setUnreadCount(0);
                 const latest = await getTableChat(tableCode);
                 setChatMessages(latest?.messages || []);
               }}
@@ -483,7 +502,10 @@ const styles = StyleSheet.create({
     borderColor: '#e5e7eb',
     padding: 12,
   },
-  chatTitle: { fontSize: 16, fontWeight: '800', marginBottom: 10, color: '#111827' },
+  chatHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  chatTitle: { fontSize: 16, fontWeight: '800', color: '#111827' },
+  unreadBadge: { backgroundColor: '#ef4444', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  unreadBadgeText: { color: '#fff', fontWeight: '800', fontSize: 12 },
   chatInputRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
   chatInput: {
     flex: 1,
