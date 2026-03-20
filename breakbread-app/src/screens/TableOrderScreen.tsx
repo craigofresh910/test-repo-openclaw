@@ -124,12 +124,29 @@ export default function TableOrderScreen({ route, navigation }: any) {
 
         <View style={styles.participants}>
           <Text style={styles.participantsTitle}>At the Table ({participants.length || 1})</Text>
-          {(participants.length ? participants : [{ userId: me.userId, name: me.name }]).map((p) => (
-            <View key={p.userId} style={styles.participant}>
-              <Text style={styles.participantAvatar}>👤</Text>
-              <Text style={styles.participantName}>{p.name}</Text>
+
+          <View style={styles.tableScene}>
+            <View style={styles.roundTable}>
+              <Text style={styles.roundTableText}>BREAKBREAD TABLE</Text>
             </View>
-          ))}
+
+            {(participants.length ? participants : [{ userId: me.userId, name: me.name }]).slice(0, 6).map((p, idx) => {
+              const seatStyles = [
+                styles.seatTop,
+                styles.seatTopRight,
+                styles.seatBottomRight,
+                styles.seatBottom,
+                styles.seatBottomLeft,
+                styles.seatTopLeft,
+              ];
+              return (
+                <View key={p.userId} style={[styles.seat, seatStyles[idx]]}>
+                  <Text style={styles.seatAvatar}>👤</Text>
+                  <Text style={styles.seatName} numberOfLines={1}>{p.name}</Text>
+                </View>
+              );
+            })}
+          </View>
         </View>
 
         <View style={styles.suggestBox}>
@@ -183,9 +200,40 @@ const styles = StyleSheet.create({
   shareBtnText: { color: '#fff', fontWeight: '700', fontSize: 17 },
   participants: { marginBottom: 20 },
   participantsTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
-  participant: { flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: '#f9f9f9', borderRadius: 12, marginBottom: 8 },
-  participantAvatar: { fontSize: 32, marginRight: 12 },
-  participantName: { fontSize: 16, fontWeight: '600' },
+  tableScene: {
+    height: 280,
+    borderRadius: 16,
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  roundTable: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: '#111827',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 4,
+    borderColor: '#f59e0b',
+  },
+  roundTableText: { color: '#fff', fontWeight: '800', fontSize: 11, textAlign: 'center', paddingHorizontal: 10 },
+  seat: {
+    position: 'absolute',
+    width: 88,
+    alignItems: 'center',
+  },
+  seatAvatar: { fontSize: 28 },
+  seatName: { marginTop: 2, fontSize: 12, fontWeight: '700', color: '#111827', maxWidth: 84, textAlign: 'center' },
+  seatTop: { top: 14, left: '50%', marginLeft: -44 },
+  seatTopRight: { top: 58, right: 14 },
+  seatBottomRight: { bottom: 58, right: 14 },
+  seatBottom: { bottom: 14, left: '50%', marginLeft: -44 },
+  seatBottomLeft: { bottom: 58, left: 14 },
+  seatTopLeft: { top: 58, left: 14 },
 
   suggestBox: {
     marginBottom: 20,
