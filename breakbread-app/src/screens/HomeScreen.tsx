@@ -255,8 +255,6 @@ export default function HomeScreen({ navigation }: any) {
           ))}
         </View>
 
-        <AdBanner />
-
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Nearby</Text>
           {loading ? <ActivityIndicator size="large" color="#f59e0b" style={{ margin: 20 }} /> : (
@@ -270,6 +268,8 @@ export default function HomeScreen({ navigation }: any) {
             </>
           )}
         </View>
+
+        <AdBanner />
       </ScrollView>
 
       <Modal
