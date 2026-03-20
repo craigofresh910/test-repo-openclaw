@@ -4,6 +4,7 @@ import BackArrow from '../components/BackArrow';
 import AppHeader from '../components/AppHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
+import * as FileSystem from 'expo-file-system';
 import { createLiveTable, getLiveTable, getTableChat, getUserLiveTables, joinLiveTable, leaveLiveTable, searchNearbyRestaurants, sendTableChat } from '../services/api';
 
 function generateTableCode() {
@@ -43,7 +44,16 @@ export default function TableOrderScreen({ route, navigation }: any) {
       let name = (await AsyncStorage.getItem('profile.username')) || 'You';
       const photoUri = await AsyncStorage.getItem('profile.photoUri');
       const avatarEmoji = (await AsyncStorage.getItem('profile.avatar')) || '👤';
-      const avatar = photoUri || avatarEmoji;
+      let avatar = avatarEmoji;
+
+      if (photoUri) {
+        try {
+          const b64 = await FileSystem.readAsStringAsync(photoUri, { encoding: FileSystem.EncodingType.Base64 });
+          avatar = `data:image/jpeg;base64,${b64}`;
+        } catch {
+          avatar = avatarEmoji;
+        }
+      }
 
       if (!userId) {
         userId = `u_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -195,7 +205,7 @@ export default function TableOrderScreen({ route, navigation }: any) {
                 <View key={p.userId} style={[styles.seat, { left, top, width: seatSize }]}>
                   <View style={styles.chairBack} />
                   <View style={styles.personDot}>
-                    {String(p.avatar || '').startsWith('file:') || String(p.avatar || '').startsWith('http') ? (
+                    {String(p.avatar || '').startsWith('file:') || String(p.avatar || '').startsWith('http') || String(p.avatar || '').startsWith('data:') ? (
                       <Image source={{ uri: String(p.avatar) }} style={styles.personPhoto} />
                     ) : (
                       <Text style={styles.personInitial}>{p.avatar || (p.name || 'U').charAt(0).toUpperCase()}</Text>
@@ -279,7 +289,7 @@ export default function TableOrderScreen({ route, navigation }: any) {
 
           {chatMessages.slice(-20).map((m) => (
             <View key={m.id} style={styles.chatMsgRow}>
-              {String(m.avatar || '').startsWith('file:') || String(m.avatar || '').startsWith('http') ? (
+              {String(m.avatar || '').startsWith('file:') || String(m.avatar || '').startsWith('http') || String(m.avatar || '').startsWith('data:') ? (
                 <Image source={{ uri: String(m.avatar) }} style={styles.chatAvatarPhoto} />
               ) : (
                 <Text style={styles.chatAvatar}>{m.avatar || '👤'}</Text>
