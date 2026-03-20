@@ -41,7 +41,9 @@ export default function TableOrderScreen({ route, navigation }: any) {
     const init = async () => {
       let userId = await AsyncStorage.getItem('bb.userId');
       let name = (await AsyncStorage.getItem('profile.username')) || 'You';
-      const avatar = (await AsyncStorage.getItem('profile.avatar')) || '👤';
+      const photoUri = await AsyncStorage.getItem('profile.photoUri');
+      const avatarEmoji = (await AsyncStorage.getItem('profile.avatar')) || '👤';
+      const avatar = photoUri || avatarEmoji;
 
       if (!userId) {
         userId = `u_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -193,7 +195,11 @@ export default function TableOrderScreen({ route, navigation }: any) {
                 <View key={p.userId} style={[styles.seat, { left, top, width: seatSize }]}>
                   <View style={styles.chairBack} />
                   <View style={styles.personDot}>
-                    <Text style={styles.personInitial}>{p.avatar || (p.name || 'U').charAt(0).toUpperCase()}</Text>
+                    {String(p.avatar || '').startsWith('file:') || String(p.avatar || '').startsWith('http') ? (
+                      <Image source={{ uri: String(p.avatar) }} style={styles.personPhoto} />
+                    ) : (
+                      <Text style={styles.personInitial}>{p.avatar || (p.name || 'U').charAt(0).toUpperCase()}</Text>
+                    )}
                   </View>
                   <Text style={styles.seatName} numberOfLines={1}>{p.name}</Text>
                 </View>
@@ -273,7 +279,11 @@ export default function TableOrderScreen({ route, navigation }: any) {
 
           {chatMessages.slice(-20).map((m) => (
             <View key={m.id} style={styles.chatMsgRow}>
-              <Text style={styles.chatAvatar}>{m.avatar || '👤'}</Text>
+              {String(m.avatar || '').startsWith('file:') || String(m.avatar || '').startsWith('http') ? (
+                <Image source={{ uri: String(m.avatar) }} style={styles.chatAvatarPhoto} />
+              ) : (
+                <Text style={styles.chatAvatar}>{m.avatar || '👤'}</Text>
+              )}
               <View style={styles.chatBubble}>
                 <Text style={styles.chatName}>{m.name}</Text>
                 <Text style={styles.chatText}>{m.text}</Text>
@@ -363,6 +373,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   personInitial: { fontWeight: '800', color: '#374151' },
+  personPhoto: { width: 34, height: 34, borderRadius: 17 },
   seatName: { marginTop: 4, fontSize: 12, fontWeight: '700', color: '#111827', maxWidth: 86, textAlign: 'center' },
 
   suggestBox: {
@@ -446,6 +457,7 @@ const styles = StyleSheet.create({
   chatSendText: { color: '#fff', fontWeight: '800' },
   chatMsgRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
   chatAvatar: { fontSize: 20, marginRight: 8, marginTop: 2 },
+  chatAvatarPhoto: { width: 24, height: 24, borderRadius: 12, marginRight: 8, marginTop: 2 },
   chatBubble: { flex: 1, backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 10, padding: 8 },
   chatName: { fontSize: 12, fontWeight: '800', color: '#374151', marginBottom: 2 },
   chatText: { fontSize: 13, color: '#111827' },
