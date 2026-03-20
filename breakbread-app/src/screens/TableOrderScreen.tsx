@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, Alert, TextInput, Image, Vibration, PanResponder } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, Alert, TextInput, Image, Vibration } from 'react-native';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 import BackArrow from '../components/BackArrow';
 import AppHeader from '../components/AppHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -252,29 +253,24 @@ export default function TableOrderScreen({ route, navigation }: any) {
     Alert.alert('Message actions', `@${m.name}${mine ? ' • swipe → edit, swipe ← delete' : ''}`, buttons);
   };
 
-  const makeSwipeResponder = (m: any) =>
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_evt, gestureState) => Math.abs(gestureState.dx) > 20,
-      onPanResponderRelease: (_evt, gestureState) => {
-        if (m.userId === me.userId) {
-          if (gestureState.dx > 70) {
-            setEditingMessageId(m.id);
-            setChatInput(m.text);
-            setReplyTo(null);
-            return;
-          }
-          if (gestureState.dx < -70) {
-            removeMessage(m.id);
-            return;
-          }
-        }
+  const onOpenLeftAction = (m: any) => {
+    if (m.userId === me.userId) {
+      setEditingMessageId(m.id);
+      setChatInput(m.text);
+      setReplyTo(null);
+      return;
+    }
+    setReplyTo({ id: m.id, name: m.name, text: m.text });
+    setChatInput(`@${m.name} `);
+  };
 
-        if (gestureState.dx > 70) {
-          setReplyTo({ id: m.id, name: m.name, text: m.text });
-          setChatInput(`@${m.name} `);
-        }
-      },
-    });
+  const onOpenRightAction = (m: any) => {
+    if (m.userId !== me.userId) return;
+    Alert.alert('Delete message?', 'This will remove your message for everyone at table.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => removeMessage(m.id) },
+    ]);
+  };
 
   return (
     <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
@@ -387,16 +383,35 @@ export default function TableOrderScreen({ route, navigation }: any) {
           </View>
 
           {chatMessages.slice(-20).map((m) => {
-            const swipeResponder = makeSwipeResponder(m);
             const mine = m.userId === me.userId;
             const time = new Date(m.sentAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
             return (
-              <TouchableOpacity
+              <Swipeable
                 key={m.id}
+                overshootLeft={false}
+                overshootRight={false}
+                friction={2}
+                leftThreshold={40}
+                rightThreshold={40}
+                onSwipeableOpen={(direction) => {
+                  if (direction === 'left') onOpenRightAction(m);
+                  if (direction === 'right') onOpenLeftAction(m);
+                }}
+                renderLeftActions={() => (
+                  <View style={[styles.swipeAction, styles.swipeEditAction]}>
+                    <Text style={styles.swipeActionText}>{mine ? 'Edit' : 'Reply'}</Text>
+                  </View>
+                )}
+                renderRightActions={() => (
+                  <View style={[styles.swipeAction, styles.swipeDeleteAction]}>
+                    <Text style={styles.swipeActionText}>{mine ? 'Delete' : 'Reply'}</Text>
+                  </View>
+                )}
+              >
+              <TouchableOpacity
                 style={[styles.chatMsgRow, mine && styles.chatMsgRowMine]}
                 onLongPress={() => openMessageActions(m)}
                 activeOpacity={0.9}
-                {...swipeResponder.panHandlers}
               >
                 {!mine && (
                   String(m.avatar || '').startsWith('file:') || String(m.avatar || '').startsWith('http') || String(m.avatar || '').startsWith('data:') ? (
@@ -433,6 +448,7 @@ export default function TableOrderScreen({ route, navigation }: any) {
                   )
                 )}
               </TouchableOpacity>
+              </Swipeable>
             );
           })}
         </View>
@@ -642,6 +658,11 @@ const styles = StyleSheet.create({
   },
   chatSendBtn: { backgroundColor: '#111827', borderRadius: 10, paddingHorizontal: 14, justifyContent: 'center' },
   chatSendText: { color: '#fff', fontWeight: '800' },
+  swipeAction: { justifyContent: 'center', borderRadius: 14, marginBottom: 10, paddingHorizontal: 14 },
+  swipeEditAction: { backgroundColor: '#2563eb' },
+  swipeDeleteAction: { backgroundColor: '#dc2626' },
+  swipeActionText: { color: '#fff', fontWeight: '800', fontSize: 12 },
+
   chatMsgRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 10 },
   chatMsgRowMine: { justifyContent: 'flex-end' },
   chatAvatar: { fontSize: 19, marginHorizontal: 8, marginBottom: 2 },
