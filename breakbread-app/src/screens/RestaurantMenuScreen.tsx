@@ -86,7 +86,14 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
               <TouchableOpacity style={styles.tableCtaBtn} onPress={() => navigation.navigate('TableOrder')}>
                 <Text style={styles.tableCtaText}>Start Table</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.tableCtaBtnSecondary} onPress={() => navigation.navigate('HomeMain')}>
+              <TouchableOpacity
+                style={styles.tableCtaBtnSecondary}
+                onPress={() => {
+                  const parent = navigation.getParent?.();
+                  if (parent) parent.navigate('Table');
+                  else navigation.navigate('TableMain');
+                }}
+              >
                 <Text style={styles.tableCtaTextSecondary}>Join Table</Text>
               </TouchableOpacity>
             </View>
