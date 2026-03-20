@@ -198,6 +198,13 @@ export default function TableOrderScreen({ route, navigation }: any) {
     setVotes((prev) => ({ ...prev, [placeId]: (prev[placeId] || 0) + 1 }));
   };
 
+  const swipeLeavePrompt = () => {
+    Alert.alert('Leave table?', 'Are you sure you want to leave this table?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Leave', style: 'destructive', onPress: leaveTable },
+    ]);
+  };
+
   const createTableNow = () => {
     const code = generateTableCode();
     setTableMode('create');
@@ -354,9 +361,24 @@ export default function TableOrderScreen({ route, navigation }: any) {
           <Text style={styles.shareBtnText}>📤 Share Invite</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.leaveBtn} onPress={leaveTable}>
-          <Text style={styles.leaveBtnText}>Leave Table</Text>
-        </TouchableOpacity>
+        <Swipeable
+          overshootLeft={false}
+          overshootRight={false}
+          friction={2}
+          rightThreshold={42}
+          onSwipeableOpen={(direction) => {
+            if (direction === 'left') swipeLeavePrompt();
+          }}
+          renderRightActions={() => (
+            <View style={[styles.swipeAction, styles.leaveSwipeAction]}>
+              <Text style={styles.swipeActionText}>Release to Leave</Text>
+            </View>
+          )}
+        >
+          <View style={styles.leaveBtn}>
+            <Text style={styles.leaveBtnText}>Swipe ← to Leave Table</Text>
+          </View>
+        </Swipeable>
 
         <View style={styles.participants}>
           <Text style={styles.participantsTitle}>At the Table ({participants.length || 1})</Text>
@@ -720,6 +742,7 @@ const styles = StyleSheet.create({
   swipeAction: { justifyContent: 'center', borderRadius: 14, marginBottom: 10, paddingHorizontal: 14 },
   swipeEditAction: { backgroundColor: '#2563eb' },
   swipeDeleteAction: { backgroundColor: '#dc2626' },
+  leaveSwipeAction: { backgroundColor: '#dc2626', marginBottom: 20, alignItems: 'center' },
   swipeActionText: { color: '#fff', fontWeight: '800', fontSize: 12 },
 
   chatMsgRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 10 },
