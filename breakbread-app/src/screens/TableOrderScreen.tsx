@@ -267,11 +267,11 @@ const styles = StyleSheet.create({
     width: 220,
     height: 220,
     borderRadius: 110,
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFEF2',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 6,
-    borderColor: '#D4AF37',
+    borderColor: '#000000',
   },
   tableLogo: { width: 130, height: 60, borderRadius: 8 },
   seat: {
