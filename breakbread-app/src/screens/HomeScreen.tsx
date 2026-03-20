@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, TextInput,
 import { searchNearbyRestaurants } from '../services/api';
 import * as Location from 'expo-location';
 import AppHeader from '../components/AppHeader';
-import AdBanner from '../components/AdBanner';
+import MovingAd from '../components/MovingAd';
 
 const CATEGORIES = [
   { id: '1', name: 'Burgers', icon: '🍔' },
@@ -263,7 +263,7 @@ export default function HomeScreen({ navigation }: any) {
         </View>
 
         <View style={styles.section}>
-          {showFeedAd ? <AdBanner /> : null}
+          {showFeedAd ? <MovingAd /> : null}
           <Text style={styles.sectionTitle}>Nearby</Text>
           {loading ? <ActivityIndicator size="large" color="#f59e0b" style={{ margin: 20 }} /> : (
             <>

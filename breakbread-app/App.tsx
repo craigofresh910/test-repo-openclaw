@@ -9,7 +9,6 @@ import RestaurantMenuScreen from './src/screens/RestaurantMenuScreen';
 import TableOrderScreen from './src/screens/TableOrderScreen';
 import OrdersScreen from './src/screens/OrdersScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
-import MovingAd from './src/components/MovingAd';
 
 const Tab = createBottomTabNavigator();
 const HomeStack = createNativeStackNavigator();
@@ -67,12 +66,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <Tab.Navigator
-        tabBar={(props) => (
-          <View>
-            <MovingAd />
-            <BottomTabBar {...props} />
-          </View>
-        )}
+        tabBar={(props) => <BottomTabBar {...props} />}
         screenOptions={{
           headerShown: false,
           tabBarStyle: { height: 80, paddingBottom: 20, paddingTop: 10 },
