@@ -116,7 +116,9 @@ export default function TableOrderScreen({ route, navigation }: any) {
   const leaveTable = async () => {
     try {
       await leaveLiveTable({ code: tableCode, userId: me.userId });
-      navigation.navigate('HomeMain');
+      const parent = navigation.getParent?.();
+      if (parent) parent.navigate('Home');
+      else navigation.navigate('TableMain');
     } catch {
       Alert.alert('Leave failed', 'Could not leave table right now.');
     }
