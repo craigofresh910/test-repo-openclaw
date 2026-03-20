@@ -123,7 +123,7 @@ export const getRestaurantDetails = async (placeId?: string) => {
   }
 };
 
-export const createLiveTable = async (payload: { userId: string; name: string; code?: string }) => {
+export const createLiveTable = async (payload: { userId: string; name: string; code?: string; avatar?: string }) => {
   const res = await fetch(`${API_BASE}/tables/create`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -132,7 +132,7 @@ export const createLiveTable = async (payload: { userId: string; name: string; c
   return res.json();
 };
 
-export const joinLiveTable = async (payload: { code: string; userId: string; name: string }) => {
+export const joinLiveTable = async (payload: { code: string; userId: string; name: string; avatar?: string }) => {
   const res = await fetch(`${API_BASE}/tables/join`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -157,6 +157,20 @@ export const getLiveTable = async (code: string) => {
 
 export const getUserLiveTables = async (userId: string) => {
   const res = await fetch(`${API_BASE}/tables/user/${encodeURIComponent(userId)}`);
+  return res.json();
+};
+
+export const getTableChat = async (code: string) => {
+  const res = await fetch(`${API_BASE}/tables/chat/${encodeURIComponent(code)}`);
+  return res.json();
+};
+
+export const sendTableChat = async (payload: { code: string; userId: string; name: string; avatar?: string; text: string }) => {
+  const res = await fetch(`${API_BASE}/tables/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
   return res.json();
 };
 

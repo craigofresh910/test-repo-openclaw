@@ -4,7 +4,7 @@ import BackArrow from '../components/BackArrow';
 import AppHeader from '../components/AppHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
-import { createLiveTable, getLiveTable, getUserLiveTables, joinLiveTable, leaveLiveTable, searchNearbyRestaurants } from '../services/api';
+import { createLiveTable, getLiveTable, getTableChat, getUserLiveTables, joinLiveTable, leaveLiveTable, searchNearbyRestaurants, sendTableChat } from '../services/api';
 
 function generateTableCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -27,10 +27,12 @@ export default function TableOrderScreen({ route, navigation }: any) {
 
   const [suggestionInput, setSuggestionInput] = useState('');
   const [restaurantCards, setRestaurantCards] = useState<Place[]>([]);
-  const [participants, setParticipants] = useState<Array<{ userId: string; name: string }>>([]);
-  const [activeTables, setActiveTables] = useState<Array<{ code: string; createdAt: string; participants: Array<{ userId: string; name: string }> }>>([]);
-  const [me, setMe] = useState<{ userId: string; name: string }>({ userId: 'guest', name: 'You' });
+  const [participants, setParticipants] = useState<Array<{ userId: string; name: string; avatar?: string }>>([]);
+  const [activeTables, setActiveTables] = useState<Array<{ code: string; createdAt: string; participants: Array<{ userId: string; name: string; avatar?: string }> }>>([]);
+  const [me, setMe] = useState<{ userId: string; name: string; avatar?: string }>({ userId: 'guest', name: 'You', avatar: '👤' });
   const [votes, setVotes] = useState<Record<string, number>>({});
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState<Array<{ id: string; userId: string; name: string; avatar?: string; text: string; sentAt: string }>>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -39,34 +41,38 @@ export default function TableOrderScreen({ route, navigation }: any) {
     const init = async () => {
       let userId = await AsyncStorage.getItem('bb.userId');
       let name = (await AsyncStorage.getItem('profile.username')) || 'You';
+      const avatar = (await AsyncStorage.getItem('profile.avatar')) || '👤';
 
       if (!userId) {
         userId = `u_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
         await AsyncStorage.setItem('bb.userId', userId);
       }
-      if (mounted) setMe({ userId, name });
+      if (mounted) setMe({ userId, name, avatar });
 
       try {
         if (incoming) {
-          await joinLiveTable({ code: tableCode, userId, name });
+          await joinLiveTable({ code: tableCode, userId, name, avatar });
         } else {
-          await createLiveTable({ code: tableCode, userId, name });
+          await createLiveTable({ code: tableCode, userId, name, avatar });
         }
       } catch {}
 
       const refresh = async () => {
         try {
-          const [tableData, userTablesData] = await Promise.all([
+          const [tableData, userTablesData, chatData] = await Promise.all([
             getLiveTable(tableCode),
             getUserLiveTables(userId),
+            getTableChat(tableCode),
           ]);
 
           const list = tableData?.table?.participants || [];
           const tables = userTablesData?.tables || [];
+          const messages = chatData?.messages || [];
 
           if (mounted) {
             setParticipants(list);
             setActiveTables(tables);
+            setChatMessages(messages);
           }
         } catch {}
       };
@@ -187,7 +193,7 @@ export default function TableOrderScreen({ route, navigation }: any) {
                 <View key={p.userId} style={[styles.seat, { left, top, width: seatSize }]}>
                   <View style={styles.chairBack} />
                   <View style={styles.personDot}>
-                    <Text style={styles.personInitial}>{(p.name || 'U').charAt(0).toUpperCase()}</Text>
+                    <Text style={styles.personInitial}>{p.avatar || (p.name || 'U').charAt(0).toUpperCase()}</Text>
                   </View>
                   <Text style={styles.seatName} numberOfLines={1}>{p.name}</Text>
                 </View>
@@ -227,6 +233,50 @@ export default function TableOrderScreen({ route, navigation }: any) {
                   <Text style={styles.voteBtnText}>Vote 👍</Text>
                 </TouchableOpacity>
                 <Text style={styles.voteCount}>Votes: {votes[item.place_id] || 0}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.chatBox}>
+          <Text style={styles.chatTitle}>Table Chat</Text>
+          <View style={styles.chatInputRow}>
+            <TextInput
+              style={styles.chatInput}
+              placeholder="Say something..."
+              placeholderTextColor="#9ca3af"
+              value={chatInput}
+              onChangeText={setChatInput}
+              onSubmitEditing={async () => {
+                const text = chatInput.trim();
+                if (!text) return;
+                await sendTableChat({ code: tableCode, userId: me.userId, name: me.name, avatar: me.avatar, text });
+                setChatInput('');
+                const latest = await getTableChat(tableCode);
+                setChatMessages(latest?.messages || []);
+              }}
+            />
+            <TouchableOpacity
+              style={styles.chatSendBtn}
+              onPress={async () => {
+                const text = chatInput.trim();
+                if (!text) return;
+                await sendTableChat({ code: tableCode, userId: me.userId, name: me.name, avatar: me.avatar, text });
+                setChatInput('');
+                const latest = await getTableChat(tableCode);
+                setChatMessages(latest?.messages || []);
+              }}
+            >
+              <Text style={styles.chatSendText}>Send</Text>
+            </TouchableOpacity>
+          </View>
+
+          {chatMessages.slice(-20).map((m) => (
+            <View key={m.id} style={styles.chatMsgRow}>
+              <Text style={styles.chatAvatar}>{m.avatar || '👤'}</Text>
+              <View style={styles.chatBubble}>
+                <Text style={styles.chatName}>{m.name}</Text>
+                <Text style={styles.chatText}>{m.text}</Text>
               </View>
             </View>
           ))}
@@ -371,5 +421,33 @@ const styles = StyleSheet.create({
   },
   voteBtnText: { color: '#fff', fontWeight: '700', fontSize: 12 },
   voteCount: { color: '#374151', fontWeight: '700', fontSize: 12 },
+
+  chatBox: {
+    marginBottom: 20,
+    backgroundColor: '#f9fafb',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    padding: 12,
+  },
+  chatTitle: { fontSize: 16, fontWeight: '800', marginBottom: 10, color: '#111827' },
+  chatInputRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
+  chatInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    color: '#111827',
+    backgroundColor: '#fff',
+  },
+  chatSendBtn: { backgroundColor: '#111827', borderRadius: 10, paddingHorizontal: 14, justifyContent: 'center' },
+  chatSendText: { color: '#fff', fontWeight: '800' },
+  chatMsgRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
+  chatAvatar: { fontSize: 20, marginRight: 8, marginTop: 2 },
+  chatBubble: { flex: 1, backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 10, padding: 8 },
+  chatName: { fontSize: 12, fontWeight: '800', color: '#374151', marginBottom: 2 },
+  chatText: { fontSize: 13, color: '#111827' },
 
 });
