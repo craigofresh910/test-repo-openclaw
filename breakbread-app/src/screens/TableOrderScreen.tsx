@@ -130,17 +130,18 @@ export default function TableOrderScreen({ route, navigation }: any) {
               <Text style={styles.roundTableText}>BREAKBREAD TABLE</Text>
             </View>
 
-            {(participants.length ? participants : [{ userId: me.userId, name: me.name }]).slice(0, 6).map((p, idx) => {
-              const seatStyles = [
-                styles.seatTop,
-                styles.seatTopRight,
-                styles.seatBottomRight,
-                styles.seatBottom,
-                styles.seatBottomLeft,
-                styles.seatTopLeft,
-              ];
+            {(participants.length ? participants : [{ userId: me.userId, name: me.name }]).slice(0, 6).map((p, idx, arr) => {
+              const total = Math.max(arr.length, 1);
+              const angle = (-Math.PI / 2) + (idx * (2 * Math.PI / total));
+              const centerX = 140;
+              const centerY = 140;
+              const radius = 108;
+              const seatSize = 78;
+              const left = centerX + Math.cos(angle) * radius - seatSize / 2;
+              const top = centerY + Math.sin(angle) * radius - seatSize / 2;
+
               return (
-                <View key={p.userId} style={[styles.seat, seatStyles[idx]]}>
+                <View key={p.userId} style={[styles.seat, { left, top, width: seatSize }]}>
                   <Text style={styles.seatAvatar}>👤</Text>
                   <Text style={styles.seatName} numberOfLines={1}>{p.name}</Text>
                 </View>
@@ -223,17 +224,10 @@ const styles = StyleSheet.create({
   roundTableText: { color: '#fff', fontWeight: '800', fontSize: 11, textAlign: 'center', paddingHorizontal: 10 },
   seat: {
     position: 'absolute',
-    width: 88,
     alignItems: 'center',
   },
   seatAvatar: { fontSize: 28 },
   seatName: { marginTop: 2, fontSize: 12, fontWeight: '700', color: '#111827', maxWidth: 84, textAlign: 'center' },
-  seatTop: { top: 14, left: '50%', marginLeft: -44 },
-  seatTopRight: { top: 58, right: 14 },
-  seatBottomRight: { bottom: 58, right: 14 },
-  seatBottom: { bottom: 14, left: '50%', marginLeft: -44 },
-  seatBottomLeft: { bottom: 58, left: 14 },
-  seatTopLeft: { top: 58, left: 14 },
 
   suggestBox: {
     marginBottom: 20,
