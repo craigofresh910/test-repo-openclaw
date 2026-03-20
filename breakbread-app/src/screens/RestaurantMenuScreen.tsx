@@ -43,7 +43,6 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
           <Text style={styles.title}>{restaurant.name}</Text>
           <View style={styles.row}>
             {(details?.rating || restaurant.rating) && <Text style={styles.rating}>⭐ {details?.rating || restaurant.rating}</Text>}
-            <Text style={styles.address}>{restaurant.address}</Text>
           </View>
 
           <View style={styles.infoCard}>
@@ -129,7 +128,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '800', marginBottom: 8 },
   row: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   rating: { backgroundColor: '#22c55e', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginRight: 10, color: '#fff', fontWeight: '700' },
-  address: { color: '#666', flex: 1 },
   websiteBtn: { backgroundColor: '#f59e0b', padding: 14, borderRadius: 12, alignItems: 'center', marginBottom: 20 },
   websiteBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 
