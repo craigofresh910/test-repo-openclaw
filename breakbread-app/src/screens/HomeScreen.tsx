@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, TextInput, FlatList, RefreshControl, ActivityIndicator, Modal, Alert, Linking } from 'react-native';
 import { searchNearbyRestaurants } from '../services/api';
 import * as Location from 'expo-location';
+import BackArrow from '../components/BackArrow';
 
 const HOME_LOGO = require('../../assets/breakbread-logo.png');
 
@@ -195,6 +196,7 @@ export default function HomeScreen({ navigation }: any) {
 
   return (
     <View style={{ flex: 1 }}>
+      <BackArrow navigation={navigation} />
       <ScrollView
         style={styles.container}
         stickyHeaderIndices={[0]}

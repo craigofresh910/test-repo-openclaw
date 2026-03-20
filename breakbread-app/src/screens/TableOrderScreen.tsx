@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import BackArrow from '../components/BackArrow';
 
 export default function TableOrderScreen({ route, navigation }: any) {
   const { tableCode } = route.params || {};
@@ -7,6 +8,7 @@ export default function TableOrderScreen({ route, navigation }: any) {
 
   return (
     <ScrollView style={styles.container}>
+      <BackArrow navigation={navigation} />
       <View style={styles.content}>
         <Text style={styles.title}>Table</Text>
         

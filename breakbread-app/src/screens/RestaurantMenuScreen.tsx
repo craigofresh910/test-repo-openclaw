@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, TextInput, FlatList, Alert, Linking } from 'react-native';
+import BackArrow from '../components/BackArrow';
 
 const MENU_ITEMS: any[] = [];
 
@@ -27,6 +28,7 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
 
   return (
     <View style={{ flex: 1 }}>
+      <BackArrow navigation={navigation} />
       <ScrollView>
         <Image source={{ uri: restaurant.photo || 'https://via.placeholder.com/400' }} style={styles.hero} />
         <View style={styles.content}>

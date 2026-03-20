@@ -1,11 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import BackArrow from '../components/BackArrow';
 
 const AVATARS = ['👤', '🍔', '🍕', '🌮', '🍣', '🍜', '🥗', '🍔'];
 
-export default function ProfileScreen() {
+export default function ProfileScreen({ navigation }: any) {
   return (
     <ScrollView style={styles.container}>
+      <BackArrow navigation={navigation} />
       <View style={styles.content}>
         <Text style={styles.title}>Profile</Text>
         
