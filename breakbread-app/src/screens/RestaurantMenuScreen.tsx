@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Linking, Modal, Pressable } from 'react-native';
 import BackArrow from '../components/BackArrow';
 import AppHeader from '../components/AppHeader';
 import { getRestaurantWebsite, getRestaurantDetails } from '../services/api';
@@ -184,31 +184,40 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
             </TouchableOpacity>
           ) : null}
 
-          {showWebsitePanel && (websiteUri || website) ? (
-            <View style={styles.webPanelWrap}>
-              <View style={styles.webPanelHeader}>
-                <TouchableOpacity onPress={() => setShowWebsitePanel(false)}>
-                  <Text style={styles.webCloseText}>Close</Text>
-                </TouchableOpacity>
-                <Text style={styles.webTitle} numberOfLines={1}>{restaurant.name}</Text>
-                <View style={{ width: 44 }} />
-              </View>
-              <WebView
-                source={{ uri: websiteUri || website || '' }}
-                style={styles.webPanel}
-                startInLoadingState
-                onError={() => {
-                  if (websiteUri && website && websiteUri !== website) {
-                    setWebsiteUri(website);
-                  }
-                }}
-              />
-            </View>
-          ) : null}
 
 
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showWebsitePanel && !!(websiteUri || website)}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowWebsitePanel(false)}
+      >
+        <View style={styles.webModalRoot}>
+          <Pressable style={styles.webModalBackdrop} onPress={() => setShowWebsitePanel(false)} />
+          <View style={styles.webModalCard}>
+            <View style={styles.webPanelHeader}>
+              <TouchableOpacity onPress={() => setShowWebsitePanel(false)}>
+                <Text style={styles.webCloseText}>Close</Text>
+              </TouchableOpacity>
+              <Text style={styles.webTitle} numberOfLines={1}>{restaurant.name}</Text>
+              <View style={{ width: 44 }} />
+            </View>
+            <WebView
+              source={{ uri: websiteUri || website || '' }}
+              style={styles.webPanel}
+              startInLoadingState
+              onError={() => {
+                if (websiteUri && website && websiteUri !== website) {
+                  setWebsiteUri(website);
+                }
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
 
     </View>
   );
@@ -272,13 +281,22 @@ const styles = StyleSheet.create({
   tableCtaText: { color: '#fff', fontWeight: '800' },
   tableCtaTextSecondary: { color: '#f59e0b', fontWeight: '800' },
 
-  webPanelWrap: {
-    marginBottom: 14,
-    borderRadius: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+  webModalRoot: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  webModalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  webModalCard: {
+    marginTop: 96,
     backgroundColor: '#fff',
+    borderTopLeftRadius: 14,
+    borderTopRightRadius: 14,
+    overflow: 'hidden',
+    borderTopWidth: 1,
+    borderColor: '#e5e7eb',
   },
   webPanelHeader: {
     height: 48,
@@ -288,8 +306,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: '#fff',
   },
-  webPanel: { height: 640, backgroundColor: '#fff' },
+  webPanel: { height: '100%', minHeight: 560, backgroundColor: '#fff' },
   webCloseText: { color: '#ef4444', fontWeight: '700' },
   webTitle: { flex: 1, textAlign: 'center', fontWeight: '700', color: '#111827', marginHorizontal: 10 },
   webExternalBtn: { paddingHorizontal: 8, paddingVertical: 6 },
