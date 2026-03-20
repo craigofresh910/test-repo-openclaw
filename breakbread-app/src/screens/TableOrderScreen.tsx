@@ -1,7 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, Alert, TextInput } from 'react-native';
 import BackArrow from '../components/BackArrow';
 import AppHeader from '../components/AppHeader';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createLiveTable, getLiveTable, joinLiveTable } from '../services/api';
 
 function generateTableCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -12,12 +14,53 @@ function generateTableCode() {
 
 export default function TableOrderScreen({ route, navigation }: any) {
   const incoming = route?.params?.tableCode;
-  const tableCode = useMemo(() => incoming || generateTableCode(), [incoming]);
+  const tableCode = useMemo(() => (incoming || generateTableCode()).toUpperCase(), [incoming]);
 
   const [suggestionInput, setSuggestionInput] = useState('');
-  const [suggestions, setSuggestions] = useState<Array<{ id: string; name: string; by: string }>>([
-    { id: '1', name: 'Logan’s Roadhouse', by: 'You' },
-  ]);
+  const [suggestions, setSuggestions] = useState<Array<{ id: string; name: string; by: string }>>([]);
+  const [participants, setParticipants] = useState<Array<{ userId: string; name: string }>>([]);
+  const [me, setMe] = useState<{ userId: string; name: string }>({ userId: 'guest', name: 'You' });
+
+  useEffect(() => {
+    let mounted = true;
+    let timer: any;
+
+    const init = async () => {
+      let userId = await AsyncStorage.getItem('bb.userId');
+      let name = (await AsyncStorage.getItem('profile.username')) || 'You';
+
+      if (!userId) {
+        userId = `u_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        await AsyncStorage.setItem('bb.userId', userId);
+      }
+      if (mounted) setMe({ userId, name });
+
+      try {
+        if (incoming) {
+          await joinLiveTable({ code: tableCode, userId, name });
+        } else {
+          await createLiveTable({ code: tableCode, userId, name });
+        }
+      } catch {}
+
+      const refresh = async () => {
+        try {
+          const data = await getLiveTable(tableCode);
+          const list = data?.table?.participants || [];
+          if (mounted) setParticipants(list);
+        } catch {}
+      };
+
+      await refresh();
+      timer = setInterval(refresh, 3000);
+    };
+
+    init();
+    return () => {
+      mounted = false;
+      if (timer) clearInterval(timer);
+    };
+  }, [incoming, tableCode]);
 
   const shareInvite = async () => {
     try {
@@ -32,10 +75,7 @@ export default function TableOrderScreen({ route, navigation }: any) {
   const addSuggestion = () => {
     const value = suggestionInput.trim();
     if (!value) return;
-    setSuggestions((prev) => [
-      { id: String(Date.now()), name: value, by: 'You' },
-      ...prev,
-    ]);
+    setSuggestions((prev) => [{ id: String(Date.now()), name: value, by: me.name || 'You' }, ...prev]);
     setSuggestionInput('');
   };
 
@@ -55,11 +95,13 @@ export default function TableOrderScreen({ route, navigation }: any) {
         </TouchableOpacity>
 
         <View style={styles.participants}>
-          <Text style={styles.participantsTitle}>At the Table (1)</Text>
-          <View style={styles.participant}>
-            <Text style={styles.participantAvatar}>👤</Text>
-            <Text style={styles.participantName}>You</Text>
-          </View>
+          <Text style={styles.participantsTitle}>At the Table ({participants.length || 1})</Text>
+          {(participants.length ? participants : [{ userId: me.userId, name: me.name }]).map((p) => (
+            <View key={p.userId} style={styles.participant}>
+              <Text style={styles.participantAvatar}>👤</Text>
+              <Text style={styles.participantName}>{p.name}</Text>
+            </View>
+          ))}
         </View>
 
         <View style={styles.suggestBox}>
@@ -87,7 +129,7 @@ export default function TableOrderScreen({ route, navigation }: any) {
           ))}
         </View>
 
-        <Text style={styles.waiting}>Waiting for others to join...</Text>
+        <Text style={styles.waiting}>Live sync active — participants update automatically.</Text>
       </View>
     </ScrollView>
   );
@@ -142,5 +184,5 @@ const styles = StyleSheet.create({
   suggestName: { fontSize: 14, fontWeight: '700', color: '#111827' },
   suggestBy: { marginTop: 2, fontSize: 12, color: '#6b7280' },
 
-  waiting: { textAlign: 'center', color: '#888', fontSize: 15 },
+  waiting: { textAlign: 'center', color: '#888', fontSize: 13 },
 });

@@ -123,5 +123,28 @@ export const getRestaurantDetails = async (placeId?: string) => {
   }
 };
 
+export const createLiveTable = async (payload: { userId: string; name: string; code?: string }) => {
+  const res = await fetch(`${API_BASE}/tables/create`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+};
+
+export const joinLiveTable = async (payload: { code: string; userId: string; name: string }) => {
+  const res = await fetch(`${API_BASE}/tables/join`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+};
+
+export const getLiveTable = async (code: string) => {
+  const res = await fetch(`${API_BASE}/tables/${encodeURIComponent(code)}`);
+  return res.json();
+};
+
 export const getOrders = async () => [];
 export const createOrder = async () => ({});
