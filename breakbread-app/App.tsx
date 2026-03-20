@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator, BottomTabBar } from '@react-navigation/bottom-tabs';
-import { Text, View, StyleSheet } from 'react-native';
+import { Text, View, StyleSheet, Image } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import HomeScreen from './src/screens/HomeScreen';
@@ -72,6 +72,23 @@ function ProfileStackScreen() {
 }
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setShowSplash(false), 1400);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (showSplash) {
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <View style={styles.appSplash}>
+          <Image source={require('./assets/breakbread-logo.png')} style={styles.appSplashLogo} resizeMode="contain" />
+        </View>
+      </GestureHandlerRootView>
+    );
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <NavigationContainer>
@@ -114,6 +131,16 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  appSplash: {
+    flex: 1,
+    backgroundColor: '#f59e0b',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  appSplashLogo: {
+    width: 220,
+    height: 220,
+  },
   stickyAdWrap: {
     height: 54,
     borderTopWidth: 1,
