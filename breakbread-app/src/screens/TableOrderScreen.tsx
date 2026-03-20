@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, Alert, TextInput, Image, Vibration } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import BackArrow from '../components/BackArrow';
@@ -26,7 +26,9 @@ interface Place {
 
 export default function TableOrderScreen({ route, navigation }: any) {
   const incoming = route?.params?.tableCode;
-  const tableCode = useMemo(() => (incoming || generateTableCode()).toUpperCase(), [incoming]);
+  const [tableCode, setTableCode] = useState<string>(incoming ? String(incoming).toUpperCase() : '');
+  const [tableMode, setTableMode] = useState<'create' | 'join' | 'none'>(incoming ? 'join' : 'none');
+  const [joinCodeInput, setJoinCodeInput] = useState('');
 
   const [suggestionInput, setSuggestionInput] = useState('');
   const [restaurantCards, setRestaurantCards] = useState<Place[]>([]);
@@ -68,13 +70,18 @@ export default function TableOrderScreen({ route, navigation }: any) {
       }
       if (mounted) setMe({ userId, name, avatar });
 
+      if (!tableCode || tableMode === 'none') return;
+
       try {
-        if (incoming) {
+        if (tableMode === 'join') {
           await joinLiveTable({ code: tableCode, userId, name, avatar });
         } else {
           await createLiveTable({ code: tableCode, userId, name, avatar });
         }
-      } catch {}
+      } catch {
+        Alert.alert('Table error', tableMode === 'join' ? 'Could not join table. Check code.' : 'Could not create table.');
+        return;
+      }
 
       const refresh = async () => {
         try {
@@ -132,7 +139,7 @@ export default function TableOrderScreen({ route, navigation }: any) {
       mounted = false;
       if (timer) clearInterval(timer);
     };
-  }, [incoming, tableCode]);
+  }, [tableCode, tableMode]);
 
   useEffect(() => {
     loadRestaurantSuggestions();
@@ -189,6 +196,22 @@ export default function TableOrderScreen({ route, navigation }: any) {
 
   const voteFor = (placeId: string) => {
     setVotes((prev) => ({ ...prev, [placeId]: (prev[placeId] || 0) + 1 }));
+  };
+
+  const createTableNow = () => {
+    const code = generateTableCode();
+    setTableMode('create');
+    setTableCode(code);
+  };
+
+  const joinTableNow = () => {
+    const code = joinCodeInput.trim().toUpperCase();
+    if (!code) {
+      Alert.alert('Missing code', 'Enter a table code to join.');
+      return;
+    }
+    setTableMode('join');
+    setTableCode(code);
   };
 
   const refreshChat = async () => {
@@ -279,9 +302,35 @@ export default function TableOrderScreen({ route, navigation }: any) {
       <View style={styles.content}>
         <Text style={styles.title}>Table</Text>
 
-        <View style={styles.codeBox}>
-          <Text style={styles.code}>{tableCode}</Text>
-        </View>
+        {!tableCode ? (
+          <View style={styles.lobbyBox}>
+            <Text style={styles.lobbyTitle}>Start or Join a Table</Text>
+            <TouchableOpacity style={styles.createTableBtn} onPress={createTableNow}>
+              <Text style={styles.createTableBtnText}>+ Create New Table</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.joinLabel}>Have a code?</Text>
+            <View style={styles.joinRow}>
+              <TextInput
+                style={styles.joinInput}
+                value={joinCodeInput}
+                onChangeText={setJoinCodeInput}
+                autoCapitalize="characters"
+                placeholder="Enter table code"
+                placeholderTextColor="#9ca3af"
+              />
+              <TouchableOpacity style={styles.joinBtn} onPress={joinTableNow}>
+                <Text style={styles.joinBtnText}>Join</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.codeBox}>
+            <Text style={styles.code}>{tableCode}</Text>
+          </View>
+        )}
+
+        {!tableCode ? null : <>
 
         <View style={styles.activeTablesBox}>
           <Text style={styles.activeTablesTitle}>Your Active Tables</Text>
@@ -488,6 +537,7 @@ export default function TableOrderScreen({ route, navigation }: any) {
             </View>
           ))}
         </View>
+        </>}
 
       </View>
     </ScrollView>
@@ -498,6 +548,15 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   content: { padding: 20 },
   title: { fontSize: 28, fontWeight: '800', textAlign: 'center', marginBottom: 20 },
+  lobbyBox: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 14, padding: 14, backgroundColor: '#fafafa', marginBottom: 20 },
+  lobbyTitle: { fontSize: 18, fontWeight: '800', color: '#111827', marginBottom: 12 },
+  createTableBtn: { backgroundColor: '#111827', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12 },
+  createTableBtnText: { color: '#fff', fontWeight: '800', fontSize: 14 },
+  joinLabel: { fontSize: 12, fontWeight: '700', color: '#6b7280', marginBottom: 8 },
+  joinRow: { flexDirection: 'row', gap: 8 },
+  joinInput: { flex: 1, borderWidth: 1, borderColor: '#d1d5db', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 10, color: '#111827', backgroundColor: '#fff' },
+  joinBtn: { backgroundColor: '#f59e0b', borderRadius: 10, paddingHorizontal: 14, justifyContent: 'center' },
+  joinBtnText: { color: '#111827', fontWeight: '800' },
   codeBox: { backgroundColor: '#f5f5f5', borderRadius: 16, padding: 24, alignItems: 'center', marginBottom: 20 },
   code: { fontSize: 40, fontWeight: '800', color: '#f59e0b', letterSpacing: 4 },
   activeTablesBox: {
