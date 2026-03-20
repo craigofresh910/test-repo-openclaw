@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import * as Location from 'expo-location';
 import { searchNearbyRestaurants } from '../services/api';
 import BackArrow from '../components/BackArrow';
+import AppHeader from '../components/AppHeader';
 
 interface Place {
   place_id: string;
@@ -39,6 +40,7 @@ export default function OrdersScreen({ navigation }: any) {
 
   return (
     <ScrollView style={styles.container}>
+      <AppHeader />
       <BackArrow navigation={navigation} />
       <View style={styles.content}>
         <Text style={styles.title}>Your Orders</Text>

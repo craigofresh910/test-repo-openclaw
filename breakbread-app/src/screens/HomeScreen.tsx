@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, TextInput, FlatList, RefreshControl, ActivityIndicator, Modal, Alert, Linking } from 'react-native';
 import { searchNearbyRestaurants } from '../services/api';
 import * as Location from 'expo-location';
-
-const HOME_LOGO = require('../../assets/breakbread-logo.png');
+import AppHeader from '../components/AppHeader';
 
 const CATEGORIES = [
   { id: '1', name: 'Burgers', icon: '🍔' },
@@ -201,9 +200,7 @@ export default function HomeScreen({ navigation }: any) {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); setRefreshing(false); }} />}
       >
         <View style={styles.stickyHeaderWrap}>
-          <View style={styles.header}>
-            <Image source={HOME_LOGO} style={styles.logo} resizeMode="contain" />
-          </View>
+          <AppHeader />
 
           <View style={styles.searchBox}>
             <TextInput style={styles.searchInput} placeholder="🔍 Search restaurants..." placeholderTextColor="#888" value={searchQuery} onChangeText={setSearchQuery} onSubmitEditing={async () => {
@@ -362,9 +359,7 @@ export default function HomeScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   stickyHeaderWrap: { backgroundColor: '#fff', zIndex: 10 },
-  header: { backgroundColor: '#f59e0b', paddingTop: 50, paddingBottom: 16, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 24, fontWeight: '800', color: '#fff' },
-  logo: { width: 180, height: 44, borderRadius: 12, marginTop: 8 },
+
   searchBox: { padding: 16 },
   searchInput: { backgroundColor: '#f5f5f5', borderRadius: 12, padding: 14, fontSize: 16 },
   locationRow: { paddingHorizontal: 16, paddingBottom: 8 },

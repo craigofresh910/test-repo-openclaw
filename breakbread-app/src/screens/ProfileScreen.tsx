@@ -1,12 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import BackArrow from '../components/BackArrow';
+import AppHeader from '../components/AppHeader';
 
 const AVATARS = ['👤', '🍔', '🍕', '🌮', '🍣', '🍜', '🥗', '🍔'];
 
 export default function ProfileScreen({ navigation }: any) {
   return (
     <ScrollView style={styles.container}>
+      <AppHeader />
       <BackArrow navigation={navigation} />
       <View style={styles.content}>
         <Text style={styles.title}>Profile</Text>
