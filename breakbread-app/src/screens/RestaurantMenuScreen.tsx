@@ -1,18 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Linking } from 'react-native';
 import BackArrow from '../components/BackArrow';
 import AppHeader from '../components/AppHeader';
-import { getRestaurantWebsite } from '../services/api';
+import { getRestaurantWebsite, getRestaurantDetails } from '../services/api';
 import { WebView } from 'react-native-webview';
 
 export default function RestaurantMenuScreen({ route, navigation }: any) {
   const { restaurant } = route.params;
   const [website, setWebsite] = useState<string | undefined>(restaurant?.website);
   const [showWebsitePanel, setShowWebsitePanel] = useState(false);
+  const [details, setDetails] = useState<any>(null);
 
   useEffect(() => {
     let active = true;
     (async () => {
+      if (restaurant?.place_id) {
+        const d = await getRestaurantDetails(restaurant.place_id);
+        if (active && d) {
+          setDetails(d);
+          if (!website && d.website) setWebsite(d.website);
+        }
+      }
+
       if (!website && restaurant?.place_id) {
         const w = await getRestaurantWebsite(restaurant.place_id);
         if (active && w) setWebsite(w);
@@ -33,8 +42,55 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
         <View style={styles.content}>
           <Text style={styles.title}>{restaurant.name}</Text>
           <View style={styles.row}>
-            {restaurant.rating && <Text style={styles.rating}>⭐ {restaurant.rating}</Text>}
+            {(details?.rating || restaurant.rating) && <Text style={styles.rating}>⭐ {details?.rating || restaurant.rating}</Text>}
             <Text style={styles.address}>{restaurant.address}</Text>
+          </View>
+
+          <View style={styles.infoCard}>
+            <Text style={styles.infoTitle}>Restaurant Info</Text>
+            <Text style={styles.infoLine}>📍 {restaurant.address}</Text>
+            {details?.phone ? <Text style={styles.infoLine}>📞 {details.phone}</Text> : null}
+            {typeof details?.openNow === 'boolean' ? (
+              <Text style={[styles.infoLine, { color: details.openNow ? '#16a34a' : '#dc2626' }]}>
+                {details.openNow ? '🟢 Open now' : '🔴 Closed now'}
+              </Text>
+            ) : null}
+            {typeof details?.priceLevel === 'number' ? (
+              <Text style={styles.infoLine}>💸 {'$'.repeat(Math.max(1, details.priceLevel))}</Text>
+            ) : null}
+            {typeof details?.reviews === 'number' ? <Text style={styles.infoLine}>📝 {details.reviews} reviews</Text> : null}
+
+            <View style={styles.infoActions}>
+              <TouchableOpacity
+                style={styles.infoActionBtn}
+                onPress={() => Linking.openURL(`https://maps.google.com/?q=${encodeURIComponent(`${restaurant.name} ${restaurant.address}`)}`)}
+              >
+                <Text style={styles.infoActionText}>Open in Maps</Text>
+              </TouchableOpacity>
+              {details?.phone ? (
+                <TouchableOpacity
+                  style={styles.infoActionBtn}
+                  onPress={() => Linking.openURL(`tel:${details.phone}`)}
+                >
+                  <Text style={styles.infoActionText}>Call</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+
+            <View style={styles.badgesRow}>
+              {details?.delivery ? <Text style={styles.badge}>Delivery</Text> : null}
+              {details?.takeout ? <Text style={styles.badge}>Takeout</Text> : null}
+              {details?.dineIn ? <Text style={styles.badge}>Dine-in</Text> : null}
+            </View>
+
+            <View style={styles.tableCtaRow}>
+              <TouchableOpacity style={styles.tableCtaBtn} onPress={() => navigation.navigate('TableOrder')}>
+                <Text style={styles.tableCtaText}>Start Table</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.tableCtaBtnSecondary} onPress={() => navigation.navigate('HomeMain')}>
+                <Text style={styles.tableCtaTextSecondary}>Join Table</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {website ? (
@@ -77,7 +133,53 @@ const styles = StyleSheet.create({
   websiteBtn: { backgroundColor: '#f59e0b', padding: 14, borderRadius: 12, alignItems: 'center', marginBottom: 20 },
   websiteBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 
-
+  infoCard: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    backgroundColor: '#f9fafb',
+    padding: 12,
+    marginBottom: 14,
+  },
+  infoTitle: { fontSize: 16, fontWeight: '800', color: '#111827', marginBottom: 8 },
+  infoLine: { fontSize: 14, color: '#374151', marginBottom: 5 },
+  infoActions: { flexDirection: 'row', gap: 8, marginTop: 6 },
+  infoActionBtn: {
+    backgroundColor: '#111827',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
+  infoActionText: { color: '#fff', fontWeight: '700', fontSize: 12 },
+  badgesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
+  badge: {
+    backgroundColor: '#e5e7eb',
+    color: '#111827',
+    fontSize: 11,
+    fontWeight: '700',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  tableCtaRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  tableCtaBtn: {
+    flex: 1,
+    backgroundColor: '#f59e0b',
+    borderRadius: 10,
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  tableCtaBtnSecondary: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderColor: '#f59e0b',
+    borderWidth: 1,
+    borderRadius: 10,
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  tableCtaText: { color: '#fff', fontWeight: '800' },
+  tableCtaTextSecondary: { color: '#f59e0b', fontWeight: '800' },
 
   webPanelWrap: {
     marginBottom: 14,

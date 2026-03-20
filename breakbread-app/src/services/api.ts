@@ -80,5 +80,46 @@ export const getRestaurantWebsite = async (placeId?: string) => {
   }
 };
 
+export const getRestaurantDetails = async (placeId?: string) => {
+  if (!placeId) return undefined;
+  try {
+    const key = 'AIzaSyBXL7xl4adq0YzUzjWHrlgrLZ4BJq-jidk';
+    const fields = [
+      'formatted_phone_number',
+      'opening_hours',
+      'current_opening_hours',
+      'rating',
+      'user_ratings_total',
+      'price_level',
+      'website',
+      'url',
+      'delivery',
+      'takeout',
+      'dine_in',
+      'name',
+    ].join(',');
+
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=${fields}&key=${key}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.status !== 'OK') return undefined;
+
+    const r = data.result || {};
+    return {
+      phone: r.formatted_phone_number,
+      openNow: r.current_opening_hours?.open_now ?? r.opening_hours?.open_now,
+      rating: r.rating,
+      reviews: r.user_ratings_total,
+      priceLevel: r.price_level,
+      website: r.website || r.url,
+      delivery: !!r.delivery,
+      takeout: !!r.takeout,
+      dineIn: !!r.dine_in,
+    };
+  } catch {
+    return undefined;
+  }
+};
+
 export const getOrders = async () => [];
 export const createOrder = async () => ({});
