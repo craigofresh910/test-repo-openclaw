@@ -345,18 +345,19 @@ export default function TableOrderScreen({ navigation }: any) {
           ) : (
             activeTables.map((t) => {
               const isCurrent = t.code === tableCode;
-              const row = (
-                <TouchableOpacity
-                  key={t.code}
-                  style={[styles.activeTableItem, isCurrent && styles.activeTableItemCurrent]}
-                  onPress={() => navigation.navigate('TableMain', { tableCode: t.code })}
-                >
-                  <Text style={styles.activeTableCode}>{t.code}</Text>
-                  <Text style={styles.activeTableMeta}>{t.participants?.length || 0} people{isCurrent ? ' • swipe ← to leave' : ''}</Text>
-                </TouchableOpacity>
-              );
 
-              if (!isCurrent) return row;
+              if (!isCurrent) {
+                return (
+                  <TouchableOpacity
+                    key={t.code}
+                    style={styles.activeTableItem}
+                    onPress={() => navigation.navigate('TableMain', { tableCode: t.code })}
+                  >
+                    <Text style={styles.activeTableCode}>{t.code}</Text>
+                    <Text style={styles.activeTableMeta}>{t.participants?.length || 0} people</Text>
+                  </TouchableOpacity>
+                );
+              }
 
               return (
                 <Swipeable
@@ -364,7 +365,7 @@ export default function TableOrderScreen({ navigation }: any) {
                   overshootLeft={false}
                   overshootRight={false}
                   friction={2}
-                  rightThreshold={42}
+                  rightThreshold={36}
                   onSwipeableOpen={(direction) => {
                     if (direction === 'left') swipeLeavePrompt();
                   }}
@@ -374,7 +375,10 @@ export default function TableOrderScreen({ navigation }: any) {
                     </View>
                   )}
                 >
-                  {row}
+                  <View style={[styles.activeTableItem, styles.activeTableItemCurrent]}>
+                    <Text style={styles.activeTableCode}>{t.code}</Text>
+                    <Text style={styles.activeTableMeta}>{t.participants?.length || 0} people • swipe ← to leave</Text>
+                  </View>
                 </Swipeable>
               );
             })
