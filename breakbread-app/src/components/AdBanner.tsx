@@ -1,7 +1,8 @@
 import React from 'react';
-import { TouchableOpacity, ImageBackground, StyleSheet, Linking, View, Text } from 'react-native';
+import { TouchableOpacity, ImageBackground, StyleSheet, Linking, View, Text, Image } from 'react-native';
 
 const AD_IMAGE = require('../../assets/tomorrows-yesterday-ad2.jpg');
+const AD_LOGO = require('../../assets/tomorrows-yesterday-ad.jpg');
 
 export default function AdBanner() {
   return (
@@ -12,9 +13,14 @@ export default function AdBanner() {
     >
       <ImageBackground source={AD_IMAGE} style={styles.image} imageStyle={styles.imageInner} resizeMode="cover">
         <View style={styles.overlay}>
-          <Text style={styles.kicker}>SPONSORED</Text>
-          <Text style={styles.title}>Tomorrow’s Yesterday</Text>
-          <Text style={styles.subtitle}>Streetwear drop live now</Text>
+          <View style={styles.topRow}>
+            <View style={styles.copyCol}>
+              <Text style={styles.kicker}>SPONSORED</Text>
+              <Text style={styles.title}>Tomorrow’s Yesterday</Text>
+              <Text style={styles.subtitle}>Streetwear drop live now</Text>
+            </View>
+            <Image source={AD_LOGO} style={styles.logoRight} resizeMode="cover" />
+          </View>
           <View style={styles.ctaPill}>
             <Text style={styles.ctaText}>Shop historystartstoday.com</Text>
           </View>
@@ -49,6 +55,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
+  copyCol: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  logoRight: {
+    width: 56,
+    height: 56,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.45)',
   },
   kicker: {
     alignSelf: 'flex-start',
