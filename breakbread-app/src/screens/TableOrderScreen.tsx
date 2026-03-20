@@ -1,11 +1,28 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, Alert } from 'react-native';
 import BackArrow from '../components/BackArrow';
 import AppHeader from '../components/AppHeader';
 
+function generateTableCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let out = '';
+  for (let i = 0; i < 6; i++) out += chars[Math.floor(Math.random() * chars.length)];
+  return out;
+}
+
 export default function TableOrderScreen({ route, navigation }: any) {
-  const { tableCode } = route.params || {};
-  const [stage, setStage] = useState('invite');
+  const incoming = route?.params?.tableCode;
+  const tableCode = useMemo(() => incoming || generateTableCode(), [incoming]);
+
+  const shareInvite = async () => {
+    try {
+      await Share.share({
+        message: `Join my BreakBread table with code: ${tableCode}`,
+      });
+    } catch {
+      Alert.alert('Share failed', 'Could not share invite right now.');
+    }
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -13,12 +30,12 @@ export default function TableOrderScreen({ route, navigation }: any) {
       <BackArrow navigation={navigation} />
       <View style={styles.content}>
         <Text style={styles.title}>Table</Text>
-        
+
         <View style={styles.codeBox}>
-          <Text style={styles.code}>{tableCode || '------'}</Text>
+          <Text style={styles.code}>{tableCode}</Text>
         </View>
 
-        <TouchableOpacity style={styles.shareBtn}>
+        <TouchableOpacity style={styles.shareBtn} onPress={shareInvite}>
           <Text style={styles.shareBtnText}>📤 Share Invite</Text>
         </TouchableOpacity>
 
