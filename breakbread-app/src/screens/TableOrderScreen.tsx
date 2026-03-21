@@ -70,7 +70,9 @@ export default function TableOrderScreen({ navigation }: any) {
       if (photoUri) {
         try {
           const b64 = await FileSystem.readAsStringAsync(photoUri, { encoding: FileSystem.EncodingType.Base64 });
-          avatar = `data:image/jpeg;base64,${b64}`;
+          const lower = String(photoUri).toLowerCase();
+          const mime = lower.endsWith('.png') ? 'image/png' : lower.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
+          avatar = `data:${mime};base64,${b64}`;
         } catch {
           avatar = avatarEmoji;
         }
