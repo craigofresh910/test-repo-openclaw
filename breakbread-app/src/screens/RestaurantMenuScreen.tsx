@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.35)',
   },
   webModalCard: {
-    marginTop: 96,
+    height: '82%',
     backgroundColor: '#fff',
     borderTopLeftRadius: 14,
     borderTopRightRadius: 14,
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: '#fff',
   },
-  webPanel: { height: '100%', minHeight: 560, backgroundColor: '#fff' },
+  webPanel: { flex: 1, backgroundColor: '#fff' },
   webCloseText: { color: '#ef4444', fontWeight: '700' },
   webTitle: { flex: 1, textAlign: 'center', fontWeight: '700', color: '#111827', marginHorizontal: 10 },
   webExternalBtn: { paddingHorizontal: 8, paddingVertical: 6 },
