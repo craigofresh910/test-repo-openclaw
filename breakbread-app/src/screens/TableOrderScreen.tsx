@@ -895,13 +895,13 @@ const styles = StyleSheet.create({
   tableCountPill: { backgroundColor: '#111827', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
   tableCountText: { color: '#fff', fontSize: 11, fontWeight: '800' },
   participantsListRow: { gap: 10, paddingVertical: 2, paddingHorizontal: 2 },
-  participantCard: { width: 110, borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, backgroundColor: '#fff', padding: 10, alignItems: 'center' },
+  participantCard: { width: 88, borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 10, backgroundColor: '#fff', padding: 8, alignItems: 'center' },
   participantCardMe: { backgroundColor: '#fff7ed' },
 
   personDot: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#f3f4f6',
     borderWidth: 1,
     borderColor: '#d1d5db',
@@ -910,9 +910,9 @@ const styles = StyleSheet.create({
   },
   personDotMe: { borderColor: '#f59e0b', borderWidth: 2 },
   personInitial: { fontWeight: '800', color: '#374151' },
-  personPhoto: { width: 46, height: 46, borderRadius: 23 },
-  participantCardName: { fontSize: 13, fontWeight: '800', color: '#111827', marginTop: 8 },
-  participantCardMeta: { fontSize: 11, color: '#6b7280', marginTop: 2 },
+  personPhoto: { width: 36, height: 36, borderRadius: 18 },
+  participantCardName: { fontSize: 11, fontWeight: '800', color: '#111827', marginTop: 6 },
+  participantCardMeta: { fontSize: 10, color: '#6b7280', marginTop: 1 },
 
   suggestBox: {
     marginBottom: 20,
