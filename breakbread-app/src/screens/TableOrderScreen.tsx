@@ -945,8 +945,8 @@ const styles = StyleSheet.create({
   personPhoto: { width: 28, height: 28, borderRadius: 14 },
   participantCardName: { fontSize: 10, fontWeight: '800', color: '#111827', marginTop: 4 },
   participantCardMeta: { fontSize: 9, color: '#6b7280', marginTop: 1 },
-  captainBadge: { marginTop: 2, backgroundColor: '#f59e0b', borderRadius: 999, paddingHorizontal: 6, paddingVertical: 2 },
-  captainBadgeText: { fontSize: 8, color: '#111827', fontWeight: '900' },
+  captainBadge: { marginTop: 2, backgroundColor: '#f59e0b', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2, minWidth: 50, alignItems: 'center' },
+  captainBadgeText: { fontSize: 8, color: '#111827', fontWeight: '900', includeFontPadding: false, lineHeight: 10 },
 
   suggestBox: {
     marginBottom: 20,
