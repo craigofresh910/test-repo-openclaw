@@ -333,12 +333,6 @@ export default function TableOrderScreen({ navigation }: any) {
     Alert.alert('Sent', 'Payment request sent to captain.');
   };
 
-  const shareOrderList = async () => {
-    if (!orderedPicks.length) return;
-    const lines = orderedPicks.map((r, i) => `${i + 1}. ${r.name} — ${votes[r.place_id] || 0} votes`);
-    await Share.share({ message: `BreakBread table order picks:\n${lines.join('\n')}` });
-  };
-
   const addItemToOrder = async () => {
     const name = itemName.trim();
     if (!name) return Alert.alert('Missing item', 'Enter item name.');
@@ -728,9 +722,6 @@ export default function TableOrderScreen({ navigation }: any) {
         <View style={styles.orderListBox}>
           <View style={styles.orderListHead}>
             <Text style={styles.orderListTitle}>Restaurant Decision List</Text>
-            <TouchableOpacity style={styles.myVoteOpenBtn} onPress={shareOrderList}>
-              <Text style={styles.myVoteOpenText}>Copy/Share</Text>
-            </TouchableOpacity>
           </View>
 
           {orderedPicks.map((r, idx) => (
@@ -739,9 +730,6 @@ export default function TableOrderScreen({ navigation }: any) {
                 <Text style={styles.orderName}>{idx + 1}. {r.name}</Text>
                 <Text style={styles.orderMeta}>Votes: {votes[r.place_id] || 0}</Text>
               </View>
-              <TouchableOpacity style={styles.compactViewBtn} onPress={() => navigation.navigate('RestaurantMenu', { restaurant: r, autoOpenWebsite: true })}>
-                <Text style={styles.compactViewText}>Order</Text>
-              </TouchableOpacity>
             </View>
           ))}
         </View>
