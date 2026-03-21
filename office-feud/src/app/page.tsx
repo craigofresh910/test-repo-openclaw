@@ -288,10 +288,13 @@ export default function Home() {
   if (phase === 'menu') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cyan-950 via-cyan-900 to-slate-900 p-8 flex flex-col items-center justify-center">
-        <h1 className="text-6xl md:text-8xl font-black text-cyan-400 mb-12" style={{textShadow: '4px 4px 0 #000'}}>OFFICE FEUD</h1>
-        <div className="space-y-4">
-          <button onClick={() => { setIsHost(true); setPhase('setup'); }} className="w-full bg-cyan-500 text-black font-black text-2xl px-8 py-6 rounded-lg" style={{boxShadow: '6px 6px 0 #000'}}>HOST GAME</button>
-          <button onClick={() => { const p = prompt('Enter PIN'); if (p) { setPin(p); setIsHost(false); setPhase('join'); }}} className="w-full bg-green-600 text-white font-bold text-xl px-8 py-5 rounded-lg">JOIN GAME</button>
+        <div className="w-full max-w-2xl bg-slate-900/60 border border-cyan-500/30 rounded-3xl p-8 md:p-12 shadow-2xl backdrop-blur-sm">
+          <h1 className="text-5xl md:text-7xl font-black text-cyan-400 mb-3 text-center" style={{textShadow: '4px 4px 0 #000'}}>OFFICE FEUD</h1>
+          <p className="text-center text-cyan-100/80 mb-10 text-lg">Build teams. Battle rounds. Office glory.</p>
+          <div className="space-y-4 max-w-md mx-auto">
+            <button onClick={() => { setIsHost(true); setPhase('setup'); }} className="w-full bg-cyan-500 hover:bg-cyan-400 transition text-black font-black text-2xl px-8 py-5 rounded-xl" style={{boxShadow: '6px 6px 0 #000'}}>HOST GAME</button>
+            <button onClick={() => { const p = prompt('Enter PIN'); if (p) { setPin(p); setIsHost(false); setPhase('join'); }}} className="w-full bg-green-600 hover:bg-green-500 transition text-white font-bold text-xl px-8 py-4 rounded-xl">JOIN GAME</button>
+          </div>
         </div>
       </div>
     );
@@ -320,12 +323,12 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cyan-950 via-cyan-900 to-slate-900 p-8 flex flex-col items-center justify-center">
         <h1 className="text-4xl font-black text-cyan-400 mb-8">SET UP GAME</h1>
-        <div className="bg-gray-800 p-8 rounded-xl w-full max-w-md">
-          <input value={playerName} onChange={e => setPlayerName(e.target.value)} placeholder="Your Nickname" className="w-full bg-gray-700 text-white text-xl p-3 rounded-lg mb-3" />
-          <input value={playerEmail} onChange={e => setPlayerEmail(e.target.value)} placeholder="Your Email" type="email" className="w-full bg-gray-700 text-white text-xl p-3 rounded-lg mb-4" />
-          <button onClick={handleStart} disabled={!playerName.trim() || !playerEmail.trim()} className="bg-cyan-500 disabled:bg-gray-600 text-black font-bold text-xl px-8 py-4 rounded-lg w-full">CREATE GAME</button>
+        <div className="bg-slate-900/70 border border-cyan-500/25 p-8 rounded-2xl w-full max-w-md shadow-2xl">
+          <input value={playerName} onChange={e => setPlayerName(e.target.value)} placeholder="Your Nickname" className="w-full bg-gray-800 border border-gray-600 text-white text-xl p-3 rounded-xl mb-3" />
+          <input value={playerEmail} onChange={e => setPlayerEmail(e.target.value)} placeholder="Your Email" type="email" className="w-full bg-gray-800 border border-gray-600 text-white text-xl p-3 rounded-xl mb-4" />
+          <button onClick={handleStart} disabled={!playerName.trim() || !playerEmail.trim()} className="bg-cyan-500 hover:bg-cyan-400 disabled:bg-gray-600 transition text-black font-bold text-xl px-8 py-4 rounded-xl w-full">CREATE GAME</button>
         </div>
-        <button onClick={() => setPhase('menu')} className="mt-4 text-gray-400">Back</button>
+        <button onClick={() => setPhase('menu')} className="mt-4 text-gray-400 hover:text-white transition">Back</button>
       </div>
     );
   }
@@ -357,11 +360,11 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cyan-950 via-cyan-900 to-slate-900 p-8 flex flex-col items-center justify-center">
         <h1 className="text-4xl font-black text-green-400 mb-8">JOIN GAME</h1>
-        <div className="bg-gray-800 p-8 rounded-xl text-center w-full max-w-md">
-          <p className="text-white mb-4">PIN: {pin}</p>
-          <input value={playerName} onChange={e => setPlayerName(e.target.value)} placeholder="Your Nickname" className="w-full bg-gray-700 text-white text-xl p-3 rounded-lg mb-3" />
-          <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Your Email" type="email" className="w-full bg-gray-700 text-white text-xl p-3 rounded-lg mb-4" />
-          <button onClick={handleJoin} disabled={!playerName.trim() || !email.trim()} className="bg-green-600 disabled:bg-gray-600 text-white font-bold text-xl px-8 py-4 rounded-lg w-full">JOIN</button>
+        <div className="bg-slate-900/70 border border-green-500/30 p-8 rounded-2xl text-center w-full max-w-md shadow-2xl">
+          <p className="text-white mb-4 text-lg">PIN: <span className="font-black text-green-300">{pin}</span></p>
+          <input value={playerName} onChange={e => setPlayerName(e.target.value)} placeholder="Your Nickname" className="w-full bg-gray-800 border border-gray-600 text-white text-xl p-3 rounded-xl mb-3" />
+          <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Your Email" type="email" className="w-full bg-gray-800 border border-gray-600 text-white text-xl p-3 rounded-xl mb-4" />
+          <button onClick={handleJoin} disabled={!playerName.trim() || !email.trim()} className="bg-green-600 hover:bg-green-500 disabled:bg-gray-600 transition text-white font-bold text-xl px-8 py-4 rounded-xl w-full">JOIN</button>
         </div>
       </div>
     );
