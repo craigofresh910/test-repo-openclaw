@@ -281,8 +281,15 @@ export default function TableOrderScreen({ navigation }: any) {
 
   const shareInvite = async () => {
     try {
+      const joinEndsAt = phaseInfo?.joinEndsAt ? new Date(phaseInfo.joinEndsAt) : null;
+      const joinBy = joinEndsAt
+        ? joinEndsAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+        : null;
+
       await Share.share({
-        message: `Join my BreakBread table with code: ${tableCode}`,
+        message: joinBy
+          ? `Join my BreakBread table with code: ${tableCode}. Please be seated by ${joinBy}.`
+          : `Join my BreakBread table with code: ${tableCode}.`,
       });
     } catch {
       Alert.alert('Share failed', 'Could not share invite right now.');
