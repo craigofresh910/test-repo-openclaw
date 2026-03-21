@@ -35,7 +35,7 @@ export default function TableOrderScreen({ navigation }: any) {
   const [activeTables, setActiveTables] = useState<Array<{ code: string; createdAt: string; participants: Array<{ userId: string; name: string; avatar?: string }> }>>([]);
   const [me, setMe] = useState<{ userId: string; name: string; avatar?: string }>({ userId: 'guest', name: 'You', avatar: '👤' });
   const [votes, setVotes] = useState<Record<string, number>>({});
-  const [myVotes, setMyVotes] = useState<Record<string, Place>>({});
+  const [myVotePlaceId, setMyVotePlaceId] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<Array<{ id: string; userId: string; name: string; avatar?: string; text: string; sentAt: string; replyToId?: string; replyToName?: string; replyToText?: string; editedAt?: string }>>([]);
   const [replyTo, setReplyTo] = useState<{ id: string; name: string; text: string } | null>(null);
@@ -209,11 +209,21 @@ export default function TableOrderScreen({ navigation }: any) {
   };
 
   const voteFor = (placeId: string) => {
-    setVotes((prev) => ({ ...prev, [placeId]: (prev[placeId] || 0) + 1 }));
-    const found = restaurantCards.find((r) => r.place_id === placeId);
-    if (found) {
-      setMyVotes((prev) => ({ ...prev, [placeId]: found }));
-    }
+    setVotes((prev) => {
+      const next = { ...prev };
+
+      if (myVotePlaceId && myVotePlaceId !== placeId) {
+        next[myVotePlaceId] = Math.max(0, (next[myVotePlaceId] || 0) - 1);
+      }
+
+      if (myVotePlaceId !== placeId) {
+        next[placeId] = (next[placeId] || 0) + 1;
+      }
+
+      return next;
+    });
+
+    setMyVotePlaceId(placeId);
   };
 
   const swipeLeavePrompt = () => {
@@ -592,23 +602,25 @@ export default function TableOrderScreen({ navigation }: any) {
         </View>
 
         <View style={styles.myVotesBox}>
-          <Text style={styles.myVotesTitle}>Your Votes</Text>
-          {Object.keys(myVotes).length === 0 ? (
-            <Text style={styles.myVotesEmpty}>No votes yet. Vote restaurants below.</Text>
+          <Text style={styles.myVotesTitle}>Your Vote</Text>
+          {!myVotePlaceId ? (
+            <Text style={styles.myVotesEmpty}>No vote selected yet. Pick one below — you can change it anytime.</Text>
           ) : (
-            Object.values(myVotes)
-              .sort((a, b) => (votes[b.place_id] || 0) - (votes[a.place_id] || 0))
-              .map((r) => (
+            (() => {
+              const r = restaurantCards.find((x) => x.place_id === myVotePlaceId);
+              if (!r) return <Text style={styles.myVotesEmpty}>Your selected vote is not in the current list.</Text>;
+              return (
                 <View key={`my-${r.place_id}`} style={styles.myVoteRow}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.myVoteName} numberOfLines={1}>{r.name}</Text>
-                    <Text style={styles.myVoteMeta}>Your votes: {votes[r.place_id] || 0}</Text>
+                    <Text style={styles.myVoteMeta}>Current votes: {votes[r.place_id] || 0}</Text>
                   </View>
                   <TouchableOpacity style={styles.myVoteOpenBtn} onPress={() => navigation.navigate('RestaurantMenu', { restaurant: r })}>
                     <Text style={styles.myVoteOpenText}>Open</Text>
                   </TouchableOpacity>
                 </View>
-              ))
+              );
+            })()
           )}
         </View>
 
@@ -644,8 +656,8 @@ export default function TableOrderScreen({ navigation }: any) {
                 <TouchableOpacity style={styles.compactViewBtn} onPress={() => navigation.navigate('RestaurantMenu', { restaurant: item })}>
                   <Text style={styles.compactViewText}>View</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.compactVoteBtn, myVotes[item.place_id] && styles.compactVoteBtnActive]} onPress={() => voteFor(item.place_id)}>
-                  <Text style={styles.compactVoteText}>{myVotes[item.place_id] ? '+1 Again' : '+1'}</Text>
+                <TouchableOpacity style={[styles.compactVoteBtn, myVotePlaceId === item.place_id && styles.compactVoteBtnActive]} onPress={() => voteFor(item.place_id)}>
+                  <Text style={styles.compactVoteText}>{myVotePlaceId === item.place_id ? 'Voted' : 'Vote'}</Text>
                 </TouchableOpacity>
               </View>
             </View>
