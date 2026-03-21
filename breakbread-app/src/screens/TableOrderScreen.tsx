@@ -55,6 +55,7 @@ export default function TableOrderScreen({ navigation }: any) {
   const [paidMap, setPaidMap] = useState<Record<string, boolean>>({});
   const [paidRequests, setPaidRequests] = useState<Record<string, boolean>>({});
   const [cashTag, setCashTag] = useState('');
+  const [phaseInfo, setPhaseInfo] = useState<{ phase: 'join' | 'suggestions' | 'order_pay' | 'closed'; joinEndsAt?: string; suggestionsEndsAt?: string; orderPayEndsAt?: string } | null>(null);
   const lastSeenMessageIdRef = useRef<string | null>(null);
   const seenMessageIdsRef = useRef<Set<string>>(new Set());
   const seenPaymentAlertIdsRef = useRef<Set<string>>(new Set());
@@ -132,9 +133,11 @@ export default function TableOrderScreen({ navigation }: any) {
           const list = tableData?.table?.participants || [];
           const messages = chatData?.messages || [];
           const items = tableData?.table?.items || [];
+          const phase = tableData?.phaseInfo || null;
 
           if (mounted) {
             setParticipants(list);
+            setPhaseInfo(phase);
             setChatMessages(messages);
             setTableItems(items);
 
@@ -425,6 +428,10 @@ export default function TableOrderScreen({ navigation }: any) {
     .filter((r) => (votes[r.place_id] || 0) > 0)
     .sort((a, b) => (votes[b.place_id] || 0) - (votes[a.place_id] || 0));
 
+  const currentPhase = phaseInfo?.phase || 'join';
+  const canSuggest = currentPhase === 'suggestions';
+  const canOrderPay = currentPhase === 'order_pay';
+
   const togglePaid = async (userId: string, next: boolean) => {
     setPaidMap((prev) => ({ ...prev, [userId]: next }));
     if (next) {
@@ -563,6 +570,16 @@ export default function TableOrderScreen({ navigation }: any) {
         {paymentBanner ? (
           <View style={styles.paymentBanner}>
             <Text style={styles.paymentBannerText}>{paymentBanner}</Text>
+          </View>
+        ) : null}
+        {tableCode && phaseInfo ? (
+          <View style={styles.phaseBanner}>
+            <Text style={styles.phaseBannerText}>
+              {currentPhase === 'join' ? `Invite + Join Open until ${new Date(phaseInfo.joinEndsAt || '').toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` :
+               currentPhase === 'suggestions' ? `Suggestions Open until ${new Date(phaseInfo.suggestionsEndsAt || '').toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` :
+               currentPhase === 'order_pay' ? `Order + Pay Open until ${new Date(phaseInfo.orderPayEndsAt || '').toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` :
+               'Table Closed: non-ordering members removed, captain proceeds'}
+            </Text>
           </View>
         ) : null}
 
@@ -829,9 +846,10 @@ export default function TableOrderScreen({ navigation }: any) {
               placeholderTextColor="#9ca3af"
               value={suggestionInput}
               onChangeText={setSuggestionInput}
-              onSubmitEditing={() => loadRestaurantSuggestions(suggestionInput.trim() || undefined)}
+              editable={canSuggest}
+              onSubmitEditing={() => canSuggest && loadRestaurantSuggestions(suggestionInput.trim() || undefined)}
             />
-            <TouchableOpacity style={styles.addBtn} onPress={() => loadRestaurantSuggestions(suggestionInput.trim() || undefined)}>
+            <TouchableOpacity style={[styles.addBtn, !canSuggest && styles.requestPaidBtnDisabled]} onPress={() => canSuggest && loadRestaurantSuggestions(suggestionInput.trim() || undefined)} disabled={!canSuggest}>
               <Text style={styles.addBtnText}>Go</Text>
             </TouchableOpacity>
           </View>
@@ -843,16 +861,17 @@ export default function TableOrderScreen({ navigation }: any) {
                 <>
                   <View style={styles.wheelCard}>
                     <Text style={styles.wheelTitle}>🎡 Restaurant Wheel</Text>
+                    {!canSuggest ? <Text style={styles.phaseLockText}>Suggestions are locked for this phase.</Text> : null}
                     <Text style={styles.wheelPickName} numberOfLines={1}>{selected.name}</Text>
                     <Text style={styles.wheelPickMeta}>👍 {votes[selected.place_id] || 0} votes</Text>
                     <View style={styles.wheelActionsRow}>
                       <TouchableOpacity style={styles.compactViewBtn} onPress={() => navigation.navigate('RestaurantMenu', { restaurant: selected, autoOpenWebsite: true })}>
                         <Text style={styles.compactViewText}>View Menu</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity style={[styles.compactVoteBtn, myVotePlaceId === selected.place_id && styles.compactVoteBtnActive]} onPress={() => voteFor(selected.place_id)}>
+                      <TouchableOpacity style={[styles.compactVoteBtn, myVotePlaceId === selected.place_id && styles.compactVoteBtnActive, !canSuggest && styles.requestPaidBtnDisabled]} onPress={() => canSuggest && voteFor(selected.place_id)} disabled={!canSuggest}>
                         <Text style={styles.compactVoteText}>{myVotePlaceId === selected.place_id ? 'Voted' : 'Vote'}</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity style={styles.spinBtn} onPress={spinRestaurantWheel}>
+                      <TouchableOpacity style={[styles.spinBtn, !canSuggest && styles.requestPaidBtnDisabled]} onPress={spinRestaurantWheel} disabled={!canSuggest}>
                         <Text style={styles.spinBtnText}>Spin</Text>
                       </TouchableOpacity>
                     </View>
@@ -893,13 +912,13 @@ export default function TableOrderScreen({ navigation }: any) {
         <View style={styles.itemsBox}>
           <Text style={styles.itemsTitle}>Order Items</Text>
           <View style={styles.itemsInputRow}>
-            <TextInput style={[styles.billInput, { flex: 2 }]} value={itemName} onChangeText={setItemName} placeholder="Item name" placeholderTextColor="#9ca3af" />
-            <TextInput style={[styles.billInput, { flex: 0.7 }]} value={itemQty} onChangeText={setItemQty} keyboardType="number-pad" placeholder="Qty" placeholderTextColor="#9ca3af" />
-            <TextInput style={[styles.billInput, { flex: 1 }]} value={itemPrice} onChangeText={setItemPrice} keyboardType="decimal-pad" placeholder="$" placeholderTextColor="#9ca3af" />
+            <TextInput style={[styles.billInput, { flex: 2 }]} value={itemName} onChangeText={setItemName} placeholder="Item name" placeholderTextColor="#9ca3af" editable={canOrderPay} />
+            <TextInput style={[styles.billInput, { flex: 0.7 }]} value={itemQty} onChangeText={setItemQty} keyboardType="number-pad" placeholder="Qty" placeholderTextColor="#9ca3af" editable={canOrderPay} />
+            <TextInput style={[styles.billInput, { flex: 1 }]} value={itemPrice} onChangeText={setItemPrice} keyboardType="decimal-pad" placeholder="$" placeholderTextColor="#9ca3af" editable={canOrderPay} />
           </View>
           <View style={styles.itemsInputRow}>
-            <TextInput style={styles.cashInput} value={itemNotes} onChangeText={setItemNotes} placeholder="Notes (optional)" placeholderTextColor="#9ca3af" />
-            <TouchableOpacity style={styles.lockBtn} onPress={addItemToOrder}>
+            <TextInput style={styles.cashInput} value={itemNotes} onChangeText={setItemNotes} placeholder="Notes (optional)" placeholderTextColor="#9ca3af" editable={canOrderPay} />
+            <TouchableOpacity style={[styles.lockBtn, !canOrderPay && styles.requestPaidBtnDisabled]} onPress={addItemToOrder} disabled={!canOrderPay}>
               <Text style={styles.lockBtnText}>{editingItemId ? 'Save' : 'Add'}</Text>
             </TouchableOpacity>
           </View>
@@ -907,6 +926,9 @@ export default function TableOrderScreen({ navigation }: any) {
             <TouchableOpacity onPress={() => { setEditingItemId(null); setItemName(''); setItemQty('1'); setItemPrice(''); setItemNotes(''); }}>
               <Text style={styles.editingCancel}>Cancel edit</Text>
             </TouchableOpacity>
+          ) : null}
+          {!canOrderPay ? (
+            <Text style={styles.phaseLockText}>Order items are locked in this phase.</Text>
           ) : null}
 
           {tableItems.length === 0 ? (
@@ -920,10 +942,10 @@ export default function TableOrderScreen({ navigation }: any) {
                 </View>
                 {(isCaptain || it.userId === me.userId) ? (
                   <View style={{ flexDirection: 'row', gap: 6 }}>
-                    <TouchableOpacity style={styles.compactViewBtn} onPress={() => { setEditingItemId(it.id); setItemName(it.name); setItemQty(String(it.qty || 1)); setItemPrice(it.price !== undefined ? String(it.price) : ''); setItemNotes(it.notes || ''); }}>
+                    <TouchableOpacity style={[styles.compactViewBtn, !canOrderPay && styles.requestPaidBtnDisabled]} onPress={() => { if (!canOrderPay) return; setEditingItemId(it.id); setItemName(it.name); setItemQty(String(it.qty || 1)); setItemPrice(it.price !== undefined ? String(it.price) : ''); setItemNotes(it.notes || ''); }} disabled={!canOrderPay}>
                       <Text style={styles.compactViewText}>Edit</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.compactVoteBtn} onPress={() => removeItemFromOrder(it.id)}>
+                    <TouchableOpacity style={[styles.compactVoteBtn, !canOrderPay && styles.requestPaidBtnDisabled]} onPress={() => canOrderPay && removeItemFromOrder(it.id)} disabled={!canOrderPay}>
                       <Text style={styles.compactVoteText}>Remove</Text>
                     </TouchableOpacity>
                   </View>
@@ -1012,6 +1034,8 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '800', textAlign: 'center', marginBottom: 12 },
   paymentBanner: { backgroundColor: '#111827', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, marginBottom: 10, borderWidth: 1, borderColor: '#374151' },
   paymentBannerText: { color: '#fff', fontWeight: '800', textAlign: 'center', fontSize: 13 },
+  phaseBanner: { backgroundColor: '#eef2ff', borderRadius: 10, paddingVertical: 8, paddingHorizontal: 10, borderWidth: 1, borderColor: '#c7d2fe', marginBottom: 10 },
+  phaseBannerText: { color: '#3730a3', fontWeight: '700', fontSize: 12, textAlign: 'center' },
   lobbyBox: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 14, padding: 14, backgroundColor: '#fafafa', marginBottom: 20 },
   lobbyTitle: { fontSize: 18, fontWeight: '800', color: '#111827', marginBottom: 12 },
   createTableBtn: { backgroundColor: '#111827', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12 },
@@ -1122,6 +1146,7 @@ const styles = StyleSheet.create({
 
   wheelCard: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, padding: 12, marginBottom: 10 },
   wheelTitle: { fontSize: 12, fontWeight: '800', color: '#6b7280', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 },
+  phaseLockText: { fontSize: 11, color: '#9a3412', fontWeight: '700', marginBottom: 6 },
   wheelPickName: { fontSize: 18, fontWeight: '800', color: '#111827' },
   wheelPickMeta: { marginTop: 4, fontSize: 12, color: '#374151', fontWeight: '700' },
   wheelActionsRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
