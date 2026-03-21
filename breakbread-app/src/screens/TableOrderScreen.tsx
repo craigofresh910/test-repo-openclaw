@@ -970,7 +970,7 @@ export default function TableOrderScreen({ navigation }: any) {
             const hasRequest = !!paidRequests[p.userId];
 
             return (
-              <View key={`pay-${p.userId}`} style={styles.payRow}>
+              <View key={`pay-${p.userId}`} style={[styles.payRow, paidMap[p.userId] && styles.payRowPaid]}>
                 <View>
                   <Text style={styles.payName}>{p.name}</Text>
                   <Text style={styles.payAmount}>Owes ${personOwes(p.userId).toFixed(2)}{hasRequest ? ' • Requested paid' : ''}</Text>
@@ -1179,7 +1179,8 @@ const styles = StyleSheet.create({
   lockBtnText: { color: '#fff', fontWeight: '800' },
   billSummary: { backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: '#e5e7eb', padding: 10, marginBottom: 10 },
   billLine: { fontSize: 13, color: '#111827', fontWeight: '700', marginBottom: 4 },
-  payRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#eef2f7' },
+  payRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#eef2f7', borderRadius: 8, paddingHorizontal: 8 },
+  payRowPaid: { borderWidth: 1, borderColor: '#22c55e', backgroundColor: '#f0fdf4' },
   payCaptainActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   approveBtn: { backgroundColor: '#16a34a', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 },
   approveBtnText: { color: '#fff', fontSize: 11, fontWeight: '800' },
