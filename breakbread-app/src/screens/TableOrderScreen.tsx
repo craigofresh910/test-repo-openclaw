@@ -46,6 +46,7 @@ export default function TableOrderScreen({ navigation }: any) {
   const [billTip, setBillTip] = useState('0');
   const [checkoutLocked, setCheckoutLocked] = useState(false);
   const [paidMap, setPaidMap] = useState<Record<string, boolean>>({});
+  const [paidRequests, setPaidRequests] = useState<Record<string, boolean>>({});
   const [cashTag, setCashTag] = useState('$yourcashtag');
   const lastSeenMessageIdRef = useRef<string | null>(null);
   const seenMessageIdsRef = useRef<Set<string>>(new Set());
@@ -307,6 +308,14 @@ export default function TableOrderScreen({ navigation }: any) {
 
   const togglePaid = (userId: string, next: boolean) => {
     setPaidMap((prev) => ({ ...prev, [userId]: next }));
+    if (next) {
+      setPaidRequests((prev) => ({ ...prev, [userId]: false }));
+    }
+  };
+
+  const requestMarkPaid = () => {
+    setPaidRequests((prev) => ({ ...prev, [me.userId]: true }));
+    Alert.alert('Sent', 'Payment request sent to captain.');
   };
 
   const openMessageActions = (m: any) => {
@@ -691,19 +700,40 @@ export default function TableOrderScreen({ navigation }: any) {
             <Text style={styles.billLine}>Pay captain at: {cashTag}</Text>
           </View>
 
-          {participants.map((p) => (
-            <View key={`pay-${p.userId}`} style={styles.payRow}>
-              <View>
-                <Text style={styles.payName}>{p.name}</Text>
-                <Text style={styles.payAmount}>Owes ${perPerson.toFixed(2)}</Text>
+          {participants.map((p) => {
+            const isMeRow = p.userId === me.userId;
+            const hasRequest = !!paidRequests[p.userId];
+
+            return (
+              <View key={`pay-${p.userId}`} style={styles.payRow}>
+                <View>
+                  <Text style={styles.payName}>{p.name}</Text>
+                  <Text style={styles.payAmount}>Owes ${perPerson.toFixed(2)}{hasRequest ? ' • Requested paid' : ''}</Text>
+                </View>
+
+                {isCaptain ? (
+                  <View style={styles.payCaptainActions}>
+                    {hasRequest && !paidMap[p.userId] ? (
+                      <TouchableOpacity style={styles.approveBtn} onPress={() => togglePaid(p.userId, true)}>
+                        <Text style={styles.approveBtnText}>Approve</Text>
+                      </TouchableOpacity>
+                    ) : null}
+                    <Switch
+                      value={!!paidMap[p.userId]}
+                      onValueChange={(v) => togglePaid(p.userId, v)}
+                      disabled={!checkoutLocked}
+                    />
+                  </View>
+                ) : isMeRow ? (
+                  <TouchableOpacity style={[styles.requestPaidBtn, (!checkoutLocked || paidMap[p.userId]) && styles.requestPaidBtnDisabled]} onPress={requestMarkPaid} disabled={!checkoutLocked || !!paidMap[p.userId]}>
+                    <Text style={styles.requestPaidBtnText}>{paidMap[p.userId] ? 'Paid ✅' : hasRequest ? 'Request Sent' : 'I Paid'}</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <Text style={styles.pendingTag}>{paidMap[p.userId] ? 'Paid ✅' : hasRequest ? 'Pending captain' : 'Pending'}</Text>
+                )}
               </View>
-              <Switch
-                value={!!paidMap[p.userId]}
-                onValueChange={(v) => togglePaid(p.userId, v)}
-                disabled={!isCaptain || !checkoutLocked}
-              />
-            </View>
-          ))}
+            );
+          })}
         </View>
         </>}
 
@@ -878,6 +908,13 @@ const styles = StyleSheet.create({
   billSummary: { backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: '#e5e7eb', padding: 10, marginBottom: 10 },
   billLine: { fontSize: 13, color: '#111827', fontWeight: '700', marginBottom: 4 },
   payRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#eef2f7' },
+  payCaptainActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  approveBtn: { backgroundColor: '#16a34a', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 },
+  approveBtnText: { color: '#fff', fontSize: 11, fontWeight: '800' },
+  requestPaidBtn: { backgroundColor: '#111827', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7 },
+  requestPaidBtnDisabled: { backgroundColor: '#9ca3af' },
+  requestPaidBtnText: { color: '#fff', fontSize: 11, fontWeight: '800' },
+  pendingTag: { color: '#6b7280', fontSize: 12, fontWeight: '700' },
   payName: { fontSize: 14, fontWeight: '700', color: '#111827' },
   payAmount: { fontSize: 12, color: '#6b7280' },
 
