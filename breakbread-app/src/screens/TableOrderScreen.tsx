@@ -337,7 +337,20 @@ export default function TableOrderScreen({ navigation }: any) {
   const taxNum = subtotalNum * TAX_RATE;
   const tipNum = memberCount * 1; // $1 tip per person
   const totalBill = Math.max(0, subtotalNum + taxNum + tipNum);
-  const perPerson = totalBill / memberCount;
+
+  const userItemTotals: Record<string, number> = {};
+  tableItems.forEach((it) => {
+    userItemTotals[it.userId] = (userItemTotals[it.userId] || 0) + (Number(it.price || 0) * Number(it.qty || 1));
+  });
+
+  const personOwes = (userId: string) => {
+    const base = userItemTotals[userId] || 0;
+    if (subtotalNum <= 0) return (totalBill / memberCount);
+    const taxShare = taxNum * (base / subtotalNum);
+    const tipShare = 1;
+    return base + taxShare + tipShare;
+  };
+
   const captainId = participants[0]?.userId || me.userId;
   const isCaptain = me.userId === captainId;
   const paidCount = participants.filter((p) => paidMap[p.userId]).length;
@@ -805,7 +818,7 @@ export default function TableOrderScreen({ navigation }: any) {
             <Text style={styles.billLine}>Tax (auto 6%): ${taxNum.toFixed(2)}</Text>
             <Text style={styles.billLine}>Tip (auto $1 x {memberCount}): ${tipNum.toFixed(2)}</Text>
             <Text style={styles.billLine}>Total bill: ${totalBill.toFixed(2)}</Text>
-            <Text style={styles.billLine}>Per person: ${perPerson.toFixed(2)}</Text>
+            <Text style={styles.billLine}>Each person pays what they added (+tax share + $1 tip)</Text>
             <Text style={styles.billLine}>Paid: {paidCount}/{memberCount}</Text>
             <Text style={styles.billLine}>Pay captain at: {cashTag}</Text>
           </View>
@@ -818,7 +831,7 @@ export default function TableOrderScreen({ navigation }: any) {
               <View key={`pay-${p.userId}`} style={styles.payRow}>
                 <View>
                   <Text style={styles.payName}>{p.name}</Text>
-                  <Text style={styles.payAmount}>Owes ${perPerson.toFixed(2)}{hasRequest ? ' • Requested paid' : ''}</Text>
+                  <Text style={styles.payAmount}>Owes ${personOwes(p.userId).toFixed(2)}{hasRequest ? ' • Requested paid' : ''}</Text>
                 </View>
 
                 {isCaptain ? (
