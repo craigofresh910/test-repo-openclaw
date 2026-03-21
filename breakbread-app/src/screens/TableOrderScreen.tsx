@@ -512,9 +512,15 @@ export default function TableOrderScreen({ navigation }: any) {
 
 
         <View style={styles.participants}>
-          <Text style={styles.participantsTitle}>At the Table ({participants.length || 1})</Text>
+          <View style={styles.participantsHead}>
+            <Text style={styles.participantsTitle}>At the Table</Text>
+            <View style={styles.tableCountPill}>
+              <Text style={styles.tableCountText}>{participants.length || 1} seated</Text>
+            </View>
+          </View>
 
           <View style={styles.tableScene}>
+            <View style={styles.tableGlow} />
             <View style={styles.roundTable}>
               <Image source={require('../../assets/breakbread-logo.png')} style={styles.tableLogo} resizeMode="contain" />
             </View>
@@ -525,13 +531,13 @@ export default function TableOrderScreen({ navigation }: any) {
               const centerX = 150;
               const centerY = 165;
               const radius = 132;
-              const seatSize = 86;
+              const seatSize = 90;
               const left = centerX + Math.cos(angle) * radius - seatSize / 2;
               const top = centerY + Math.sin(angle) * radius - seatSize / 2;
 
               return (
                 <View key={p.userId} style={[styles.seat, { left, top, width: seatSize }]}>
-                  <View style={styles.personDot}>
+                  <View style={[styles.personDot, p.userId === me.userId && styles.personDotMe]}>
                     {String(p.avatar || '').startsWith('file:') || String(p.avatar || '').startsWith('http') || String(p.avatar || '').startsWith('data:') ? (
                       <Image source={{ uri: String(p.avatar) }} style={styles.personPhoto} />
                     ) : (
@@ -542,6 +548,14 @@ export default function TableOrderScreen({ navigation }: any) {
                 </View>
               );
             })}
+          </View>
+
+          <View style={styles.participantRail}>
+            {(participants.length ? participants : [{ userId: me.userId, name: me.name }]).map((p) => (
+              <View key={`chip-${p.userId}`} style={[styles.participantChip, p.userId === me.userId && styles.participantChipMe]}>
+                <Text style={styles.participantChipText} numberOfLines={1}>{p.name}</Text>
+              </View>
+            ))}
           </View>
         </View>
 
@@ -885,16 +899,29 @@ const styles = StyleSheet.create({
   leaveBtn: { backgroundColor: '#ef4444', borderRadius: 12, padding: 12, alignItems: 'center', marginBottom: 20 },
   leaveBtnText: { color: '#fff', fontWeight: '800', fontSize: 14 },
   participants: { marginBottom: 20 },
-  participantsTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
+  participantsHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  participantsTitle: { fontSize: 20, fontWeight: '800', color: '#111827' },
+  tableCountPill: { backgroundColor: '#111827', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
+  tableCountText: { color: '#fff', fontSize: 11, fontWeight: '800' },
   tableScene: {
-    height: 340,
+    height: 346,
     borderRadius: 18,
-    backgroundColor: '#eef2f7',
+    backgroundColor: '#f8fafc',
     borderWidth: 1,
     borderColor: '#e5e7eb',
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  tableGlow: {
+    position: 'absolute',
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: '#fff7d6',
+    left: 10,
+    top: 26,
   },
   roundTable: {
     width: 220,
@@ -905,6 +932,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 6,
     borderColor: '#f59e0b',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
   },
   tableLogo: { width: 130, height: 60, borderRadius: 8 },
   seat: {
@@ -913,18 +944,23 @@ const styles = StyleSheet.create({
   },
 
   personDot: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#f3f4f6',
     borderWidth: 1,
     borderColor: '#d1d5db',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  personDotMe: { borderColor: '#f59e0b', borderWidth: 2 },
   personInitial: { fontWeight: '800', color: '#374151' },
-  personPhoto: { width: 34, height: 34, borderRadius: 17 },
-  seatName: { marginTop: 4, fontSize: 12, fontWeight: '700', color: '#111827', maxWidth: 86, textAlign: 'center' },
+  personPhoto: { width: 38, height: 38, borderRadius: 19 },
+  seatName: { marginTop: 4, fontSize: 12, fontWeight: '700', color: '#111827', maxWidth: 90, textAlign: 'center' },
+  participantRail: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
+  participantChip: { backgroundColor: '#eef2f7', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
+  participantChipMe: { backgroundColor: '#ffedd5' },
+  participantChipText: { fontSize: 11, color: '#111827', fontWeight: '700' },
 
   suggestBox: {
     marginBottom: 20,
