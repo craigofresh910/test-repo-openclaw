@@ -59,7 +59,7 @@ const getRestaurantCategory = (restaurant: any, details: any) => {
 };
 
 export default function RestaurantMenuScreen({ route, navigation }: any) {
-  const { restaurant } = route.params;
+  const { restaurant, autoOpenWebsite } = route.params;
   const [website, setWebsite] = useState<string | undefined>(restaurant?.website);
   const [showWebsitePanel, setShowWebsitePanel] = useState(false);
   const [websiteUri, setWebsiteUri] = useState<string | undefined>(undefined);
@@ -107,6 +107,11 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
     setWebsiteUri(menuCandidate);
     setShowWebsitePanel(true);
   };
+
+  useEffect(() => {
+    if (!autoOpenWebsite || !website) return;
+    openMenuInPanel();
+  }, [autoOpenWebsite, website]);
 
   return (
     <View style={{ flex: 1 }}>

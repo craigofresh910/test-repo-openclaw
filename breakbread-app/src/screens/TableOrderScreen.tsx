@@ -653,7 +653,7 @@ export default function TableOrderScreen({ navigation }: any) {
               </View>
 
               <View style={styles.compactActions}>
-                <TouchableOpacity style={styles.compactViewBtn} onPress={() => navigation.navigate('RestaurantMenu', { restaurant: item })}>
+                <TouchableOpacity style={styles.compactViewBtn} onPress={() => navigation.navigate('RestaurantMenu', { restaurant: item, autoOpenWebsite: true })}>
                   <Text style={styles.compactViewText}>View</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.compactVoteBtn, myVotePlaceId === item.place_id && styles.compactVoteBtnActive]} onPress={() => voteFor(item.place_id)}>
