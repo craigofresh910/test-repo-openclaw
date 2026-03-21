@@ -141,7 +141,16 @@ export default function TableOrderScreen({ navigation }: any) {
             paymentEvents.forEach((m: any) => {
               if (!seenPaymentAlertIdsRef.current.has(m.id)) {
                 seenPaymentAlertIdsRef.current.add(m.id);
-                const msg = String(m.text || '').replace('PAYMENT_EVENT:', '').trim();
+                const raw = String(m.text || '').replace('PAYMENT_EVENT:', '').trim();
+                const firstColon = raw.indexOf(':');
+                const paidUserId = firstColon > -1 ? raw.slice(0, firstColon) : '';
+                const msg = firstColon > -1 ? raw.slice(firstColon + 1) : raw;
+
+                if (paidUserId) {
+                  setPaidMap((prev) => ({ ...prev, [paidUserId]: true }));
+                  setPaidRequests((prev) => ({ ...prev, [paidUserId]: false }));
+                }
+
                 setPaymentBanner(`💸 ${msg}`);
                 setTimeout(() => setPaymentBanner(''), 2800);
                 Notifications.scheduleNotificationAsync({
@@ -398,7 +407,7 @@ export default function TableOrderScreen({ navigation }: any) {
           userId: me.userId,
           name: me.name,
           avatar: me.avatar,
-          text: `PAYMENT_EVENT:${who} paid`,
+          text: `PAYMENT_EVENT:${userId}:${who} paid`,
         });
         await broadcastTablePayment({ code: tableCode, actorUserId: me.userId, message: `${who} paid` });
       } catch {}
