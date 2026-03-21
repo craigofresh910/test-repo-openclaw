@@ -35,6 +35,7 @@ export default function TableOrderScreen({ navigation }: any) {
   const [activeTables, setActiveTables] = useState<Array<{ code: string; createdAt: string; participants: Array<{ userId: string; name: string; avatar?: string }> }>>([]);
   const [me, setMe] = useState<{ userId: string; name: string; avatar?: string }>({ userId: 'guest', name: 'You', avatar: '👤' });
   const [votes, setVotes] = useState<Record<string, number>>({});
+  const [myVotes, setMyVotes] = useState<Record<string, Place>>({});
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<Array<{ id: string; userId: string; name: string; avatar?: string; text: string; sentAt: string; replyToId?: string; replyToName?: string; replyToText?: string; editedAt?: string }>>([]);
   const [replyTo, setReplyTo] = useState<{ id: string; name: string; text: string } | null>(null);
@@ -209,6 +210,10 @@ export default function TableOrderScreen({ navigation }: any) {
 
   const voteFor = (placeId: string) => {
     setVotes((prev) => ({ ...prev, [placeId]: (prev[placeId] || 0) + 1 }));
+    const found = restaurantCards.find((r) => r.place_id === placeId);
+    if (found) {
+      setMyVotes((prev) => ({ ...prev, [placeId]: found }));
+    }
   };
 
   const swipeLeavePrompt = () => {
@@ -586,6 +591,27 @@ export default function TableOrderScreen({ navigation }: any) {
           })}
         </View>
 
+        <View style={styles.myVotesBox}>
+          <Text style={styles.myVotesTitle}>Your Votes</Text>
+          {Object.keys(myVotes).length === 0 ? (
+            <Text style={styles.myVotesEmpty}>No votes yet. Vote restaurants below.</Text>
+          ) : (
+            Object.values(myVotes)
+              .sort((a, b) => (votes[b.place_id] || 0) - (votes[a.place_id] || 0))
+              .map((r) => (
+                <View key={`my-${r.place_id}`} style={styles.myVoteRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.myVoteName} numberOfLines={1}>{r.name}</Text>
+                    <Text style={styles.myVoteMeta}>Your votes: {votes[r.place_id] || 0}</Text>
+                  </View>
+                  <TouchableOpacity style={styles.myVoteOpenBtn} onPress={() => navigation.navigate('RestaurantMenu', { restaurant: r })}>
+                    <Text style={styles.myVoteOpenText}>Open</Text>
+                  </TouchableOpacity>
+                </View>
+              ))
+          )}
+        </View>
+
         <View style={styles.suggestBox}>
           <Text style={styles.suggestTitle}>Restaurant Suggestions + Voting</Text>
 
@@ -618,8 +644,8 @@ export default function TableOrderScreen({ navigation }: any) {
                 <TouchableOpacity style={styles.compactViewBtn} onPress={() => navigation.navigate('RestaurantMenu', { restaurant: item })}>
                   <Text style={styles.compactViewText}>View</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.compactVoteBtn} onPress={() => voteFor(item.place_id)}>
-                  <Text style={styles.compactVoteText}>+1</Text>
+                <TouchableOpacity style={[styles.compactVoteBtn, myVotes[item.place_id] && styles.compactVoteBtnActive]} onPress={() => voteFor(item.place_id)}>
+                  <Text style={styles.compactVoteText}>{myVotes[item.place_id] ? '+1 Again' : '+1'}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -771,6 +797,15 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   suggestTitle: { fontSize: 16, fontWeight: '800', marginBottom: 10, color: '#111827' },
+
+  myVotesBox: { marginBottom: 14, borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, backgroundColor: '#f9fafb', padding: 10 },
+  myVotesTitle: { fontSize: 15, fontWeight: '800', color: '#111827', marginBottom: 8 },
+  myVotesEmpty: { fontSize: 12, color: '#6b7280' },
+  myVoteRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: '#eceff1' },
+  myVoteName: { fontSize: 13, fontWeight: '700', color: '#111827' },
+  myVoteMeta: { fontSize: 11, color: '#6b7280', marginTop: 2 },
+  myVoteOpenBtn: { backgroundColor: '#111827', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
+  myVoteOpenText: { color: '#fff', fontWeight: '800', fontSize: 11 },
   suggestInputRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
   suggestInput: {
     flex: 1,
@@ -810,6 +845,7 @@ const styles = StyleSheet.create({
   compactViewBtn: { backgroundColor: '#111827', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 10 },
   compactViewText: { color: '#fff', fontWeight: '800', fontSize: 11 },
   compactVoteBtn: { backgroundColor: '#f59e0b', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 12 },
+  compactVoteBtnActive: { backgroundColor: '#fbbf24' },
   compactVoteText: { color: '#111827', fontWeight: '900', fontSize: 12 },
 
   settlementBox: {
