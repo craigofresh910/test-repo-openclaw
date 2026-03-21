@@ -660,7 +660,7 @@ export default function TableOrderScreen({ navigation }: any) {
             contentContainerStyle={styles.participantsListRow}
           >
             {(participants.length ? participants : [{ userId: me.userId, name: me.name }]).map((p) => (
-              <View key={`list-${p.userId}`} style={[styles.participantCard, p.userId === me.userId && styles.participantCardMe]}>
+              <View key={`list-${p.userId}`} style={[styles.participantCard, p.userId === me.userId && styles.participantCardMe, paidMap[p.userId] && styles.participantCardPaid]}>
                 <View style={[styles.personDot, p.userId === me.userId && styles.personDotMe]}>
                   {(() => {
                     const raw = String(p.avatar || '');
@@ -1063,6 +1063,7 @@ const styles = StyleSheet.create({
   participantsListRow: { gap: 6, paddingVertical: 2, paddingHorizontal: 2 },
   participantCard: { width: 66, borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 10, backgroundColor: '#fff', padding: 6, alignItems: 'center' },
   participantCardMe: { backgroundColor: '#fff7ed' },
+  participantCardPaid: { borderColor: '#22c55e', borderWidth: 2, backgroundColor: '#f0fdf4' },
 
   personDot: {
     width: 30,
