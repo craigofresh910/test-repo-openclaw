@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import * as FileSystem from 'expo-file-system';
 import * as Notifications from 'expo-notifications';
-import { createLiveTable, deleteTableChat, editTableChat, getLiveTable, getTableChat, getUserLiveTables, joinLiveTable, leaveLiveTable, searchNearbyRestaurants, sendTableChat } from '../services/api';
+import { addTableItem, createLiveTable, deleteTableChat, editTableChat, getLiveTable, getTableChat, getUserLiveTables, joinLiveTable, leaveLiveTable, removeTableItem, searchNearbyRestaurants, sendTableChat } from '../services/api';
 
 function generateTableCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -40,6 +40,11 @@ export default function TableOrderScreen({ navigation }: any) {
   const [chatMessages, setChatMessages] = useState<Array<{ id: string; userId: string; name: string; avatar?: string; text: string; sentAt: string; replyToId?: string; replyToName?: string; replyToText?: string; editedAt?: string }>>([]);
   const [replyTo, setReplyTo] = useState<{ id: string; name: string; text: string } | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [tableItems, setTableItems] = useState<Array<{ id: string; userId: string; userName: string; name: string; qty: number; price?: number; notes?: string }>>([]);
+  const [itemName, setItemName] = useState('');
+  const [itemQty, setItemQty] = useState('1');
+  const [itemPrice, setItemPrice] = useState('');
+  const [itemNotes, setItemNotes] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
   const [billSubtotal, setBillSubtotal] = useState('');
   const [billTax, setBillTax] = useState('');
@@ -111,10 +116,12 @@ export default function TableOrderScreen({ navigation }: any) {
 
           const list = tableData?.table?.participants || [];
           const messages = chatData?.messages || [];
+          const items = tableData?.table?.items || [];
 
           if (mounted) {
             setParticipants(list);
             setChatMessages(messages);
+            setTableItems(items);
 
             const latest = messages[messages.length - 1];
             if (latest) {
@@ -330,6 +337,34 @@ export default function TableOrderScreen({ navigation }: any) {
     if (!orderedPicks.length) return;
     const lines = orderedPicks.map((r, i) => `${i + 1}. ${r.name} — ${votes[r.place_id] || 0} votes`);
     await Share.share({ message: `BreakBread table order picks:\n${lines.join('\n')}` });
+  };
+
+  const addItemToOrder = async () => {
+    const name = itemName.trim();
+    if (!name) return Alert.alert('Missing item', 'Enter item name.');
+
+    await addTableItem({
+      code: tableCode,
+      userId: me.userId,
+      userName: me.name,
+      name,
+      qty: Math.max(1, Number(itemQty || 1)),
+      price: itemPrice ? Number(itemPrice) : undefined,
+      notes: itemNotes.trim() || undefined,
+    });
+
+    setItemName('');
+    setItemQty('1');
+    setItemPrice('');
+    setItemNotes('');
+    const latest = await getLiveTable(tableCode);
+    setTableItems(latest?.table?.items || []);
+  };
+
+  const removeItemFromOrder = async (itemId: string) => {
+    await removeTableItem({ code: tableCode, itemId, userId: me.userId });
+    const latest = await getLiveTable(tableCode);
+    setTableItems(latest?.table?.items || []);
   };
 
   const openMessageActions = (m: any) => {
@@ -712,6 +747,39 @@ export default function TableOrderScreen({ navigation }: any) {
           )}
         </View>
 
+        <View style={styles.itemsBox}>
+          <Text style={styles.itemsTitle}>Shared Order Items</Text>
+          <View style={styles.itemsInputRow}>
+            <TextInput style={[styles.billInput, { flex: 2 }]} value={itemName} onChangeText={setItemName} placeholder="Item name" placeholderTextColor="#9ca3af" />
+            <TextInput style={[styles.billInput, { flex: 0.7 }]} value={itemQty} onChangeText={setItemQty} keyboardType="number-pad" placeholder="Qty" placeholderTextColor="#9ca3af" />
+            <TextInput style={[styles.billInput, { flex: 1 }]} value={itemPrice} onChangeText={setItemPrice} keyboardType="decimal-pad" placeholder="$" placeholderTextColor="#9ca3af" />
+          </View>
+          <View style={styles.itemsInputRow}>
+            <TextInput style={styles.cashInput} value={itemNotes} onChangeText={setItemNotes} placeholder="Notes (optional)" placeholderTextColor="#9ca3af" />
+            <TouchableOpacity style={styles.lockBtn} onPress={addItemToOrder}>
+              <Text style={styles.lockBtnText}>Add</Text>
+            </TouchableOpacity>
+          </View>
+
+          {tableItems.length === 0 ? (
+            <Text style={styles.myVotesEmpty}>No items yet. Add your actual order items here.</Text>
+          ) : (
+            tableItems.map((it) => (
+              <View key={it.id} style={styles.orderRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.orderName}>{it.qty}x {it.name}</Text>
+                  <Text style={styles.orderMeta}>By {it.userName}{it.price ? ` • $${Number(it.price).toFixed(2)}` : ''}{it.notes ? ` • ${it.notes}` : ''}</Text>
+                </View>
+                {(isCaptain || it.userId === me.userId) ? (
+                  <TouchableOpacity style={styles.compactVoteBtn} onPress={() => removeItemFromOrder(it.id)}>
+                    <Text style={styles.compactVoteText}>Remove</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            ))
+          )}
+        </View>
+
         <View style={styles.settlementBox}>
           <Text style={styles.settlementTitle}>Captain Checkout + Settlement</Text>
           <Text style={styles.settlementMeta}>Captain: {participants.find((p) => p.userId === captainId)?.name || me.name}</Text>
@@ -942,6 +1010,17 @@ const styles = StyleSheet.create({
   orderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
   orderName: { fontSize: 13, fontWeight: '700', color: '#111827' },
   orderMeta: { fontSize: 11, color: '#6b7280', marginTop: 2 },
+
+  itemsBox: {
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    padding: 10,
+  },
+  itemsTitle: { fontSize: 15, fontWeight: '800', color: '#111827', marginBottom: 8 },
+  itemsInputRow: { flexDirection: 'row', gap: 8, marginBottom: 8, alignItems: 'center' },
 
   settlementBox: {
     marginBottom: 20,

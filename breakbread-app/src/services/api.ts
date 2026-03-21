@@ -193,5 +193,23 @@ export const deleteTableChat = async (payload: { code: string; messageId: string
   return res.json();
 };
 
+export const addTableItem = async (payload: { code: string; userId: string; userName: string; name: string; qty?: number; price?: number; notes?: string }) => {
+  const res = await fetch(`${API_BASE}/tables/items`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+};
+
+export const removeTableItem = async (payload: { code: string; itemId: string; userId: string }) => {
+  const res = await fetch(`${API_BASE}/tables/items`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+};
+
 export const getOrders = async () => [];
 export const createOrder = async () => ({});
