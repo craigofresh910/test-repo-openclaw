@@ -573,13 +573,32 @@ export default function TableOrderScreen({ navigation }: any) {
           </View>
         ) : null}
         {tableCode && phaseInfo ? (
-          <View style={styles.phaseBanner}>
-            <Text style={styles.phaseBannerText}>
-              {currentPhase === 'join' ? `Invite + Join Open until ${new Date(phaseInfo.joinEndsAt || '').toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` :
-               currentPhase === 'suggestions' ? `Suggestions Open until ${new Date(phaseInfo.suggestionsEndsAt || '').toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` :
-               currentPhase === 'order_pay' ? `Order + Pay Open until ${new Date(phaseInfo.orderPayEndsAt || '').toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` :
-               'Table Closed: non-ordering members removed, captain proceeds'}
-            </Text>
+          <View style={styles.phaseStack}>
+            <Text style={styles.phaseStackTitle}>Current Phase</Text>
+            {currentPhase === 'join' ? (
+              <View style={styles.phaseCardActive}>
+                <Text style={styles.phaseCardTitle}>1) Invite + Join</Text>
+                <Text style={styles.phaseCardMeta}>Open until {new Date(phaseInfo.joinEndsAt || '').toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</Text>
+              </View>
+            ) : null}
+            {currentPhase === 'suggestions' ? (
+              <View style={styles.phaseCardActive}>
+                <Text style={styles.phaseCardTitle}>2) Restaurant Suggestions</Text>
+                <Text style={styles.phaseCardMeta}>Open until {new Date(phaseInfo.suggestionsEndsAt || '').toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</Text>
+              </View>
+            ) : null}
+            {currentPhase === 'order_pay' ? (
+              <View style={styles.phaseCardActive}>
+                <Text style={styles.phaseCardTitle}>3) Order + Pay</Text>
+                <Text style={styles.phaseCardMeta}>Open until {new Date(phaseInfo.orderPayEndsAt || '').toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</Text>
+              </View>
+            ) : null}
+            {currentPhase === 'closed' ? (
+              <View style={styles.phaseCardClosed}>
+                <Text style={styles.phaseCardTitle}>Closed</Text>
+                <Text style={styles.phaseCardMeta}>Timer ended. Non-ordering members removed. Captain proceeds.</Text>
+              </View>
+            ) : null}
           </View>
         ) : null}
 
@@ -1042,8 +1061,12 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '800', textAlign: 'center', marginBottom: 12 },
   paymentBanner: { backgroundColor: '#111827', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, marginBottom: 10, borderWidth: 1, borderColor: '#374151' },
   paymentBannerText: { color: '#fff', fontWeight: '800', textAlign: 'center', fontSize: 13 },
-  phaseBanner: { backgroundColor: '#eef2ff', borderRadius: 10, paddingVertical: 8, paddingHorizontal: 10, borderWidth: 1, borderColor: '#c7d2fe', marginBottom: 10 },
-  phaseBannerText: { color: '#3730a3', fontWeight: '700', fontSize: 12, textAlign: 'center' },
+  phaseStack: { backgroundColor: '#f8fafc', borderRadius: 12, borderWidth: 1, borderColor: '#e5e7eb', padding: 10, marginBottom: 10 },
+  phaseStackTitle: { fontSize: 11, color: '#6b7280', fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 },
+  phaseCardActive: { backgroundColor: '#eef2ff', borderRadius: 10, borderWidth: 1, borderColor: '#c7d2fe', paddingVertical: 10, paddingHorizontal: 10 },
+  phaseCardClosed: { backgroundColor: '#fef2f2', borderRadius: 10, borderWidth: 1, borderColor: '#fecaca', paddingVertical: 10, paddingHorizontal: 10 },
+  phaseCardTitle: { color: '#111827', fontWeight: '800', fontSize: 13, marginBottom: 2 },
+  phaseCardMeta: { color: '#374151', fontWeight: '600', fontSize: 12 },
   lobbyBox: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 14, padding: 14, backgroundColor: '#fafafa', marginBottom: 20 },
   lobbyTitle: { fontSize: 18, fontWeight: '800', color: '#111827', marginBottom: 12 },
   createTableBtn: { backgroundColor: '#111827', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12 },
