@@ -2,6 +2,18 @@ import axios from 'axios';
 
 const API_BASE = 'https://lunchbreakapp.com/api';
 
+const toRad = (v: number) => (v * Math.PI) / 180;
+const distanceMeters = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const R = 6371000;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
 export const searchNearbyRestaurants = async (
   lat: number,
   lng: number,
@@ -38,8 +50,14 @@ export const searchNearbyRestaurants = async (
     }
 
     if (data.results) {
-      return {
-        places: data.results.map((p: any) => ({
+      const mapped = data.results.map((p: any) => {
+        const rLat = p.geometry?.location?.lat;
+        const rLng = p.geometry?.location?.lng;
+        const dist = typeof rLat === 'number' && typeof rLng === 'number'
+          ? distanceMeters(lat, lng, rLat, rLng)
+          : Number.MAX_SAFE_INTEGER;
+
+        return {
           place_id: p.place_id,
           name: p.name,
           address: p.formatted_address || p.vicinity || '',
@@ -49,10 +67,19 @@ export const searchNearbyRestaurants = async (
             ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${p.photos[0].photo_reference}&key=${key}`
             : undefined,
           website: p.website,
-          lat: p.geometry?.location?.lat,
-          lng: p.geometry?.location?.lng,
+          lat: rLat,
+          lng: rLng,
+          distance_meters: dist,
           types: p.types || [],
-        })),
+        };
+      });
+
+      const places = hasQuery
+        ? mapped
+        : mapped.sort((a: any, b: any) => (a.distance_meters || Number.MAX_SAFE_INTEGER) - (b.distance_meters || Number.MAX_SAFE_INTEGER));
+
+      return {
+        places,
         nextPageToken: data.next_page_token,
       };
     }
