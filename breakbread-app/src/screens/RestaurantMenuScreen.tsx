@@ -133,7 +133,14 @@ export default function RestaurantMenuScreen({ route, navigation }: any) {
             {typeof details?.priceLevel === 'number' ? (
               <Text style={styles.infoLine}>💸 {'$'.repeat(Math.max(1, details.priceLevel))}</Text>
             ) : null}
-            {typeof details?.reviews === 'number' ? <Text style={styles.infoLine}>📝 {details.reviews} reviews</Text> : null}
+            {Array.isArray(details?.hoursText) && details.hoursText.length > 0 ? (
+              <View style={styles.hoursWrap}>
+                <Text style={styles.hoursTitle}>Hours</Text>
+                {details.hoursText.map((line: string, idx: number) => (
+                  <Text key={`${line}-${idx}`} style={styles.hoursLine}>• {line}</Text>
+                ))}
+              </View>
+            ) : null}
 
             <View style={styles.infoActions}>
               <TouchableOpacity
@@ -243,6 +250,9 @@ const styles = StyleSheet.create({
   },
   infoTitle: { fontSize: 16, fontWeight: '800', color: '#111827', marginBottom: 8 },
   infoLine: { fontSize: 14, color: '#374151', marginBottom: 5 },
+  hoursWrap: { marginTop: 6, marginBottom: 2, backgroundColor: '#fff', borderRadius: 8, padding: 8, borderWidth: 1, borderColor: '#e5e7eb' },
+  hoursTitle: { fontSize: 13, fontWeight: '800', color: '#111827', marginBottom: 4 },
+  hoursLine: { fontSize: 12, color: '#374151', marginBottom: 2 },
   infoActions: { flexDirection: 'row', gap: 8, marginTop: 6 },
   infoActionBtn: {
     backgroundColor: '#111827',

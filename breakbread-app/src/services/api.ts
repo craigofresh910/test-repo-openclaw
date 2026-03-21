@@ -109,6 +109,7 @@ export const getRestaurantDetails = async (placeId?: string) => {
     return {
       phone: r.formatted_phone_number,
       openNow: r.current_opening_hours?.open_now ?? r.opening_hours?.open_now,
+      hoursText: r.current_opening_hours?.weekday_text || r.opening_hours?.weekday_text || [],
       rating: r.rating,
       reviews: r.user_ratings_total,
       priceLevel: r.price_level,
