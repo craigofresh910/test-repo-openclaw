@@ -211,9 +211,8 @@ export const removeTableItem = async (payload: { code: string; itemId: string; u
   return res.json();
 };
 
-export const getOrders = async () => [];
-export const createOrder = async () => ({});
-= await fetch(`${API_BASE}/tables/payment-event`, {
+export const broadcastTablePayment = async (payload: { code: string; actorUserId: string; message: string }) => {
+  const res = await fetch(`${API_BASE}/tables/payment-event`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
