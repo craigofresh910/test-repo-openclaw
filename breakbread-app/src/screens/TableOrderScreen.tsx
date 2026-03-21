@@ -519,41 +519,20 @@ export default function TableOrderScreen({ navigation }: any) {
             </View>
           </View>
 
-          <View style={styles.tableScene}>
-            <View style={styles.tableGlow} />
-            <View style={styles.roundTable}>
-              <Image source={require('../../assets/breakbread-logo.png')} style={styles.tableLogo} resizeMode="contain" />
-            </View>
-
-            {(participants.length ? participants : [{ userId: me.userId, name: me.name }]).slice(0, 6).map((p, idx, arr) => {
-              const total = Math.max(arr.length, 1);
-              const angle = (-Math.PI / 2) + (idx * (2 * Math.PI / total));
-              const centerX = 150;
-              const centerY = 165;
-              const radius = 132;
-              const seatSize = 72;
-              const left = centerX + Math.cos(angle) * radius - seatSize / 2;
-              const top = centerY + Math.sin(angle) * radius - seatSize / 2;
-
-              return (
-                <View key={p.userId} style={[styles.seat, { left, top, width: seatSize }]}>
-                  <View style={[styles.personDot, p.userId === me.userId && styles.personDotMe]}>
-                    {String(p.avatar || '').startsWith('file:') || String(p.avatar || '').startsWith('http') || String(p.avatar || '').startsWith('data:') ? (
-                      <Image source={{ uri: String(p.avatar) }} style={styles.personPhoto} />
-                    ) : (
-                      <Text style={styles.personInitial}>{p.avatar || (p.name || 'U').charAt(0).toUpperCase()}</Text>
-                    )}
-                  </View>
-
-                </View>
-              );
-            })}
-          </View>
-
-          <View style={styles.participantRail}>
+          <View style={styles.participantsList}>
             {(participants.length ? participants : [{ userId: me.userId, name: me.name }]).map((p) => (
-              <View key={`chip-${p.userId}`} style={[styles.participantChip, p.userId === me.userId && styles.participantChipMe]}>
-                <Text style={styles.participantChipText} numberOfLines={1}>{p.name}</Text>
+              <View key={`list-${p.userId}`} style={[styles.participantListRow, p.userId === me.userId && styles.participantListRowMe]}>
+                <View style={[styles.personDot, p.userId === me.userId && styles.personDotMe]}>
+                  {String(p.avatar || '').startsWith('file:') || String(p.avatar || '').startsWith('http') || String(p.avatar || '').startsWith('data:') ? (
+                    <Image source={{ uri: String(p.avatar) }} style={styles.personPhoto} />
+                  ) : (
+                    <Text style={styles.personInitial}>{p.avatar || (p.name || 'U').charAt(0).toUpperCase()}</Text>
+                  )}
+                </View>
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={styles.participantListName}>{p.name}</Text>
+                  <Text style={styles.participantListMeta}>{p.userId === me.userId ? 'You' : 'Table member'}</Text>
+                </View>
               </View>
             ))}
           </View>
@@ -903,45 +882,9 @@ const styles = StyleSheet.create({
   participantsTitle: { fontSize: 20, fontWeight: '800', color: '#111827' },
   tableCountPill: { backgroundColor: '#111827', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
   tableCountText: { color: '#fff', fontSize: 11, fontWeight: '800' },
-  tableScene: {
-    height: 346,
-    borderRadius: 18,
-    backgroundColor: '#f8fafc',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  tableGlow: {
-    position: 'absolute',
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    backgroundColor: '#fff7d6',
-    left: 10,
-    top: 26,
-  },
-  roundTable: {
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: '#FFFEF2',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 6,
-    borderColor: '#f59e0b',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  tableLogo: { width: 130, height: 60, borderRadius: 8 },
-  seat: {
-    position: 'absolute',
-    alignItems: 'center',
-  },
+  participantsList: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 14, backgroundColor: '#fff', overflow: 'hidden' },
+  participantListRow: { flexDirection: 'row', alignItems: 'center', padding: 10, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+  participantListRowMe: { backgroundColor: '#fff7ed' },
 
   personDot: {
     width: 40,
@@ -956,10 +899,8 @@ const styles = StyleSheet.create({
   personDotMe: { borderColor: '#f59e0b', borderWidth: 2 },
   personInitial: { fontWeight: '800', color: '#374151' },
   personPhoto: { width: 38, height: 38, borderRadius: 19 },
-  participantRail: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
-  participantChip: { backgroundColor: '#eef2f7', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
-  participantChipMe: { backgroundColor: '#ffedd5' },
-  participantChipText: { fontSize: 11, color: '#111827', fontWeight: '700' },
+  participantListName: { fontSize: 14, fontWeight: '800', color: '#111827' },
+  participantListMeta: { fontSize: 12, color: '#6b7280', marginTop: 2 },
 
   suggestBox: {
     marginBottom: 20,
