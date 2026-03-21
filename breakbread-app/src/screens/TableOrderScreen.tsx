@@ -531,7 +531,6 @@ export default function TableOrderScreen({ navigation }: any) {
 
               return (
                 <View key={p.userId} style={[styles.seat, { left, top, width: seatSize }]}>
-                  <View style={styles.chairBack} />
                   <View style={styles.personDot}>
                     {String(p.avatar || '').startsWith('file:') || String(p.avatar || '').startsWith('http') || String(p.avatar || '').startsWith('data:') ? (
                       <Image source={{ uri: String(p.avatar) }} style={styles.personPhoto} />
@@ -912,13 +911,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     alignItems: 'center',
   },
-  chairBack: {
-    width: 44,
-    height: 20,
-    borderRadius: 6,
-    backgroundColor: '#2f3b4a',
-    marginBottom: 4,
-  },
+
   personDot: {
     width: 36,
     height: 36,
