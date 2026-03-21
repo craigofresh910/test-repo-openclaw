@@ -736,7 +736,7 @@ export default function TableOrderScreen({ navigation }: any) {
         ) : null}
 
         <View style={styles.itemsBox}>
-          <Text style={styles.itemsTitle}>Shared Order Items</Text>
+          <Text style={styles.itemsTitle}>Order Items</Text>
           <View style={styles.itemsInputRow}>
             <TextInput style={[styles.billInput, { flex: 2 }]} value={itemName} onChangeText={setItemName} placeholder="Item name" placeholderTextColor="#9ca3af" />
             <TextInput style={[styles.billInput, { flex: 0.7 }]} value={itemQty} onChangeText={setItemQty} keyboardType="number-pad" placeholder="Qty" placeholderTextColor="#9ca3af" />
