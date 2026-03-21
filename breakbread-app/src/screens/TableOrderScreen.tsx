@@ -47,7 +47,7 @@ export default function TableOrderScreen({ navigation }: any) {
   const [checkoutLocked, setCheckoutLocked] = useState(false);
   const [paidMap, setPaidMap] = useState<Record<string, boolean>>({});
   const [paidRequests, setPaidRequests] = useState<Record<string, boolean>>({});
-  const [cashTag, setCashTag] = useState('$yourcashtag');
+  const [cashTag, setCashTag] = useState('');
   const lastSeenMessageIdRef = useRef<string | null>(null);
   const seenMessageIdsRef = useRef<Set<string>>(new Set());
 
@@ -60,6 +60,8 @@ export default function TableOrderScreen({ navigation }: any) {
       let name = (await AsyncStorage.getItem('profile.username')) || 'You';
       const photoUri = await AsyncStorage.getItem('profile.photoUri');
       const avatarEmoji = (await AsyncStorage.getItem('profile.avatar')) || '👤';
+      const profileCashApp = (await AsyncStorage.getItem('profile.cashapp')) || '';
+      const profileZelle = (await AsyncStorage.getItem('profile.zelle')) || '';
       let avatar = avatarEmoji;
 
       if (photoUri) {
@@ -75,7 +77,10 @@ export default function TableOrderScreen({ navigation }: any) {
         userId = `u_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
         await AsyncStorage.setItem('bb.userId', userId);
       }
-      if (mounted) setMe({ userId, name, avatar });
+      if (mounted) {
+        setMe({ userId, name, avatar });
+        if (!cashTag) setCashTag(profileCashApp || profileZelle || 'Not set in profile');
+      }
 
       if (tableCode && tableMode !== 'none') {
         try {

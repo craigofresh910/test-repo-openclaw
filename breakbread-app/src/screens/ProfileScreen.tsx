@@ -18,6 +18,8 @@ export default function ProfileScreen({ navigation }: any) {
   const [showFriends, setShowFriends] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [paymentMethods, setPaymentMethods] = useState<string[]>(['Cash App']);
+  const [cashAppHandle, setCashAppHandle] = useState('');
+  const [zelleHandle, setZelleHandle] = useState('');
 
   const friends = useMemo(() => ['Jordan', 'Mia', 'Chris'], []);
   const [favoriteLocation, setFavoriteLocation] = useState('Detroit, MI');
@@ -25,13 +27,15 @@ export default function ProfileScreen({ navigation }: any) {
   useEffect(() => {
     (async () => {
       try {
-        const [u, a, n, p, photo, favLoc] = await Promise.all([
+        const [u, a, n, p, photo, favLoc, cash, zelle] = await Promise.all([
           AsyncStorage.getItem('profile.username'),
           AsyncStorage.getItem('profile.avatar'),
           AsyncStorage.getItem('profile.notifications'),
           AsyncStorage.getItem('profile.payments'),
           AsyncStorage.getItem('profile.photoUri'),
           AsyncStorage.getItem('profile.favoriteLocation'),
+          AsyncStorage.getItem('profile.cashapp'),
+          AsyncStorage.getItem('profile.zelle'),
         ]);
         if (u) setUsername(u);
         if (a) setAvatar(a);
@@ -39,17 +43,21 @@ export default function ProfileScreen({ navigation }: any) {
         if (p) setPaymentMethods(JSON.parse(p));
         if (photo) setPhotoUri(photo);
         if (favLoc) setFavoriteLocation(favLoc);
+        if (cash) setCashAppHandle(cash);
+        if (zelle) setZelleHandle(zelle);
       } catch {}
     })();
   }, []);
 
-  const persistProfile = async (next?: Partial<{ username: string; avatar: string; notifications: boolean; payments: string[]; photoUri: string | null; favoriteLocation: string }>) => {
+  const persistProfile = async (next?: Partial<{ username: string; avatar: string; notifications: boolean; payments: string[]; photoUri: string | null; favoriteLocation: string; cashapp: string; zelle: string }>) => {
     try {
       if (next?.username !== undefined) await AsyncStorage.setItem('profile.username', next.username);
       if (next?.avatar !== undefined) await AsyncStorage.setItem('profile.avatar', next.avatar);
       if (next?.notifications !== undefined) await AsyncStorage.setItem('profile.notifications', String(next.notifications));
       if (next?.payments !== undefined) await AsyncStorage.setItem('profile.payments', JSON.stringify(next.payments));
       if (next?.favoriteLocation !== undefined) await AsyncStorage.setItem('profile.favoriteLocation', next.favoriteLocation);
+      if (next?.cashapp !== undefined) await AsyncStorage.setItem('profile.cashapp', next.cashapp);
+      if (next?.zelle !== undefined) await AsyncStorage.setItem('profile.zelle', next.zelle);
       if (next?.photoUri !== undefined) {
         if (next.photoUri) await AsyncStorage.setItem('profile.photoUri', next.photoUri);
         else await AsyncStorage.removeItem('profile.photoUri');
@@ -164,6 +172,8 @@ export default function ProfileScreen({ navigation }: any) {
           <View style={styles.summaryBox}>
             <Text style={styles.summaryTitle}>Current Settings</Text>
             <Text style={styles.summaryLine}>Payments: {paymentMethods.length ? paymentMethods.join(', ') : 'None selected'}</Text>
+            <Text style={styles.summaryLine}>Cash App: {cashAppHandle || 'Not set'}</Text>
+            <Text style={styles.summaryLine}>Zelle: {zelleHandle || 'Not set'}</Text>
             <Text style={styles.summaryLine}>Notifications: {notificationsEnabled ? 'On' : 'Off'}</Text>
             <Text style={styles.summaryLine}>Favorite Location: {favoriteLocation}</Text>
           </View>
@@ -198,6 +208,28 @@ export default function ProfileScreen({ navigation }: any) {
                 <Text style={styles.optionCheck}>{paymentMethods.includes(m) ? '✅' : '⬜'}</Text>
               </TouchableOpacity>
             ))}
+
+            <TextInput
+              style={styles.locationInput}
+              value={cashAppHandle}
+              onChangeText={(v) => {
+                setCashAppHandle(v);
+                persistProfile({ cashapp: v });
+              }}
+              placeholder="Cash App handle (e.g. $fresh)"
+              placeholderTextColor="#9ca3af"
+            />
+            <TextInput
+              style={styles.locationInput}
+              value={zelleHandle}
+              onChangeText={(v) => {
+                setZelleHandle(v);
+                persistProfile({ zelle: v });
+              }}
+              placeholder="Zelle handle (email/phone)"
+              placeholderTextColor="#9ca3af"
+            />
+
             <TouchableOpacity style={styles.closeBtn} onPress={() => setShowPaymentModal(false)}>
               <Text style={styles.closeBtnText}>Done</Text>
             </TouchableOpacity>
