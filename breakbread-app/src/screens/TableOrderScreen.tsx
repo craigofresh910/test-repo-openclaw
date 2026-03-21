@@ -531,7 +531,7 @@ export default function TableOrderScreen({ navigation }: any) {
               const centerX = 150;
               const centerY = 165;
               const radius = 132;
-              const seatSize = 90;
+              const seatSize = 72;
               const left = centerX + Math.cos(angle) * radius - seatSize / 2;
               const top = centerY + Math.sin(angle) * radius - seatSize / 2;
 
@@ -544,7 +544,7 @@ export default function TableOrderScreen({ navigation }: any) {
                       <Text style={styles.personInitial}>{p.avatar || (p.name || 'U').charAt(0).toUpperCase()}</Text>
                     )}
                   </View>
-                  <Text style={styles.seatName} numberOfLines={1}>{p.name}</Text>
+
                 </View>
               );
             })}
@@ -956,7 +956,6 @@ const styles = StyleSheet.create({
   personDotMe: { borderColor: '#f59e0b', borderWidth: 2 },
   personInitial: { fontWeight: '800', color: '#374151' },
   personPhoto: { width: 38, height: 38, borderRadius: 19 },
-  seatName: { marginTop: 4, fontSize: 12, fontWeight: '700', color: '#111827', maxWidth: 90, textAlign: 'center' },
   participantRail: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
   participantChip: { backgroundColor: '#eef2f7', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
   participantChipMe: { backgroundColor: '#ffedd5' },
