@@ -455,7 +455,7 @@ export default function TableOrderScreen({ navigation }: any) {
           </View>
         ) : (
           <View style={styles.codeShareRow}>
-            <View style={[styles.codeBox, { flex: 1, marginBottom: 0 }]}> 
+            <View style={[styles.codeBox, { flex: 0.6, marginBottom: 0 }]}> 
               <Text style={styles.code}>{tableCode}</Text>
             </View>
             <TouchableOpacity style={styles.shareBtnInline} onPress={shareInvite}>
