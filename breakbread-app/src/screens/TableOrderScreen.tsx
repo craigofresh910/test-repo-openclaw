@@ -31,6 +31,7 @@ export default function TableOrderScreen({ navigation }: any) {
 
   const [suggestionInput, setSuggestionInput] = useState('');
   const [restaurantCards, setRestaurantCards] = useState<Place[]>([]);
+  const [wheelPickId, setWheelPickId] = useState<string | null>(null);
   const [participants, setParticipants] = useState<Array<{ userId: string; name: string; avatar?: string }>>([]);
   const [activeTables, setActiveTables] = useState<Array<{ code: string; createdAt: string; participants: Array<{ userId: string; name: string; avatar?: string }> }>>([]);
   const [me, setMe] = useState<{ userId: string; name: string; avatar?: string }>({ userId: 'guest', name: 'You', avatar: '👤' });
@@ -174,6 +175,16 @@ export default function TableOrderScreen({ navigation }: any) {
   }, []);
 
   useEffect(() => {
+    if (!restaurantCards.length) {
+      setWheelPickId(null);
+      return;
+    }
+    if (!wheelPickId || !restaurantCards.some((r) => r.place_id === wheelPickId)) {
+      setWheelPickId(restaurantCards[0].place_id);
+    }
+  }, [restaurantCards]);
+
+  useEffect(() => {
     (async () => {
       try {
         const settings = await Notifications.getPermissionsAsync();
@@ -265,6 +276,12 @@ export default function TableOrderScreen({ navigation }: any) {
     }
     setTableMode('join');
     setTableCode(code);
+  };
+
+  const spinRestaurantWheel = () => {
+    if (!restaurantCards.length) return;
+    const idx = Math.floor(Math.random() * restaurantCards.length);
+    setWheelPickId(restaurantCards[idx].place_id);
   };
 
   const refreshChat = async () => {
@@ -674,27 +691,41 @@ export default function TableOrderScreen({ navigation }: any) {
             </TouchableOpacity>
           </View>
 
-          {restaurantCards.map((item, idx) => (
-            <View key={item.place_id} style={styles.compactCard}>
-              <Image source={{ uri: item.photo || 'https://via.placeholder.com/400' }} style={styles.compactThumb} />
+          {restaurantCards.length > 0 ? (
+            (() => {
+              const selected = restaurantCards.find((r) => r.place_id === wheelPickId) || restaurantCards[0];
+              return (
+                <>
+                  <View style={styles.wheelCard}>
+                    <Text style={styles.wheelTitle}>🎡 Restaurant Wheel</Text>
+                    <Text style={styles.wheelPickName} numberOfLines={1}>{selected.name}</Text>
+                    <Text style={styles.wheelPickMeta}>👍 {votes[selected.place_id] || 0} votes</Text>
+                    <View style={styles.wheelActionsRow}>
+                      <TouchableOpacity style={styles.compactViewBtn} onPress={() => navigation.navigate('RestaurantMenu', { restaurant: selected, autoOpenWebsite: true })}>
+                        <Text style={styles.compactViewText}>View Menu</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={[styles.compactVoteBtn, myVotePlaceId === selected.place_id && styles.compactVoteBtnActive]} onPress={() => voteFor(selected.place_id)}>
+                        <Text style={styles.compactVoteText}>{myVotePlaceId === selected.place_id ? 'Voted' : 'Vote'}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.spinBtn} onPress={spinRestaurantWheel}>
+                        <Text style={styles.spinBtnText}>Spin</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
 
-              <View style={styles.compactMid}>
-                <Text style={styles.compactRank}>#{idx + 1}</Text>
-                <Text style={styles.compactTitle} numberOfLines={1}>{item.name}</Text>
-                <Text style={styles.compactAddress} numberOfLines={1}>{item.address}</Text>
-                <Text style={styles.compactVotes}>👍 {votes[item.place_id] || 0} votes</Text>
-              </View>
-
-              <View style={styles.compactActions}>
-                <TouchableOpacity style={styles.compactViewBtn} onPress={() => navigation.navigate('RestaurantMenu', { restaurant: item, autoOpenWebsite: true })}>
-                  <Text style={styles.compactViewText}>View</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.compactVoteBtn, myVotePlaceId === item.place_id && styles.compactVoteBtnActive]} onPress={() => voteFor(item.place_id)}>
-                  <Text style={styles.compactVoteText}>{myVotePlaceId === item.place_id ? 'Voted' : 'Vote'}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))}
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.wheelStrip}>
+                    {restaurantCards.map((item) => (
+                      <TouchableOpacity key={item.place_id} style={[styles.wheelChip, item.place_id === selected.place_id && styles.wheelChipActive]} onPress={() => setWheelPickId(item.place_id)}>
+                        <Text style={styles.wheelChipText} numberOfLines={1}>{item.name}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </>
+              );
+            })()
+          ) : (
+            <Text style={styles.myVotesEmpty}>No restaurant suggestions yet.</Text>
+          )}
         </View>
 
         {orderedPicks.length > 0 ? (
@@ -930,23 +961,17 @@ const styles = StyleSheet.create({
   },
   addBtnText: { color: '#fff', fontWeight: '800' },
 
-  compactCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    marginBottom: 10,
-    padding: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  compactThumb: { width: 64, height: 64, borderRadius: 10, backgroundColor: '#f3f4f6' },
-  compactMid: { flex: 1, marginHorizontal: 10 },
-  compactRank: { fontSize: 10, color: '#9ca3af', fontWeight: '800' },
-  compactTitle: { fontSize: 14, fontWeight: '800', color: '#111827', marginTop: 1 },
-  compactAddress: { marginTop: 2, fontSize: 11, color: '#6b7280' },
-  compactVotes: { marginTop: 6, fontSize: 11, color: '#374151', fontWeight: '700' },
-  compactActions: { alignItems: 'flex-end', gap: 6 },
+  wheelCard: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, padding: 12, marginBottom: 10 },
+  wheelTitle: { fontSize: 12, fontWeight: '800', color: '#6b7280', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 },
+  wheelPickName: { fontSize: 18, fontWeight: '800', color: '#111827' },
+  wheelPickMeta: { marginTop: 4, fontSize: 12, color: '#374151', fontWeight: '700' },
+  wheelActionsRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  spinBtn: { backgroundColor: '#2563eb', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 12 },
+  spinBtnText: { color: '#fff', fontWeight: '800', fontSize: 12 },
+  wheelStrip: { gap: 8, paddingBottom: 2 },
+  wheelChip: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6, maxWidth: 160 },
+  wheelChipActive: { backgroundColor: '#ffedd5', borderColor: '#f59e0b' },
+  wheelChipText: { fontSize: 11, color: '#111827', fontWeight: '700' },
   compactViewBtn: { backgroundColor: '#111827', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 10 },
   compactViewText: { color: '#fff', fontWeight: '800', fontSize: 11 },
   compactVoteBtn: { backgroundColor: '#f59e0b', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 12 },
