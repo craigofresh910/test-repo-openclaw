@@ -478,7 +478,8 @@ export default function TableOrderScreen({ navigation }: any) {
                   )}
                 >
                   <View style={styles.activeInlinePill}>
-                    <Text style={styles.activeInlinePillText}>{current.participants?.length || 0}p</Text>
+                    <Text style={styles.activeInlinePillLabel}>Active</Text>
+                    <Text style={styles.activeInlinePillText}>{current.code} • {current.participants?.length || 0} people</Text>
                   </View>
                 </Swipeable>
               );
@@ -838,8 +839,9 @@ const styles = StyleSheet.create({
   code: { fontSize: 20, fontWeight: '800', color: '#f59e0b', letterSpacing: 2 },
   shareBtnInline: { backgroundColor: '#22c55e', borderRadius: 10, paddingVertical: 11, paddingHorizontal: 12 },
   shareBtnInlineText: { color: '#fff', fontWeight: '800', fontSize: 13 },
-  activeInlinePill: { backgroundColor: '#fff7ed', borderWidth: 1, borderColor: '#fed7aa', borderRadius: 10, paddingVertical: 11, paddingHorizontal: 10 },
-  activeInlinePillText: { color: '#9a3412', fontWeight: '800', fontSize: 12 },
+  activeInlinePill: { backgroundColor: '#fff7ed', borderWidth: 1, borderColor: '#fed7aa', borderRadius: 10, paddingVertical: 7, paddingHorizontal: 10, minWidth: 112 },
+  activeInlinePillLabel: { color: '#9a3412', fontWeight: '800', fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 1 },
+  activeInlinePillText: { color: '#9a3412', fontWeight: '800', fontSize: 11 },
   activeTablesBox: {
     marginBottom: 16,
     borderWidth: 1,
