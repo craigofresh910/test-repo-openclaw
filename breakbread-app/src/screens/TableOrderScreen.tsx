@@ -133,11 +133,19 @@ export default function TableOrderScreen({ navigation }: any) {
 
             const paymentEvents = messages.filter((m: any) => String(m.text || '').startsWith('PAYMENT_EVENT:'));
             paymentEvents.forEach((m: any) => {
-              if (!seenPaymentAlertIdsRef.current.has(m.id) && m.userId !== userId) {
+              if (!seenPaymentAlertIdsRef.current.has(m.id)) {
                 seenPaymentAlertIdsRef.current.add(m.id);
                 const msg = String(m.text || '').replace('PAYMENT_EVENT:', '').trim();
                 setPaymentBanner(`💸 ${msg}`);
                 setTimeout(() => setPaymentBanner(''), 2800);
+                Notifications.scheduleNotificationAsync({
+                  content: {
+                    title: 'Payment Update',
+                    body: msg,
+                    sound: true,
+                  },
+                  trigger: null,
+                }).catch(() => {});
               }
             });
 
