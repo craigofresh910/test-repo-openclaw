@@ -461,61 +461,32 @@ export default function TableOrderScreen({ navigation }: any) {
             <TouchableOpacity style={styles.shareBtnInline} onPress={shareInvite}>
               <Text style={styles.shareBtnInlineText}>📤 Share</Text>
             </TouchableOpacity>
+            {(() => {
+              const current = activeTables.find((t) => t.code === tableCode);
+              if (!current) return null;
+              return (
+                <Swipeable
+                  overshootLeft={false}
+                  overshootRight={false}
+                  friction={2}
+                  rightThreshold={30}
+                  onSwipeableOpen={() => swipeLeavePrompt()}
+                  renderRightActions={() => (
+                    <View style={[styles.swipeAction, styles.leaveSwipeActionInlineSmall]}>
+                      <Text style={styles.swipeActionText}>Leave</Text>
+                    </View>
+                  )}
+                >
+                  <View style={styles.activeInlinePill}>
+                    <Text style={styles.activeInlinePillText}>{current.participants?.length || 0}p</Text>
+                  </View>
+                </Swipeable>
+              );
+            })()}
           </View>
         )}
 
         {!tableCode ? null : <>
-
-        <View style={styles.activeTablesBox}>
-          <Text style={styles.activeTablesTitle}>Your Active Tables</Text>
-          {activeTables.length === 0 ? (
-            <Text style={styles.activeTablesEmpty}>No active tables yet.</Text>
-          ) : (
-            activeTables.map((t) => {
-              const isCurrent = t.code === tableCode;
-
-              if (!isCurrent) {
-                return (
-                  <TouchableOpacity
-                    key={t.code}
-                    style={styles.activeTableItem}
-                    onPress={() => {
-                      setTableMode('join');
-                      setTableCode(t.code);
-                    }}
-                  >
-                    <Text style={styles.activeTableCode}>{t.code}</Text>
-                    <Text style={styles.activeTableMeta}>{t.participants?.length || 0} people</Text>
-                  </TouchableOpacity>
-                );
-              }
-
-              return (
-                <Swipeable
-                  key={`swipe-${t.code}`}
-                  overshootLeft={false}
-                  overshootRight={false}
-                  friction={2}
-                  rightThreshold={36}
-                  onSwipeableOpen={() => {
-                    swipeLeavePrompt();
-                  }}
-                  renderRightActions={() => (
-                    <View style={[styles.swipeAction, styles.leaveSwipeActionInline]}>
-                      <Text style={styles.swipeActionText}>Release to Leave</Text>
-                    </View>
-                  )}
-                >
-                  <View style={[styles.activeTableItem, styles.activeTableItemCurrent]}>
-                    <Text style={styles.activeTableCode}>{t.code}</Text>
-                    <Text style={styles.activeTableMeta}>{t.participants?.length || 0} people • swipe ← to leave</Text>
-                  </View>
-                </Swipeable>
-              );
-            })
-          )}
-        </View>
-
 
 
         <View style={styles.participants}>
@@ -862,11 +833,13 @@ const styles = StyleSheet.create({
   joinInput: { flex: 1, borderWidth: 1, borderColor: '#d1d5db', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 10, color: '#111827', backgroundColor: '#fff' },
   joinBtn: { backgroundColor: '#f59e0b', borderRadius: 10, paddingHorizontal: 14, justifyContent: 'center' },
   joinBtnText: { color: '#111827', fontWeight: '800' },
-  codeShareRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },
-  codeBox: { backgroundColor: '#f5f5f5', borderRadius: 16, padding: 18, alignItems: 'center', marginBottom: 20 },
-  code: { fontSize: 34, fontWeight: '800', color: '#f59e0b', letterSpacing: 4 },
-  shareBtnInline: { backgroundColor: '#22c55e', borderRadius: 12, paddingVertical: 14, paddingHorizontal: 14 },
-  shareBtnInlineText: { color: '#fff', fontWeight: '800', fontSize: 14 },
+  codeShareRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  codeBox: { backgroundColor: '#f5f5f5', borderRadius: 16, padding: 14, alignItems: 'center', marginBottom: 20 },
+  code: { fontSize: 28, fontWeight: '800', color: '#f59e0b', letterSpacing: 3 },
+  shareBtnInline: { backgroundColor: '#22c55e', borderRadius: 10, paddingVertical: 11, paddingHorizontal: 12 },
+  shareBtnInlineText: { color: '#fff', fontWeight: '800', fontSize: 13 },
+  activeInlinePill: { backgroundColor: '#fff7ed', borderWidth: 1, borderColor: '#fed7aa', borderRadius: 10, paddingVertical: 11, paddingHorizontal: 10 },
+  activeInlinePillText: { color: '#9a3412', fontWeight: '800', fontSize: 12 },
   activeTablesBox: {
     marginBottom: 16,
     borderWidth: 1,
@@ -1062,6 +1035,7 @@ const styles = StyleSheet.create({
   swipeEditAction: { backgroundColor: '#2563eb' },
   swipeDeleteAction: { backgroundColor: '#dc2626' },
   leaveSwipeActionInline: { backgroundColor: '#dc2626', alignItems: 'center' },
+  leaveSwipeActionInlineSmall: { backgroundColor: '#dc2626', alignItems: 'center', borderRadius: 10 },
   swipeActionText: { color: '#fff', fontWeight: '800', fontSize: 12 },
 
   chatMsgRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 10 },
