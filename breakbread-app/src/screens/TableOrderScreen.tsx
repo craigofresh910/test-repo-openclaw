@@ -478,7 +478,7 @@ export default function TableOrderScreen({ navigation }: any) {
                   )}
                 >
                   <View style={styles.activeInlinePill}>
-                    <Text style={styles.activeInlinePillLabel}>Active Table</Text>
+                    <Text style={styles.activeInlinePillLabel}>Active Tables</Text>
                     <Text style={styles.activeInlinePillText}>{current.code} • {current.participants?.length || 0} people</Text>
                   </View>
                 </Swipeable>
