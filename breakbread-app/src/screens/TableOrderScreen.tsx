@@ -794,7 +794,7 @@ export default function TableOrderScreen({ navigation }: any) {
                 </View>
               ) : (
                 <Text style={styles.settlementMeta}>Subtotal auto-calculated from itemized order.</Text>
-              )
+              )}
               <TextInput style={styles.cashInput} value={cashTag} onChangeText={setCashTag} placeholder="Captain payment handle (CashApp/Zelle/Venmo)" placeholderTextColor="#9ca3af" />
               <TouchableOpacity style={styles.lockBtn} onPress={() => setCheckoutLocked(true)}>
                 <Text style={styles.lockBtnText}>Lock Final Bill</Text>
