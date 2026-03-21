@@ -41,9 +41,9 @@ export default function TableOrderScreen({ navigation }: any) {
   const [replyTo, setReplyTo] = useState<{ id: string; name: string; text: string } | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [billSubtotal, setBillSubtotal] = useState('0');
-  const [billTax, setBillTax] = useState('0');
-  const [billTip, setBillTip] = useState('0');
+  const [billSubtotal, setBillSubtotal] = useState('');
+  const [billTax, setBillTax] = useState('');
+  const [billTip, setBillTip] = useState('');
   const [checkoutLocked, setCheckoutLocked] = useState(false);
   const [paidMap, setPaidMap] = useState<Record<string, boolean>>({});
   const [paidRequests, setPaidRequests] = useState<Record<string, boolean>>({});
