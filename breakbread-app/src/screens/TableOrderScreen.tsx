@@ -523,9 +523,13 @@ export default function TableOrderScreen({ navigation }: any) {
             </View>
           </View>
 
-          <View style={styles.participantsList}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.participantsListRow}
+          >
             {(participants.length ? participants : [{ userId: me.userId, name: me.name }]).map((p) => (
-              <View key={`list-${p.userId}`} style={[styles.participantListRow, p.userId === me.userId && styles.participantListRowMe]}>
+              <View key={`list-${p.userId}`} style={[styles.participantCard, p.userId === me.userId && styles.participantCardMe]}>
                 <View style={[styles.personDot, p.userId === me.userId && styles.personDotMe]}>
                   {(() => {
                     const raw = String(p.avatar || '');
@@ -539,13 +543,11 @@ export default function TableOrderScreen({ navigation }: any) {
                     );
                   })()}
                 </View>
-                <View style={{ flex: 1, marginLeft: 10 }}>
-                  <Text style={styles.participantListName}>{p.name}</Text>
-                  <Text style={styles.participantListMeta}>{p.userId === me.userId ? 'You' : 'Table member'}</Text>
-                </View>
+                <Text style={styles.participantCardName} numberOfLines={1}>{p.name}</Text>
+                <Text style={styles.participantCardMeta}>{p.userId === me.userId ? 'You' : 'Member'}</Text>
               </View>
             ))}
-          </View>
+          </ScrollView>
         </View>
 
         <View style={styles.chatBox}>
@@ -892,9 +894,9 @@ const styles = StyleSheet.create({
   participantsTitle: { fontSize: 20, fontWeight: '800', color: '#111827' },
   tableCountPill: { backgroundColor: '#111827', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
   tableCountText: { color: '#fff', fontSize: 11, fontWeight: '800' },
-  participantsList: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 14, backgroundColor: '#fff', overflow: 'hidden' },
-  participantListRow: { flexDirection: 'row', alignItems: 'center', padding: 10, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
-  participantListRowMe: { backgroundColor: '#fff7ed' },
+  participantsListRow: { gap: 10, paddingVertical: 2, paddingHorizontal: 2 },
+  participantCard: { width: 110, borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, backgroundColor: '#fff', padding: 10, alignItems: 'center' },
+  participantCardMe: { backgroundColor: '#fff7ed' },
 
   personDot: {
     width: 48,
@@ -909,8 +911,8 @@ const styles = StyleSheet.create({
   personDotMe: { borderColor: '#f59e0b', borderWidth: 2 },
   personInitial: { fontWeight: '800', color: '#374151' },
   personPhoto: { width: 46, height: 46, borderRadius: 23 },
-  participantListName: { fontSize: 14, fontWeight: '800', color: '#111827' },
-  participantListMeta: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  participantCardName: { fontSize: 13, fontWeight: '800', color: '#111827', marginTop: 8 },
+  participantCardMeta: { fontSize: 11, color: '#6b7280', marginTop: 2 },
 
   suggestBox: {
     marginBottom: 20,
