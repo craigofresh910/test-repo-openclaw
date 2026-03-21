@@ -853,11 +853,10 @@ export default function TableOrderScreen({ navigation }: any) {
                     <Switch
                       value={!!paidMap[p.userId]}
                       onValueChange={(v) => togglePaid(p.userId, v)}
-                      disabled={!checkoutLocked}
                     />
                   </View>
                 ) : isMeRow ? (
-                  <TouchableOpacity style={[styles.requestPaidBtn, (!checkoutLocked || paidMap[p.userId]) && styles.requestPaidBtnDisabled]} onPress={requestMarkPaid} disabled={!checkoutLocked || !!paidMap[p.userId]}>
+                  <TouchableOpacity style={[styles.requestPaidBtn, paidMap[p.userId] && styles.requestPaidBtnDisabled]} onPress={requestMarkPaid} disabled={!!paidMap[p.userId]}>
                     <Text style={styles.requestPaidBtnText}>{paidMap[p.userId] ? 'Paid ✅' : hasRequest ? 'Request Sent' : 'I Paid'}</Text>
                   </TouchableOpacity>
                 ) : (
