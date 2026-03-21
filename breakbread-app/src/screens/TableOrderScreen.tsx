@@ -724,30 +724,28 @@ export default function TableOrderScreen({ navigation }: any) {
           ))}
         </View>
 
+        {orderedPicks.length > 0 ? (
         <View style={styles.orderListBox}>
           <View style={styles.orderListHead}>
-            <Text style={styles.orderListTitle}>Actual Order List (Captain)</Text>
-            <TouchableOpacity style={[styles.myVoteOpenBtn, !orderedPicks.length && styles.requestPaidBtnDisabled]} onPress={shareOrderList} disabled={!orderedPicks.length}>
+            <Text style={styles.orderListTitle}>Restaurant Decision List</Text>
+            <TouchableOpacity style={styles.myVoteOpenBtn} onPress={shareOrderList}>
               <Text style={styles.myVoteOpenText}>Copy/Share</Text>
             </TouchableOpacity>
           </View>
 
-          {orderedPicks.length === 0 ? (
-            <Text style={styles.myVotesEmpty}>No confirmed picks yet. Vote restaurants to build order list.</Text>
-          ) : (
-            orderedPicks.map((r, idx) => (
-              <View key={`order-${r.place_id}`} style={styles.orderRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.orderName}>{idx + 1}. {r.name}</Text>
-                  <Text style={styles.orderMeta}>Votes: {votes[r.place_id] || 0}</Text>
-                </View>
-                <TouchableOpacity style={styles.compactViewBtn} onPress={() => navigation.navigate('RestaurantMenu', { restaurant: r, autoOpenWebsite: true })}>
-                  <Text style={styles.compactViewText}>Order</Text>
-                </TouchableOpacity>
+          {orderedPicks.map((r, idx) => (
+            <View key={`order-${r.place_id}`} style={styles.orderRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.orderName}>{idx + 1}. {r.name}</Text>
+                <Text style={styles.orderMeta}>Votes: {votes[r.place_id] || 0}</Text>
               </View>
-            ))
-          )}
+              <TouchableOpacity style={styles.compactViewBtn} onPress={() => navigation.navigate('RestaurantMenu', { restaurant: r, autoOpenWebsite: true })}>
+                <Text style={styles.compactViewText}>Order</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
         </View>
+        ) : null}
 
         <View style={styles.itemsBox}>
           <Text style={styles.itemsTitle}>Shared Order Items</Text>
