@@ -603,20 +603,24 @@ export default function TableOrderScreen({ navigation }: any) {
             </TouchableOpacity>
           </View>
 
-          {restaurantCards.map((item) => (
-            <View key={item.place_id} style={styles.card}>
-              <TouchableOpacity style={{ flex: 1 }} onPress={() => navigation.navigate('RestaurantMenu', { restaurant: item })}>
-                <Image source={{ uri: item.photo || 'https://via.placeholder.com/400' }} style={styles.cardImage} />
-                <View style={styles.cardContent}>
-                  <Text style={styles.cardTitle}>{item.name}</Text>
-                  <Text style={styles.cardAddress} numberOfLines={1}>{item.address}</Text>
-                </View>
-              </TouchableOpacity>
-              <View style={styles.voteRow}>
-                <TouchableOpacity style={styles.voteBtn} onPress={() => voteFor(item.place_id)}>
-                  <Text style={styles.voteBtnText}>Vote 👍</Text>
+          {restaurantCards.map((item, idx) => (
+            <View key={item.place_id} style={styles.compactCard}>
+              <Image source={{ uri: item.photo || 'https://via.placeholder.com/400' }} style={styles.compactThumb} />
+
+              <View style={styles.compactMid}>
+                <Text style={styles.compactRank}>#{idx + 1}</Text>
+                <Text style={styles.compactTitle} numberOfLines={1}>{item.name}</Text>
+                <Text style={styles.compactAddress} numberOfLines={1}>{item.address}</Text>
+                <Text style={styles.compactVotes}>👍 {votes[item.place_id] || 0} votes</Text>
+              </View>
+
+              <View style={styles.compactActions}>
+                <TouchableOpacity style={styles.compactViewBtn} onPress={() => navigation.navigate('RestaurantMenu', { restaurant: item })}>
+                  <Text style={styles.compactViewText}>View</Text>
                 </TouchableOpacity>
-                <Text style={styles.voteCount}>Votes: {votes[item.place_id] || 0}</Text>
+                <TouchableOpacity style={styles.compactVoteBtn} onPress={() => voteFor(item.place_id)}>
+                  <Text style={styles.compactVoteText}>+1</Text>
+                </TouchableOpacity>
               </View>
             </View>
           ))}
@@ -786,34 +790,27 @@ const styles = StyleSheet.create({
   },
   addBtnText: { color: '#fff', fontWeight: '800' },
 
-  card: {
+  compactCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#e5e7eb',
     marginBottom: 10,
-    overflow: 'hidden',
-  },
-  cardImage: { width: '100%', height: 120 },
-  cardContent: { padding: 10 },
-  cardTitle: { fontSize: 15, fontWeight: '700', color: '#111827' },
-  cardAddress: { marginTop: 3, fontSize: 12, color: '#6b7280' },
-  voteRow: {
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    padding: 10,
+    padding: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
-  voteBtn: {
-    backgroundColor: '#111827',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-  },
-  voteBtnText: { color: '#fff', fontWeight: '700', fontSize: 12 },
-  voteCount: { color: '#374151', fontWeight: '700', fontSize: 12 },
+  compactThumb: { width: 64, height: 64, borderRadius: 10, backgroundColor: '#f3f4f6' },
+  compactMid: { flex: 1, marginHorizontal: 10 },
+  compactRank: { fontSize: 10, color: '#9ca3af', fontWeight: '800' },
+  compactTitle: { fontSize: 14, fontWeight: '800', color: '#111827', marginTop: 1 },
+  compactAddress: { marginTop: 2, fontSize: 11, color: '#6b7280' },
+  compactVotes: { marginTop: 6, fontSize: 11, color: '#374151', fontWeight: '700' },
+  compactActions: { alignItems: 'flex-end', gap: 6 },
+  compactViewBtn: { backgroundColor: '#111827', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 10 },
+  compactViewText: { color: '#fff', fontWeight: '800', fontSize: 11 },
+  compactVoteBtn: { backgroundColor: '#f59e0b', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 12 },
+  compactVoteText: { color: '#111827', fontWeight: '900', fontSize: 12 },
 
   settlementBox: {
     marginBottom: 20,
