@@ -914,6 +914,7 @@ export default function TableOrderScreen({ navigation }: any) {
         ) : null}
 
         {(currentPhase === 'order_pay' || currentPhase === 'closed') ? (
+        <>
         <View style={styles.itemsBox}>
           <Text style={styles.itemsTitle}>Order Items</Text>
           <View style={styles.itemsInputRow}>
@@ -1026,6 +1027,7 @@ export default function TableOrderScreen({ navigation }: any) {
             );
           })}
         </View>
+        </>
         ) : null}
         </>}
 
