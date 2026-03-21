@@ -461,46 +461,56 @@ export default function TableOrderScreen({ navigation }: any) {
     const name = itemName.trim();
     if (!name) return Alert.alert('Missing item', 'Enter item name.');
 
-    if (editingItemId) {
-      await updateTableItem({
-        code: tableCode,
-        itemId: editingItemId,
-        userId: me.userId,
-        name,
-        qty: Math.max(1, Number(itemQty || 1)),
-        price: itemPrice ? Number(itemPrice) : '',
-        notes: itemNotes.trim() || '',
-      });
+    if (!tableCode) return Alert.alert('No table', 'Create or join a table first.');
 
-      setPaidMap({});
-      setPaidRequests({});
-      await sendTableChat({
-        code: tableCode,
-        userId: me.userId,
-        name: me.name,
-        avatar: me.avatar,
-        text: `PAYMENT_EVENT::Order updated — payment approval reset`,
-      });
-      await broadcastTablePayment({ code: tableCode, actorUserId: me.userId, message: 'Order updated — payment approval reset' });
-      setEditingItemId(null);
-    } else {
-      await addTableItem({
-        code: tableCode,
-        userId: me.userId,
-        userName: me.name,
-        name,
-        qty: Math.max(1, Number(itemQty || 1)),
-        price: itemPrice ? Number(itemPrice) : undefined,
-        notes: itemNotes.trim() || undefined,
-      });
+    try {
+      if (editingItemId) {
+        const updated = await updateTableItem({
+          code: tableCode,
+          itemId: editingItemId,
+          userId: me.userId,
+          name,
+          qty: Math.max(1, Number(itemQty || 1)),
+          price: itemPrice ? Number(itemPrice) : '',
+          notes: itemNotes.trim() || '',
+        });
+
+        if (!updated?.ok) throw new Error(updated?.error || 'update_failed');
+        if (Array.isArray(updated?.items)) setTableItems(updated.items);
+
+        setPaidMap({});
+        setPaidRequests({});
+        await sendTableChat({
+          code: tableCode,
+          userId: me.userId,
+          name: me.name,
+          avatar: me.avatar,
+          text: `PAYMENT_EVENT::Order updated — payment approval reset`,
+        });
+        await broadcastTablePayment({ code: tableCode, actorUserId: me.userId, message: 'Order updated — payment approval reset' });
+        setEditingItemId(null);
+      } else {
+        const added = await addTableItem({
+          code: tableCode,
+          userId: me.userId,
+          userName: me.name,
+          name,
+          qty: Math.max(1, Number(itemQty || 1)),
+          price: itemPrice ? Number(itemPrice) : undefined,
+          notes: itemNotes.trim() || undefined,
+        });
+
+        if (!added?.ok) throw new Error(added?.error || 'add_failed');
+        if (Array.isArray(added?.items)) setTableItems(added.items);
+      }
+
+      setItemName('');
+      setItemQty('1');
+      setItemPrice('');
+      setItemNotes('');
+    } catch (e: any) {
+      Alert.alert('Order item failed', String(e?.message || 'Could not save order item.'));
     }
-
-    setItemName('');
-    setItemQty('1');
-    setItemPrice('');
-    setItemNotes('');
-    const latest = await getLiveTable(tableCode);
-    setTableItems(latest?.table?.items || []);
   };
 
   const removeItemFromOrder = async (itemId: string) => {
