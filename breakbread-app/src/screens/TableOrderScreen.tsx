@@ -47,8 +47,6 @@ export default function TableOrderScreen({ navigation }: any) {
   const [itemNotes, setItemNotes] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
   const [billSubtotal, setBillSubtotal] = useState('');
-  const [billTax, setBillTax] = useState('');
-  const [billTip, setBillTip] = useState('');
   const [checkoutLocked, setCheckoutLocked] = useState(false);
   const [paidMap, setPaidMap] = useState<Record<string, boolean>>({});
   const [paidRequests, setPaidRequests] = useState<Record<string, boolean>>({});
@@ -308,11 +306,13 @@ export default function TableOrderScreen({ navigation }: any) {
     await refreshChat();
   };
 
-  const subtotalNum = Number(billSubtotal || 0);
-  const taxNum = Number(billTax || 0);
-  const tipNum = Number(billTip || 0);
-  const totalBill = Math.max(0, subtotalNum + taxNum + tipNum);
+  const pricedItemsSubtotal = tableItems.reduce((sum, it) => sum + (Number(it.price || 0) * Number(it.qty || 1)), 0);
+  const subtotalNum = pricedItemsSubtotal > 0 ? pricedItemsSubtotal : Number(billSubtotal || 0);
   const memberCount = Math.max(1, participants.length || 1);
+  const TAX_RATE = 0.06;
+  const taxNum = subtotalNum * TAX_RATE;
+  const tipNum = memberCount * 1; // $1 tip per person
+  const totalBill = Math.max(0, subtotalNum + taxNum + tipNum);
   const perPerson = totalBill / memberCount;
   const captainId = participants[0]?.userId || me.userId;
   const isCaptain = me.userId === captainId;
@@ -788,11 +788,13 @@ export default function TableOrderScreen({ navigation }: any) {
 
           {isCaptain ? (
             <>
-              <View style={styles.billRow}>
-                <TextInput style={styles.billInput} value={billSubtotal} onChangeText={setBillSubtotal} keyboardType="decimal-pad" placeholder="Subtotal" placeholderTextColor="#9ca3af" />
-                <TextInput style={styles.billInput} value={billTax} onChangeText={setBillTax} keyboardType="decimal-pad" placeholder="Tax" placeholderTextColor="#9ca3af" />
-                <TextInput style={styles.billInput} value={billTip} onChangeText={setBillTip} keyboardType="decimal-pad" placeholder="Tip" placeholderTextColor="#9ca3af" />
-              </View>
+              {pricedItemsSubtotal <= 0 ? (
+                <View style={styles.billRow}>
+                  <TextInput style={styles.billInput} value={billSubtotal} onChangeText={setBillSubtotal} keyboardType="decimal-pad" placeholder="Subtotal" placeholderTextColor="#9ca3af" />
+                </View>
+              ) : (
+                <Text style={styles.settlementMeta}>Subtotal auto-calculated from itemized order.</Text>
+              )
               <TextInput style={styles.cashInput} value={cashTag} onChangeText={setCashTag} placeholder="Captain payment handle (CashApp/Zelle/Venmo)" placeholderTextColor="#9ca3af" />
               <TouchableOpacity style={styles.lockBtn} onPress={() => setCheckoutLocked(true)}>
                 <Text style={styles.lockBtnText}>Lock Final Bill</Text>
@@ -803,6 +805,9 @@ export default function TableOrderScreen({ navigation }: any) {
           )}
 
           <View style={styles.billSummary}>
+            <Text style={styles.billLine}>Subtotal: ${subtotalNum.toFixed(2)}</Text>
+            <Text style={styles.billLine}>Tax (auto 6%): ${taxNum.toFixed(2)}</Text>
+            <Text style={styles.billLine}>Tip (auto $1 x {memberCount}): ${tipNum.toFixed(2)}</Text>
             <Text style={styles.billLine}>Total bill: ${totalBill.toFixed(2)}</Text>
             <Text style={styles.billLine}>Per person: ${perPerson.toFixed(2)}</Text>
             <Text style={styles.billLine}>Paid: {paidCount}/{memberCount}</Text>
