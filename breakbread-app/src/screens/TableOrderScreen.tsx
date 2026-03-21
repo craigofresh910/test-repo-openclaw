@@ -55,6 +55,7 @@ export default function TableOrderScreen({ navigation }: any) {
   const [cashTag, setCashTag] = useState('');
   const lastSeenMessageIdRef = useRef<string | null>(null);
   const seenMessageIdsRef = useRef<Set<string>>(new Set());
+  const seenPaymentAlertIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     let mounted = true;
@@ -128,6 +129,15 @@ export default function TableOrderScreen({ navigation }: any) {
             setParticipants(list);
             setChatMessages(messages);
             setTableItems(items);
+
+            const paymentEvents = messages.filter((m: any) => String(m.text || '').startsWith('PAYMENT_EVENT:'));
+            paymentEvents.forEach((m: any) => {
+              if (!seenPaymentAlertIdsRef.current.has(m.id) && m.userId !== userId) {
+                seenPaymentAlertIdsRef.current.add(m.id);
+                const msg = String(m.text || '').replace('PAYMENT_EVENT:', '').trim();
+                Alert.alert('Payment Update', msg);
+              }
+            });
 
             const latest = messages[messages.length - 1];
             if (latest) {
@@ -361,10 +371,20 @@ export default function TableOrderScreen({ navigation }: any) {
     .filter((r) => (votes[r.place_id] || 0) > 0)
     .sort((a, b) => (votes[b.place_id] || 0) - (votes[a.place_id] || 0));
 
-  const togglePaid = (userId: string, next: boolean) => {
+  const togglePaid = async (userId: string, next: boolean) => {
     setPaidMap((prev) => ({ ...prev, [userId]: next }));
     if (next) {
       setPaidRequests((prev) => ({ ...prev, [userId]: false }));
+      const who = participants.find((p) => p.userId === userId)?.name || 'A member';
+      try {
+        await sendTableChat({
+          code: tableCode,
+          userId: me.userId,
+          name: me.name,
+          avatar: me.avatar,
+          text: `PAYMENT_EVENT:${who} paid`,
+        });
+      } catch {}
     }
   };
 
@@ -602,7 +622,7 @@ export default function TableOrderScreen({ navigation }: any) {
             </TouchableOpacity>
           </View>
 
-          {chatMessages.slice(-20).map((m) => {
+          {chatMessages.filter((m) => !String(m.text || '').startsWith('PAYMENT_EVENT:')).slice(-20).map((m) => {
             const mine = m.userId === me.userId;
             const time = new Date(m.sentAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
             return (
