@@ -526,7 +526,7 @@ export default function TableOrderScreen({ navigation }: any) {
                   {String(p.avatar || '').startsWith('file:') || String(p.avatar || '').startsWith('http') || String(p.avatar || '').startsWith('data:') ? (
                     <Image source={{ uri: String(p.avatar) }} style={styles.personPhoto} />
                   ) : (
-                    <Text style={styles.personInitial}>{p.avatar || (p.name || 'U').charAt(0).toUpperCase()}</Text>
+                    <Text style={styles.personInitial}>{p.avatar || '👤'}</Text>
                   )}
                 </View>
                 <View style={{ flex: 1, marginLeft: 10 }}>
@@ -887,9 +887,9 @@ const styles = StyleSheet.create({
   participantListRowMe: { backgroundColor: '#fff7ed' },
 
   personDot: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#f3f4f6',
     borderWidth: 1,
     borderColor: '#d1d5db',
@@ -898,7 +898,7 @@ const styles = StyleSheet.create({
   },
   personDotMe: { borderColor: '#f59e0b', borderWidth: 2 },
   personInitial: { fontWeight: '800', color: '#374151' },
-  personPhoto: { width: 38, height: 38, borderRadius: 19 },
+  personPhoto: { width: 46, height: 46, borderRadius: 23 },
   participantListName: { fontSize: 14, fontWeight: '800', color: '#111827' },
   participantListMeta: { fontSize: 12, color: '#6b7280', marginTop: 2 },
 
