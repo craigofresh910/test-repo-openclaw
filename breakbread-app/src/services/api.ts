@@ -202,6 +202,15 @@ export const addTableItem = async (payload: { code: string; userId: string; user
   return res.json();
 };
 
+export const updateTableItem = async (payload: { code: string; itemId: string; userId: string; name?: string; qty?: number; price?: number | ''; notes?: string }) => {
+  const res = await fetch(`${API_BASE}/tables/items`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+};
+
 export const removeTableItem = async (payload: { code: string; itemId: string; userId: string }) => {
   const res = await fetch(`${API_BASE}/tables/items`, {
     method: 'DELETE',

@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import * as FileSystem from 'expo-file-system';
 import * as Notifications from 'expo-notifications';
-import { addTableItem, broadcastTablePayment, createLiveTable, deleteTableChat, editTableChat, getLiveTable, getTableChat, getUserLiveTables, joinLiveTable, leaveLiveTable, removeTableItem, searchNearbyRestaurants, sendTableChat } from '../services/api';
+import { addTableItem, broadcastTablePayment, createLiveTable, deleteTableChat, editTableChat, getLiveTable, getTableChat, getUserLiveTables, joinLiveTable, leaveLiveTable, removeTableItem, searchNearbyRestaurants, sendTableChat, updateTableItem } from '../services/api';
 
 function generateTableCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -47,6 +47,7 @@ export default function TableOrderScreen({ navigation }: any) {
   const [itemQty, setItemQty] = useState('1');
   const [itemPrice, setItemPrice] = useState('');
   const [itemNotes, setItemNotes] = useState('');
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [paymentBanner, setPaymentBanner] = useState<string>('');
   const [billSubtotal, setBillSubtotal] = useState('');
@@ -460,15 +461,39 @@ export default function TableOrderScreen({ navigation }: any) {
     const name = itemName.trim();
     if (!name) return Alert.alert('Missing item', 'Enter item name.');
 
-    await addTableItem({
-      code: tableCode,
-      userId: me.userId,
-      userName: me.name,
-      name,
-      qty: Math.max(1, Number(itemQty || 1)),
-      price: itemPrice ? Number(itemPrice) : undefined,
-      notes: itemNotes.trim() || undefined,
-    });
+    if (editingItemId) {
+      await updateTableItem({
+        code: tableCode,
+        itemId: editingItemId,
+        userId: me.userId,
+        name,
+        qty: Math.max(1, Number(itemQty || 1)),
+        price: itemPrice ? Number(itemPrice) : '',
+        notes: itemNotes.trim() || '',
+      });
+
+      setPaidMap({});
+      setPaidRequests({});
+      await sendTableChat({
+        code: tableCode,
+        userId: me.userId,
+        name: me.name,
+        avatar: me.avatar,
+        text: `PAYMENT_EVENT::Order updated — payment approval reset`,
+      });
+      await broadcastTablePayment({ code: tableCode, actorUserId: me.userId, message: 'Order updated — payment approval reset' });
+      setEditingItemId(null);
+    } else {
+      await addTableItem({
+        code: tableCode,
+        userId: me.userId,
+        userName: me.name,
+        name,
+        qty: Math.max(1, Number(itemQty || 1)),
+        price: itemPrice ? Number(itemPrice) : undefined,
+        notes: itemNotes.trim() || undefined,
+      });
+    }
 
     setItemName('');
     setItemQty('1');
@@ -865,9 +890,14 @@ export default function TableOrderScreen({ navigation }: any) {
           <View style={styles.itemsInputRow}>
             <TextInput style={styles.cashInput} value={itemNotes} onChangeText={setItemNotes} placeholder="Notes (optional)" placeholderTextColor="#9ca3af" />
             <TouchableOpacity style={styles.lockBtn} onPress={addItemToOrder}>
-              <Text style={styles.lockBtnText}>Add</Text>
+              <Text style={styles.lockBtnText}>{editingItemId ? 'Save' : 'Add'}</Text>
             </TouchableOpacity>
           </View>
+          {editingItemId ? (
+            <TouchableOpacity onPress={() => { setEditingItemId(null); setItemName(''); setItemQty('1'); setItemPrice(''); setItemNotes(''); }}>
+              <Text style={styles.editingCancel}>Cancel edit</Text>
+            </TouchableOpacity>
+          ) : null}
 
           {tableItems.length === 0 ? (
             <Text style={styles.myVotesEmpty}>No items yet. Add your actual order items here.</Text>
@@ -879,9 +909,14 @@ export default function TableOrderScreen({ navigation }: any) {
                   <Text style={styles.orderMeta}>By {it.userName}{it.price ? ` • $${Number(it.price).toFixed(2)}` : ''}{it.notes ? ` • ${it.notes}` : ''}</Text>
                 </View>
                 {(isCaptain || it.userId === me.userId) ? (
-                  <TouchableOpacity style={styles.compactVoteBtn} onPress={() => removeItemFromOrder(it.id)}>
-                    <Text style={styles.compactVoteText}>Remove</Text>
-                  </TouchableOpacity>
+                  <View style={{ flexDirection: 'row', gap: 6 }}>
+                    <TouchableOpacity style={styles.compactViewBtn} onPress={() => { setEditingItemId(it.id); setItemName(it.name); setItemQty(String(it.qty || 1)); setItemPrice(it.price !== undefined ? String(it.price) : ''); setItemNotes(it.notes || ''); }}>
+                      <Text style={styles.compactViewText}>Edit</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.compactVoteBtn} onPress={() => removeItemFromOrder(it.id)}>
+                      <Text style={styles.compactVoteText}>Remove</Text>
+                    </TouchableOpacity>
+                  </View>
                 ) : null}
               </View>
             ))
@@ -1115,6 +1150,7 @@ const styles = StyleSheet.create({
   },
   itemsTitle: { fontSize: 15, fontWeight: '800', color: '#111827', marginBottom: 8 },
   itemsInputRow: { flexDirection: 'row', gap: 8, marginBottom: 8, alignItems: 'center' },
+  editingCancel: { color: '#2563eb', fontSize: 12, fontWeight: '700', marginBottom: 8 },
 
   settlementBox: {
     marginBottom: 20,
