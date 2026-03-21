@@ -305,6 +305,9 @@ export default function TableOrderScreen({ navigation }: any) {
   const captainId = participants[0]?.userId || me.userId;
   const isCaptain = me.userId === captainId;
   const paidCount = participants.filter((p) => paidMap[p.userId]).length;
+  const orderedPicks = restaurantCards
+    .filter((r) => (votes[r.place_id] || 0) > 0)
+    .sort((a, b) => (votes[b.place_id] || 0) - (votes[a.place_id] || 0));
 
   const togglePaid = (userId: string, next: boolean) => {
     setPaidMap((prev) => ({ ...prev, [userId]: next }));
@@ -316,6 +319,12 @@ export default function TableOrderScreen({ navigation }: any) {
   const requestMarkPaid = () => {
     setPaidRequests((prev) => ({ ...prev, [me.userId]: true }));
     Alert.alert('Sent', 'Payment request sent to captain.');
+  };
+
+  const shareOrderList = async () => {
+    if (!orderedPicks.length) return;
+    const lines = orderedPicks.map((r, i) => `${i + 1}. ${r.name} — ${votes[r.place_id] || 0} votes`);
+    await Share.share({ message: `BreakBread table order picks:\n${lines.join('\n')}` });
   };
 
   const openMessageActions = (m: any) => {
@@ -673,6 +682,31 @@ export default function TableOrderScreen({ navigation }: any) {
           ))}
         </View>
 
+        <View style={styles.orderListBox}>
+          <View style={styles.orderListHead}>
+            <Text style={styles.orderListTitle}>Actual Order List (Captain)</Text>
+            <TouchableOpacity style={[styles.myVoteOpenBtn, !orderedPicks.length && styles.requestPaidBtnDisabled]} onPress={shareOrderList} disabled={!orderedPicks.length}>
+              <Text style={styles.myVoteOpenText}>Copy/Share</Text>
+            </TouchableOpacity>
+          </View>
+
+          {orderedPicks.length === 0 ? (
+            <Text style={styles.myVotesEmpty}>No confirmed picks yet. Vote restaurants to build order list.</Text>
+          ) : (
+            orderedPicks.map((r, idx) => (
+              <View key={`order-${r.place_id}`} style={styles.orderRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.orderName}>{idx + 1}. {r.name}</Text>
+                  <Text style={styles.orderMeta}>Votes: {votes[r.place_id] || 0}</Text>
+                </View>
+                <TouchableOpacity style={styles.compactViewBtn} onPress={() => navigation.navigate('RestaurantMenu', { restaurant: r, autoOpenWebsite: true })}>
+                  <Text style={styles.compactViewText}>Order</Text>
+                </TouchableOpacity>
+              </View>
+            ))
+          )}
+        </View>
+
         <View style={styles.settlementBox}>
           <Text style={styles.settlementTitle}>Captain Checkout + Settlement</Text>
           <Text style={styles.settlementMeta}>Captain: {participants.find((p) => p.userId === captainId)?.name || me.name}</Text>
@@ -889,6 +923,20 @@ const styles = StyleSheet.create({
   compactVoteBtn: { backgroundColor: '#f59e0b', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 12 },
   compactVoteBtnActive: { backgroundColor: '#fbbf24' },
   compactVoteText: { color: '#111827', fontWeight: '900', fontSize: 12 },
+
+  orderListBox: {
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    padding: 10,
+  },
+  orderListHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  orderListTitle: { fontSize: 15, fontWeight: '800', color: '#111827' },
+  orderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+  orderName: { fontSize: 13, fontWeight: '700', color: '#111827' },
+  orderMeta: { fontSize: 11, color: '#6b7280', marginTop: 2 },
 
   settlementBox: {
     marginBottom: 20,
