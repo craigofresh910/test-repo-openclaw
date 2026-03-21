@@ -107,22 +107,22 @@ export default function App() {
           <Tab.Screen
             name="Home"
             component={HomeStackScreen}
-            options={{ tabBarIcon: () => <TabIcon icon="🏠" />, tabBarLabel: () => null }}
+            options={{ tabBarIcon: () => <TabIcon icon="🏠" />, tabBarLabel: 'Home' }}
           />
           <Tab.Screen
             name="Orders"
             component={OrdersStackScreen}
-            options={{ tabBarIcon: () => <TabIcon icon="📋" />, tabBarLabel: () => null }}
+            options={{ tabBarIcon: () => <TabIcon icon="📋" />, tabBarLabel: 'Orders' }}
           />
           <Tab.Screen
             name="Table"
             component={TableStackScreen}
-            options={{ tabBarIcon: () => <TabIcon icon="👥" />, tabBarLabel: () => null }}
+            options={{ tabBarIcon: () => <TabIcon icon="🍽️" />, tabBarLabel: 'Tables' }}
           />
           <Tab.Screen
             name="Profile"
             component={ProfileStackScreen}
-            options={{ tabBarIcon: () => <TabIcon icon="👤" />, tabBarLabel: () => null }}
+            options={{ tabBarIcon: () => <TabIcon icon="👤" />, tabBarLabel: 'Profile' }}
           />
         </Tab.Navigator>
       </NavigationContainer>
