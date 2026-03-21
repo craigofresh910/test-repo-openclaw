@@ -456,7 +456,7 @@ export default function TableOrderScreen({ navigation }: any) {
         ) : (
           <View style={styles.codeShareRow}>
             <View style={[styles.codeBox, { flex: 0.6, marginBottom: 0 }]}> 
-              <Text style={styles.code}>{tableCode}</Text>
+              <Text style={styles.code} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tableCode}</Text>
             </View>
             <TouchableOpacity style={styles.shareBtnInline} onPress={shareInvite}>
               <Text style={styles.shareBtnInlineText}>📤 Share</Text>
@@ -836,7 +836,7 @@ const styles = StyleSheet.create({
   joinBtnText: { color: '#111827', fontWeight: '800' },
   codeShareRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
   codeBox: { backgroundColor: '#f5f5f5', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, alignItems: 'center', marginBottom: 20 },
-  code: { fontSize: 20, fontWeight: '800', color: '#f59e0b', letterSpacing: 2 },
+  code: { fontSize: 20, fontWeight: '800', color: '#f59e0b', letterSpacing: 2, includeFontPadding: false },
   shareBtnInline: { backgroundColor: '#22c55e', borderRadius: 10, paddingVertical: 11, paddingHorizontal: 12 },
   shareBtnInlineText: { color: '#fff', fontWeight: '800', fontSize: 13 },
   activeInlinePill: { backgroundColor: '#fff7ed', borderWidth: 1, borderColor: '#fed7aa', borderRadius: 10, paddingVertical: 7, paddingHorizontal: 10, minWidth: 112 },
