@@ -408,7 +408,7 @@ export default function TableOrderScreen({ navigation }: any) {
       <AppHeader />
       <BackArrow navigation={navigation} />
       <View style={styles.content}>
-        <Text style={styles.title}>Table</Text>
+        <Text style={styles.title}>Tables</Text>
 
         {!tableCode ? (
           <View style={styles.lobbyBox}>
