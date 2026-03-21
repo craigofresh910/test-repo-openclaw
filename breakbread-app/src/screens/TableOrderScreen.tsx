@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, Alert, TextInput, Image, Vibration } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, Alert, TextInput, Image, Vibration, Switch } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import BackArrow from '../components/BackArrow';
 import AppHeader from '../components/AppHeader';
@@ -40,6 +40,12 @@ export default function TableOrderScreen({ navigation }: any) {
   const [replyTo, setReplyTo] = useState<{ id: string; name: string; text: string } | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [billSubtotal, setBillSubtotal] = useState('0');
+  const [billTax, setBillTax] = useState('0');
+  const [billTip, setBillTip] = useState('0');
+  const [checkoutLocked, setCheckoutLocked] = useState(false);
+  const [paidMap, setPaidMap] = useState<Record<string, boolean>>({});
+  const [cashTag, setCashTag] = useState('$yourcashtag');
   const lastSeenMessageIdRef = useRef<string | null>(null);
   const seenMessageIdsRef = useRef<Set<string>>(new Set());
 
@@ -272,6 +278,20 @@ export default function TableOrderScreen({ navigation }: any) {
   const removeMessage = async (messageId: string) => {
     await deleteTableChat({ code: tableCode, messageId, userId: me.userId });
     await refreshChat();
+  };
+
+  const subtotalNum = Number(billSubtotal || 0);
+  const taxNum = Number(billTax || 0);
+  const tipNum = Number(billTip || 0);
+  const totalBill = Math.max(0, subtotalNum + taxNum + tipNum);
+  const memberCount = Math.max(1, participants.length || 1);
+  const perPerson = totalBill / memberCount;
+  const captainId = participants[0]?.userId || me.userId;
+  const isCaptain = me.userId === captainId;
+  const paidCount = participants.filter((p) => paidMap[p.userId]).length;
+
+  const togglePaid = (userId: string, next: boolean) => {
+    setPaidMap((prev) => ({ ...prev, [userId]: next }));
   };
 
   const openMessageActions = (m: any) => {
@@ -601,6 +621,48 @@ export default function TableOrderScreen({ navigation }: any) {
             </View>
           ))}
         </View>
+
+        <View style={styles.settlementBox}>
+          <Text style={styles.settlementTitle}>Captain Checkout + Settlement</Text>
+          <Text style={styles.settlementMeta}>Captain: {participants.find((p) => p.userId === captainId)?.name || me.name}</Text>
+
+          {isCaptain ? (
+            <>
+              <View style={styles.billRow}>
+                <TextInput style={styles.billInput} value={billSubtotal} onChangeText={setBillSubtotal} keyboardType="decimal-pad" placeholder="Subtotal" placeholderTextColor="#9ca3af" />
+                <TextInput style={styles.billInput} value={billTax} onChangeText={setBillTax} keyboardType="decimal-pad" placeholder="Tax" placeholderTextColor="#9ca3af" />
+                <TextInput style={styles.billInput} value={billTip} onChangeText={setBillTip} keyboardType="decimal-pad" placeholder="Tip" placeholderTextColor="#9ca3af" />
+              </View>
+              <TextInput style={styles.cashInput} value={cashTag} onChangeText={setCashTag} placeholder="Captain payment handle (CashApp/Zelle/Venmo)" placeholderTextColor="#9ca3af" />
+              <TouchableOpacity style={styles.lockBtn} onPress={() => setCheckoutLocked(true)}>
+                <Text style={styles.lockBtnText}>Lock Final Bill</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <Text style={styles.settlementMeta}>Waiting for captain to lock final bill.</Text>
+          )}
+
+          <View style={styles.billSummary}>
+            <Text style={styles.billLine}>Total bill: ${totalBill.toFixed(2)}</Text>
+            <Text style={styles.billLine}>Per person: ${perPerson.toFixed(2)}</Text>
+            <Text style={styles.billLine}>Paid: {paidCount}/{memberCount}</Text>
+            <Text style={styles.billLine}>Pay captain at: {cashTag}</Text>
+          </View>
+
+          {participants.map((p) => (
+            <View key={`pay-${p.userId}`} style={styles.payRow}>
+              <View>
+                <Text style={styles.payName}>{p.name}</Text>
+                <Text style={styles.payAmount}>Owes ${perPerson.toFixed(2)}</Text>
+              </View>
+              <Switch
+                value={!!paidMap[p.userId]}
+                onValueChange={(v) => togglePaid(p.userId, v)}
+                disabled={!isCaptain || !checkoutLocked}
+              />
+            </View>
+          ))}
+        </View>
         </>}
 
       </View>
@@ -752,6 +814,27 @@ const styles = StyleSheet.create({
   },
   voteBtnText: { color: '#fff', fontWeight: '700', fontSize: 12 },
   voteCount: { color: '#374151', fontWeight: '700', fontSize: 12 },
+
+  settlementBox: {
+    marginBottom: 20,
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    padding: 12,
+  },
+  settlementTitle: { fontSize: 16, fontWeight: '800', color: '#111827', marginBottom: 4 },
+  settlementMeta: { fontSize: 12, color: '#6b7280', marginBottom: 8 },
+  billRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  billInput: { flex: 1, borderWidth: 1, borderColor: '#d1d5db', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 9, backgroundColor: '#fff', color: '#111827' },
+  cashInput: { borderWidth: 1, borderColor: '#d1d5db', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 9, backgroundColor: '#fff', color: '#111827', marginBottom: 8 },
+  lockBtn: { backgroundColor: '#111827', borderRadius: 10, paddingVertical: 10, alignItems: 'center', marginBottom: 10 },
+  lockBtnText: { color: '#fff', fontWeight: '800' },
+  billSummary: { backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: '#e5e7eb', padding: 10, marginBottom: 10 },
+  billLine: { fontSize: 13, color: '#111827', fontWeight: '700', marginBottom: 4 },
+  payRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#eef2f7' },
+  payName: { fontSize: 14, fontWeight: '700', color: '#111827' },
+  payAmount: { fontSize: 12, color: '#6b7280' },
 
   chatBox: {
     marginBottom: 20,
