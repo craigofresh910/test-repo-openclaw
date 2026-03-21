@@ -48,6 +48,7 @@ export default function TableOrderScreen({ navigation }: any) {
   const [itemPrice, setItemPrice] = useState('');
   const [itemNotes, setItemNotes] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
+  const [paymentBanner, setPaymentBanner] = useState<string>('');
   const [billSubtotal, setBillSubtotal] = useState('');
   const [checkoutLocked, setCheckoutLocked] = useState(false);
   const [paidMap, setPaidMap] = useState<Record<string, boolean>>({});
@@ -135,7 +136,8 @@ export default function TableOrderScreen({ navigation }: any) {
               if (!seenPaymentAlertIdsRef.current.has(m.id) && m.userId !== userId) {
                 seenPaymentAlertIdsRef.current.add(m.id);
                 const msg = String(m.text || '').replace('PAYMENT_EVENT:', '').trim();
-                Alert.alert('Payment Update', msg);
+                setPaymentBanner(`💸 ${msg}`);
+                setTimeout(() => setPaymentBanner(''), 2800);
               }
             });
 
@@ -462,6 +464,11 @@ export default function TableOrderScreen({ navigation }: any) {
       <BackArrow navigation={navigation} />
       <View style={styles.content}>
         <Text style={styles.title}>Table</Text>
+        {paymentBanner ? (
+          <View style={styles.paymentBanner}>
+            <Text style={styles.paymentBannerText}>{paymentBanner}</Text>
+          </View>
+        ) : null}
 
         {!tableCode ? (
           <View style={styles.lobbyBox}>
@@ -896,7 +903,9 @@ export default function TableOrderScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   content: { padding: 20 },
-  title: { fontSize: 28, fontWeight: '800', textAlign: 'center', marginBottom: 20 },
+  title: { fontSize: 28, fontWeight: '800', textAlign: 'center', marginBottom: 12 },
+  paymentBanner: { backgroundColor: '#111827', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, marginBottom: 10, borderWidth: 1, borderColor: '#374151' },
+  paymentBannerText: { color: '#fff', fontWeight: '800', textAlign: 'center', fontSize: 13 },
   lobbyBox: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 14, padding: 14, backgroundColor: '#fafafa', marginBottom: 20 },
   lobbyTitle: { fontSize: 18, fontWeight: '800', color: '#111827', marginBottom: 12 },
   createTableBtn: { backgroundColor: '#111827', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12 },
