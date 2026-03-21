@@ -49,7 +49,7 @@ export default function ProfileScreen({ navigation }: any) {
     })();
   }, []);
 
-  const persistProfile = async (next?: Partial<{ username: string; avatar: string; notifications: boolean; payments: string[]; photoUri: string | null; favoriteLocation: string; cashapp: string; zelle: string }>) => {
+  const persistProfile = async (next?: Partial<{ username: string; avatar: string; notifications: boolean; payments: string[]; photoUri: string | null; photoData: string; favoriteLocation: string; cashapp: string; zelle: string }>) => {
     try {
       if (next?.username !== undefined) await AsyncStorage.setItem('profile.username', next.username);
       if (next?.avatar !== undefined) await AsyncStorage.setItem('profile.avatar', next.avatar);
@@ -58,6 +58,7 @@ export default function ProfileScreen({ navigation }: any) {
       if (next?.favoriteLocation !== undefined) await AsyncStorage.setItem('profile.favoriteLocation', next.favoriteLocation);
       if (next?.cashapp !== undefined) await AsyncStorage.setItem('profile.cashapp', next.cashapp);
       if (next?.zelle !== undefined) await AsyncStorage.setItem('profile.zelle', next.zelle);
+      if (next?.photoData !== undefined) await AsyncStorage.setItem('profile.photoData', next.photoData);
       if (next?.photoUri !== undefined) {
         if (next.photoUri) await AsyncStorage.setItem('profile.photoUri', next.photoUri);
         else await AsyncStorage.removeItem('profile.photoUri');
@@ -80,13 +81,17 @@ export default function ProfileScreen({ navigation }: any) {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: true,
-        quality: 0.85,
+        quality: 0.7,
         aspect: [1, 1],
+        base64: true,
       });
       if (!result.canceled && result.assets?.[0]?.uri) {
         const uri = result.assets[0].uri;
+        const b64 = result.assets[0].base64;
+        const mime = (result.assets[0].mimeType || 'image/jpeg').toLowerCase();
+        const data = b64 ? `data:${mime};base64,${b64}` : '';
         setPhotoUri(uri);
-        persistProfile({ photoUri: uri });
+        persistProfile({ photoUri: uri, photoData: data });
       }
     } catch {}
   };
@@ -186,7 +191,7 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={styles.modalTitle}>Choose Avatar</Text>
             <View style={styles.avatarGrid}>
               {AVATARS.map((a) => (
-                <TouchableOpacity key={a} style={styles.avatarChoice} onPress={() => { setAvatar(a); setPhotoUri(null); persistProfile({ avatar: a, photoUri: null }); setShowAvatarPicker(false); }}>
+                <TouchableOpacity key={a} style={styles.avatarChoice} onPress={() => { setAvatar(a); setPhotoUri(null); persistProfile({ avatar: a, photoUri: null, photoData: '' }); setShowAvatarPicker(false); }}>
                   <Text style={styles.avatarChoiceText}>{a}</Text>
                 </TouchableOpacity>
               ))}

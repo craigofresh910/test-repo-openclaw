@@ -63,12 +63,15 @@ export default function TableOrderScreen({ navigation }: any) {
       let userId = await AsyncStorage.getItem('bb.userId');
       let name = (await AsyncStorage.getItem('profile.username')) || 'You';
       const photoUri = await AsyncStorage.getItem('profile.photoUri');
+      const photoData = await AsyncStorage.getItem('profile.photoData');
       const avatarEmoji = (await AsyncStorage.getItem('profile.avatar')) || '👤';
       const profileCashApp = (await AsyncStorage.getItem('profile.cashapp')) || '';
       const profileZelle = (await AsyncStorage.getItem('profile.zelle')) || '';
       let avatar = avatarEmoji;
 
-      if (photoUri) {
+      if (photoData) {
+        avatar = photoData;
+      } else if (photoUri) {
         try {
           const b64 = await FileSystem.readAsStringAsync(photoUri, { encoding: FileSystem.EncodingType.Base64 });
           const lower = String(photoUri).toLowerCase();
