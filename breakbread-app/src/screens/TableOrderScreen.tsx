@@ -552,7 +552,13 @@ export default function TableOrderScreen({ navigation }: any) {
                   })()}
                 </View>
                 <Text style={styles.participantCardName} numberOfLines={1}>{p.name}</Text>
-                <Text style={styles.participantCardMeta}>{p.userId === me.userId ? 'You' : 'Member'}</Text>
+                {p.userId === captainId ? (
+                  <View style={styles.captainBadge}>
+                    <Text style={styles.captainBadgeText}>Captain</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.participantCardMeta}>{p.userId === me.userId ? 'You' : 'Member'}</Text>
+                )}
               </View>
             ))}
           </ScrollView>
@@ -939,6 +945,8 @@ const styles = StyleSheet.create({
   personPhoto: { width: 28, height: 28, borderRadius: 14 },
   participantCardName: { fontSize: 10, fontWeight: '800', color: '#111827', marginTop: 4 },
   participantCardMeta: { fontSize: 9, color: '#6b7280', marginTop: 1 },
+  captainBadge: { marginTop: 2, backgroundColor: '#f59e0b', borderRadius: 999, paddingHorizontal: 6, paddingVertical: 2 },
+  captainBadgeText: { fontSize: 8, color: '#111827', fontWeight: '900' },
 
   suggestBox: {
     marginBottom: 20,
