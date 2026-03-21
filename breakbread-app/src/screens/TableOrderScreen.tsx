@@ -34,6 +34,7 @@ export default function TableOrderScreen({ navigation }: any) {
   const [participants, setParticipants] = useState<Array<{ userId: string; name: string; avatar?: string }>>([]);
   const [activeTables, setActiveTables] = useState<Array<{ code: string; createdAt: string; participants: Array<{ userId: string; name: string; avatar?: string }> }>>([]);
   const [me, setMe] = useState<{ userId: string; name: string; avatar?: string }>({ userId: 'guest', name: 'You', avatar: '👤' });
+  const [mePhotoUri, setMePhotoUri] = useState<string>('');
   const [votes, setVotes] = useState<Record<string, number>>({});
   const [myVotePlaceId, setMyVotePlaceId] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState('');
@@ -84,6 +85,7 @@ export default function TableOrderScreen({ navigation }: any) {
       }
       if (mounted) {
         setMe({ userId, name, avatar });
+        setMePhotoUri(photoUri || '');
         if (!cashTag) setCashTag(profileCashApp || profileZelle || 'Not set in profile');
       }
 
@@ -525,11 +527,17 @@ export default function TableOrderScreen({ navigation }: any) {
             {(participants.length ? participants : [{ userId: me.userId, name: me.name }]).map((p) => (
               <View key={`list-${p.userId}`} style={[styles.participantListRow, p.userId === me.userId && styles.participantListRowMe]}>
                 <View style={[styles.personDot, p.userId === me.userId && styles.personDotMe]}>
-                  {String(p.avatar || '').startsWith('file:') || String(p.avatar || '').startsWith('http') || String(p.avatar || '').startsWith('data:') ? (
-                    <Image source={{ uri: String(p.avatar) }} style={styles.personPhoto} />
-                  ) : (
-                    <Text style={styles.personInitial}>{p.avatar || '👤'}</Text>
-                  )}
+                  {(() => {
+                    const raw = String(p.avatar || '');
+                    const hasRemoteOrData = /^https?:/i.test(raw) || /^file:/i.test(raw) || /^data:/i.test(raw);
+                    const fallbackLocal = p.userId === me.userId ? mePhotoUri : '';
+                    const uri = hasRemoteOrData ? raw : fallbackLocal;
+                    return uri ? (
+                      <Image source={{ uri }} style={styles.personPhoto} />
+                    ) : (
+                      <Text style={styles.personInitial}>{p.avatar || '👤'}</Text>
+                    );
+                  })()}
                 </View>
                 <View style={{ flex: 1, marginLeft: 10 }}>
                   <Text style={styles.participantListName}>{p.name}</Text>
