@@ -453,8 +453,13 @@ export default function TableOrderScreen({ navigation }: any) {
             </View>
           </View>
         ) : (
-          <View style={styles.codeBox}>
-            <Text style={styles.code}>{tableCode}</Text>
+          <View style={styles.codeShareRow}>
+            <View style={[styles.codeBox, { flex: 1, marginBottom: 0 }]}> 
+              <Text style={styles.code}>{tableCode}</Text>
+            </View>
+            <TouchableOpacity style={styles.shareBtnInline} onPress={shareInvite}>
+              <Text style={styles.shareBtnInlineText}>📤 Share</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -510,9 +515,6 @@ export default function TableOrderScreen({ navigation }: any) {
           )}
         </View>
 
-        <TouchableOpacity style={styles.shareBtn} onPress={shareInvite}>
-          <Text style={styles.shareBtnText}>📤 Share Invite</Text>
-        </TouchableOpacity>
 
 
         <View style={styles.participants}>
@@ -862,8 +864,11 @@ const styles = StyleSheet.create({
   joinInput: { flex: 1, borderWidth: 1, borderColor: '#d1d5db', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 10, color: '#111827', backgroundColor: '#fff' },
   joinBtn: { backgroundColor: '#f59e0b', borderRadius: 10, paddingHorizontal: 14, justifyContent: 'center' },
   joinBtnText: { color: '#111827', fontWeight: '800' },
-  codeBox: { backgroundColor: '#f5f5f5', borderRadius: 16, padding: 24, alignItems: 'center', marginBottom: 20 },
-  code: { fontSize: 40, fontWeight: '800', color: '#f59e0b', letterSpacing: 4 },
+  codeShareRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },
+  codeBox: { backgroundColor: '#f5f5f5', borderRadius: 16, padding: 18, alignItems: 'center', marginBottom: 20 },
+  code: { fontSize: 34, fontWeight: '800', color: '#f59e0b', letterSpacing: 4 },
+  shareBtnInline: { backgroundColor: '#22c55e', borderRadius: 12, paddingVertical: 14, paddingHorizontal: 14 },
+  shareBtnInlineText: { color: '#fff', fontWeight: '800', fontSize: 14 },
   activeTablesBox: {
     marginBottom: 16,
     borderWidth: 1,
