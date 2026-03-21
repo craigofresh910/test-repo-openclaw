@@ -813,6 +813,7 @@ export default function TableOrderScreen({ navigation }: any) {
           })}
         </View>
 
+        {(currentPhase === 'suggestions' || currentPhase === 'order_pay' || currentPhase === 'closed') ? (
         <View style={styles.myVotesBox}>
           <Text style={styles.myVotesTitle}>Your Vote</Text>
           {!myVotePlaceId ? (
@@ -835,7 +836,9 @@ export default function TableOrderScreen({ navigation }: any) {
             })()
           )}
         </View>
+        ) : null}
 
+        {(currentPhase === 'suggestions' || currentPhase === 'order_pay' || currentPhase === 'closed') ? (
         <View style={styles.suggestBox}>
           <Text style={styles.suggestTitle}>Restaurant Suggestions + Voting</Text>
 
@@ -891,8 +894,9 @@ export default function TableOrderScreen({ navigation }: any) {
             <Text style={styles.myVotesEmpty}>No restaurant suggestions yet.</Text>
           )}
         </View>
+        ) : null}
 
-        {orderedPicks.length > 0 ? (
+        {(currentPhase === 'order_pay' || currentPhase === 'closed') && orderedPicks.length > 0 ? (
         <View style={styles.orderListBox}>
           <View style={styles.orderListHead}>
             <Text style={styles.orderListTitle}>Restaurant Decision List</Text>
@@ -909,6 +913,7 @@ export default function TableOrderScreen({ navigation }: any) {
         </View>
         ) : null}
 
+        {(currentPhase === 'order_pay' || currentPhase === 'closed') ? (
         <View style={styles.itemsBox}>
           <Text style={styles.itemsTitle}>Order Items</Text>
           <View style={styles.itemsInputRow}>
@@ -1021,6 +1026,7 @@ export default function TableOrderScreen({ navigation }: any) {
             );
           })}
         </View>
+        ) : null}
         </>}
 
       </View>
