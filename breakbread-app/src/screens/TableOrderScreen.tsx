@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import * as FileSystem from 'expo-file-system';
 import * as Notifications from 'expo-notifications';
-import { addTableItem, createLiveTable, deleteTableChat, editTableChat, getLiveTable, getTableChat, getUserLiveTables, joinLiveTable, leaveLiveTable, removeTableItem, searchNearbyRestaurants, sendTableChat } from '../services/api';
+import { addTableItem, broadcastTablePayment, createLiveTable, deleteTableChat, editTableChat, getLiveTable, getTableChat, getUserLiveTables, joinLiveTable, leaveLiveTable, removeTableItem, searchNearbyRestaurants, sendTableChat } from '../services/api';
 
 function generateTableCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -89,6 +89,12 @@ export default function TableOrderScreen({ navigation }: any) {
         userId = `u_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
         await AsyncStorage.setItem('bb.userId', userId);
       }
+      let pushToken = '';
+      try {
+        const tokenRes = await Notifications.getExpoPushTokenAsync();
+        pushToken = tokenRes?.data || '';
+      } catch {}
+
       if (mounted) {
         setMe({ userId, name, avatar });
         setMePhotoUri(photoUri || '');
@@ -98,9 +104,9 @@ export default function TableOrderScreen({ navigation }: any) {
       if (tableCode && tableMode !== 'none') {
         try {
           if (tableMode === 'join') {
-            await joinLiveTable({ code: tableCode, userId, name, avatar });
+            await joinLiveTable({ code: tableCode, userId, name, avatar, pushToken });
           } else {
-            await createLiveTable({ code: tableCode, userId, name, avatar });
+            await createLiveTable({ code: tableCode, userId, name, avatar, pushToken });
           }
         } catch {
           Alert.alert('Table error', tableMode === 'join' ? 'Could not join table. Check code.' : 'Could not create table.');
@@ -394,6 +400,7 @@ export default function TableOrderScreen({ navigation }: any) {
           avatar: me.avatar,
           text: `PAYMENT_EVENT:${who} paid`,
         });
+        await broadcastTablePayment({ code: tableCode, actorUserId: me.userId, message: `${who} paid` });
       } catch {}
     }
   };

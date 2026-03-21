@@ -124,7 +124,7 @@ export const getRestaurantDetails = async (placeId?: string) => {
   }
 };
 
-export const createLiveTable = async (payload: { userId: string; name: string; code?: string; avatar?: string }) => {
+export const createLiveTable = async (payload: { userId: string; name: string; code?: string; avatar?: string; pushToken?: string }) => {
   const res = await fetch(`${API_BASE}/tables/create`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -133,7 +133,7 @@ export const createLiveTable = async (payload: { userId: string; name: string; c
   return res.json();
 };
 
-export const joinLiveTable = async (payload: { code: string; userId: string; name: string; avatar?: string }) => {
+export const joinLiveTable = async (payload: { code: string; userId: string; name: string; avatar?: string; pushToken?: string }) => {
   const res = await fetch(`${API_BASE}/tables/join`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -205,6 +205,16 @@ export const addTableItem = async (payload: { code: string; userId: string; user
 export const removeTableItem = async (payload: { code: string; itemId: string; userId: string }) => {
   const res = await fetch(`${API_BASE}/tables/items`, {
     method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+};
+
+export const getOrders = async () => [];
+export const createOrder = async () => ({});
+= await fetch(`${API_BASE}/tables/payment-event`, {
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
