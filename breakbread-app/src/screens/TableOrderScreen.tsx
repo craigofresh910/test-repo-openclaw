@@ -333,19 +333,22 @@ export default function TableOrderScreen({ navigation }: any) {
   const pricedItemsSubtotal = tableItems.reduce((sum, it) => sum + (Number(it.price || 0) * Number(it.qty || 1)), 0);
   const subtotalNum = pricedItemsSubtotal > 0 ? pricedItemsSubtotal : Number(billSubtotal || 0);
   const memberCount = Math.max(1, participants.length || 1);
-  const TAX_RATE = 0.06;
-  const taxNum = subtotalNum * TAX_RATE;
-  const tipNum = memberCount * 1; // $1 tip per person
-  const totalBill = Math.max(0, subtotalNum + taxNum + tipNum);
 
   const userItemTotals: Record<string, number> = {};
   tableItems.forEach((it) => {
     userItemTotals[it.userId] = (userItemTotals[it.userId] || 0) + (Number(it.price || 0) * Number(it.qty || 1));
   });
 
+  const TAX_RATE = 0.06;
+  const taxNum = subtotalNum * TAX_RATE;
+  const usersWithItems = participants.filter((p) => (userItemTotals[p.userId] || 0) > 0).length;
+  const tipNum = usersWithItems * 1; // $1 tip only for people who added items
+  const totalBill = Math.max(0, subtotalNum + taxNum + tipNum);
+
   const personOwes = (userId: string) => {
     const base = userItemTotals[userId] || 0;
-    if (subtotalNum <= 0) return (totalBill / memberCount);
+    if (base <= 0) return 0;
+    if (subtotalNum <= 0) return 0;
     const taxShare = taxNum * (base / subtotalNum);
     const tipShare = 1;
     return base + taxShare + tipShare;
@@ -816,7 +819,7 @@ export default function TableOrderScreen({ navigation }: any) {
           <View style={styles.billSummary}>
             <Text style={styles.billLine}>Subtotal: ${subtotalNum.toFixed(2)}</Text>
             <Text style={styles.billLine}>Tax (auto 6%): ${taxNum.toFixed(2)}</Text>
-            <Text style={styles.billLine}>Tip (auto $1 x {memberCount}): ${tipNum.toFixed(2)}</Text>
+            <Text style={styles.billLine}>Tip (auto $1 x {usersWithItems}): ${tipNum.toFixed(2)}</Text>
             <Text style={styles.billLine}>Total bill: ${totalBill.toFixed(2)}</Text>
             <Text style={styles.billLine}>Each person pays what they added (+tax share + $1 tip)</Text>
             <Text style={styles.billLine}>Paid: {paidCount}/{memberCount}</Text>
