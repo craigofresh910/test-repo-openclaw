@@ -164,6 +164,34 @@ export default function TableOrderScreen({ navigation }: any) {
               }
             });
 
+            const paymentRequests = messages.filter((m: any) => String(m.text || '').startsWith('PAYMENT_REQUEST:'));
+            paymentRequests.forEach((m: any) => {
+              if (!seenPaymentAlertIdsRef.current.has(`req_${m.id}`)) {
+                seenPaymentAlertIdsRef.current.add(`req_${m.id}`);
+                const raw = String(m.text || '').replace('PAYMENT_REQUEST:', '').trim();
+                const firstColon = raw.indexOf(':');
+                const reqUserId = firstColon > -1 ? raw.slice(0, firstColon) : '';
+                const msg = firstColon > -1 ? raw.slice(firstColon + 1) : raw;
+
+                if (reqUserId) {
+                  setPaidRequests((prev) => ({ ...prev, [reqUserId]: true }));
+                }
+
+                if (me.userId === captainId) {
+                  setPaymentBanner(`🔔 ${msg}`);
+                  setTimeout(() => setPaymentBanner(''), 2800);
+                  Notifications.scheduleNotificationAsync({
+                    content: {
+                      title: 'Payment Request',
+                      body: msg,
+                      sound: true,
+                    },
+                    trigger: null,
+                  }).catch(() => {});
+                }
+              }
+            });
+
             const latest = messages[messages.length - 1];
             if (latest) {
               if (!lastSeenMessageIdRef.current) {
@@ -414,8 +442,17 @@ export default function TableOrderScreen({ navigation }: any) {
     }
   };
 
-  const requestMarkPaid = () => {
+  const requestMarkPaid = async () => {
     setPaidRequests((prev) => ({ ...prev, [me.userId]: true }));
+    try {
+      await sendTableChat({
+        code: tableCode,
+        userId: me.userId,
+        name: me.name,
+        avatar: me.avatar,
+        text: `PAYMENT_REQUEST:${me.userId}:${me.name} requested paid confirmation`,
+      });
+    } catch {}
     Alert.alert('Sent', 'Payment request sent to captain.');
   };
 
@@ -653,7 +690,7 @@ export default function TableOrderScreen({ navigation }: any) {
             </TouchableOpacity>
           </View>
 
-          {chatMessages.filter((m) => !String(m.text || '').startsWith('PAYMENT_EVENT:')).slice(-20).map((m) => {
+          {chatMessages.filter((m) => !String(m.text || '').startsWith('PAYMENT_EVENT:') && !String(m.text || '').startsWith('PAYMENT_REQUEST:')).slice(-20).map((m) => {
             const mine = m.userId === me.userId;
             const time = new Date(m.sentAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
             return (
