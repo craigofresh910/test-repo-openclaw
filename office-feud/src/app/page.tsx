@@ -50,6 +50,10 @@ export default function Home() {
   const [isHost, setIsHost] = useState(false);
   const [playerName, setPlayerName] = useState('');
   const [playerEmail, setPlayerEmail] = useState('');
+  const [joinName, setJoinName] = useState('');
+  const [joinEmail, setJoinEmail] = useState('');
+  const [creatingGame, setCreatingGame] = useState(false);
+  const [joiningGame, setJoiningGame] = useState(false);
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [myTeam, setMyTeam] = useState<string | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -305,19 +309,27 @@ export default function Home() {
     const handleStart = async () => {
       if (!playerName.trim() || !playerEmail.trim()) return;
       try {
+        setCreatingGame(true);
+        setError(null);
         const res = await fetch(API_BASE + '/game', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ hostName: playerName.trim(), hostEmail: playerEmail.trim(), blueName: 'Blue Team', redName: 'Red Team' })
         });
         const data = await res.json();
+        if (!res.ok || !data?.gameId) {
+          throw new Error(data?.error || 'Could not create game');
+        }
         setPin(data.pin);
         setGameId(data.gameId);
         setPlayerId(data.playerId);
         setMyTeam(null); // host not assigned yet
         setPhase('team-select');
-      } catch (e) {
+      } catch (e: any) {
         console.error('Create failed:', e);
+        setError(`Create game failed: ${String(e?.message || 'unknown error')}`);
+      } finally {
+        setCreatingGame(false);
       }
     };
     return (
@@ -326,7 +338,8 @@ export default function Home() {
         <div className="bg-slate-900/70 border border-cyan-500/25 p-8 rounded-2xl w-full max-w-md shadow-2xl">
           <input value={playerName} onChange={e => setPlayerName(e.target.value)} placeholder="Your Nickname" className="w-full bg-gray-800 border border-gray-600 text-white text-xl p-3 rounded-xl mb-3" />
           <input value={playerEmail} onChange={e => setPlayerEmail(e.target.value)} placeholder="Your Email" type="email" className="w-full bg-gray-800 border border-gray-600 text-white text-xl p-3 rounded-xl mb-4" />
-          <button onClick={handleStart} disabled={!playerName.trim() || !playerEmail.trim()} className="bg-cyan-500 hover:bg-cyan-400 disabled:bg-gray-600 transition text-black font-bold text-xl px-8 py-4 rounded-xl w-full">CREATE GAME</button>
+          {error ? <p className="text-red-400 text-sm mb-3">{error}</p> : null}
+          <button onClick={handleStart} disabled={!playerName.trim() || !playerEmail.trim() || creatingGame} className="bg-cyan-500 hover:bg-cyan-400 disabled:bg-gray-600 transition text-black font-bold text-xl px-8 py-4 rounded-xl w-full">{creatingGame ? 'CREATING...' : 'CREATE GAME'}</button>
         </div>
         <button onClick={() => setPhase('menu')} className="mt-4 text-gray-400 hover:text-white transition">Back</button>
       </div>
@@ -335,26 +348,29 @@ export default function Home() {
 
   // Render Join
   if (phase === 'join') {
-    const [email, setEmail] = useState('');
-    const [playerName, setPlayerName] = useState('');
     const handleJoin = async () => {
-      if (!playerName.trim() || !email.trim()) return;
+      if (!joinName.trim() || !joinEmail.trim()) return;
       try {
+        setJoiningGame(true);
+        setError(null);
         const res = await fetch(API_BASE + '/game/join', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pin, playerName: playerName.trim(), email: email.trim() })
+          body: JSON.stringify({ pin, playerName: joinName.trim(), email: joinEmail.trim() })
         });
         const data = await res.json();
-        if (data.gameId) {
-          setGameId(data.gameId);
-          setPlayerId(data.playerId);
-          setMyTeam(null);
-          setPhase('team-select');
+        if (!res.ok || !data?.gameId) {
+          throw new Error(data?.error || 'Could not join game');
         }
-      } catch (e) {
-        console.error('Join failed:', e);
+        setGameId(data.gameId);
+        setPlayerId(data.playerId);
+        setMyTeam(null);
         setPhase('team-select');
+      } catch (e: any) {
+        console.error('Join failed:', e);
+        setError(`Join failed: ${String(e?.message || 'unknown error')}`);
+      } finally {
+        setJoiningGame(false);
       }
     };
     return (
@@ -362,9 +378,10 @@ export default function Home() {
         <h1 className="text-4xl font-black text-green-400 mb-8">JOIN GAME</h1>
         <div className="bg-slate-900/70 border border-green-500/30 p-8 rounded-2xl text-center w-full max-w-md shadow-2xl">
           <p className="text-white mb-4 text-lg">PIN: <span className="font-black text-green-300">{pin}</span></p>
-          <input value={playerName} onChange={e => setPlayerName(e.target.value)} placeholder="Your Nickname" className="w-full bg-gray-800 border border-gray-600 text-white text-xl p-3 rounded-xl mb-3" />
-          <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Your Email" type="email" className="w-full bg-gray-800 border border-gray-600 text-white text-xl p-3 rounded-xl mb-4" />
-          <button onClick={handleJoin} disabled={!playerName.trim() || !email.trim()} className="bg-green-600 hover:bg-green-500 disabled:bg-gray-600 transition text-white font-bold text-xl px-8 py-4 rounded-xl w-full">JOIN</button>
+          <input value={joinName} onChange={e => setJoinName(e.target.value)} placeholder="Your Nickname" className="w-full bg-gray-800 border border-gray-600 text-white text-xl p-3 rounded-xl mb-3" />
+          <input value={joinEmail} onChange={e => setJoinEmail(e.target.value)} placeholder="Your Email" type="email" className="w-full bg-gray-800 border border-gray-600 text-white text-xl p-3 rounded-xl mb-4" />
+          {error ? <p className="text-red-400 text-sm mb-3">{error}</p> : null}
+          <button onClick={handleJoin} disabled={!joinName.trim() || !joinEmail.trim() || joiningGame} className="bg-green-600 hover:bg-green-500 disabled:bg-gray-600 transition text-white font-bold text-xl px-8 py-4 rounded-xl w-full">{joiningGame ? 'JOINING...' : 'JOIN'}</button>
         </div>
       </div>
     );
