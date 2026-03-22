@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { jsPDF } from 'jspdf'
 
@@ -22,6 +22,11 @@ interface FormData {
   daysSinceDispute: string
   collectorContactAfterCease: 'yes' | 'no'
   hasSupportingDocs: 'yes' | 'no'
+  evidenceList: string
+  mailedDate: string
+  trackingNumber: string
+  courtVenue: string
+  caseNumber: string
   // Letter
   letterType: LetterType
   disputeReason: 'identity_theft' | 'inaccurate_reporting' | 'not_mine' | 'paid_not_updated'
@@ -44,19 +49,50 @@ export default function Generator() {
     daysSinceDispute: '',
     collectorContactAfterCease: 'no',
     hasSupportingDocs: 'no',
+    evidenceList: '',
+    mailedDate: '',
+    trackingNumber: '',
+    courtVenue: '',
+    caseNumber: '',
     letterType: 'validation',
     disputeReason: 'inaccurate_reporting',
     date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
   })
   const [generatedLetter, setGeneratedLetter] = useState('')
+  const [deadlineChecklist, setDeadlineChecklist] = useState({ day15: false, day30: false, day45: false })
   const letterRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const savedForm = localStorage.getItem('scorereform.generator.form')
+    const savedChecklist = localStorage.getItem('scorereform.generator.deadlines')
+
+    if (savedForm) {
+      try {
+        setFormData(prev => ({ ...prev, ...JSON.parse(savedForm) }))
+      } catch {}
+    }
+
+    if (savedChecklist) {
+      try {
+        setDeadlineChecklist(JSON.parse(savedChecklist))
+      } catch {}
+    }
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem('scorereform.generator.form', JSON.stringify(formData))
+  }, [formData])
+
+  useEffect(() => {
+    localStorage.setItem('scorereform.generator.deadlines', JSON.stringify(deadlineChecklist))
+  }, [deadlineChecklist])
 
   const updateField = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
   const generateLetter = () => {
-    const { fullName, address, city, state, zip, creditorName, accountNumber, debtAmount, bureau, reportDate, daysSinceDispute, collectorContactAfterCease, hasSupportingDocs, letterType, disputeReason, date } = formData
+    const { fullName, address, city, state, zip, creditorName, accountNumber, debtAmount, bureau, reportDate, daysSinceDispute, collectorContactAfterCease, hasSupportingDocs, evidenceList, mailedDate, trackingNumber, courtVenue, caseNumber, letterType, disputeReason, date } = formData
     const fullAddress = `${address}, ${city}, ${state} ${zip}`
     
     let letter = ''
@@ -287,7 +323,9 @@ Exhibit C - Method of Verification (MOV) Demand
 Exhibit D - Debt Validation Demand
 Exhibit E - Violation Scoring
 Exhibit F - Escalation Timeline
-Exhibit G - Certified Mail Checklist
+Exhibit G - Evidence + Mail Log
+Exhibit H - Court-Ready Notes
+Exhibit I - Certified Mail Checklist
 
 ============================
 EXHIBIT A - CONSUMER AFFIDAVIT
@@ -367,7 +405,22 @@ EXHIBIT F - ESCALATION TIMELINE
 ${timeline}
 
 ============================
-EXHIBIT G - SEND CHECKLIST
+EXHIBIT G - EVIDENCE + MAIL LOG
+============================
+
+Evidence Bundle: ${evidenceList || '[LIST SUPPORTING DOCUMENTS]'}
+Certified Mail Date: ${mailedDate || '[MAIL DATE]'}
+Tracking Number: ${trackingNumber || '[TRACKING #]'}
+
+============================
+EXHIBIT H - COURT-READY NOTES
+============================
+
+Potential Venue: ${courtVenue || '[COURT / COUNTY]'}
+Case Number (if filed): ${caseNumber || '[CASE NUMBER]'}
+
+============================
+EXHIBIT I - SEND CHECKLIST
 ============================
 
 [ ] Print packet
@@ -462,7 +515,9 @@ EXHIBIT G - SEND CHECKLIST
       'Exhibit D - Debt Validation Demand',
       'Exhibit E - Violation Scoring',
       'Exhibit F - Escalation Timeline',
-      'Exhibit G - Certified Mail Checklist'
+      'Exhibit G - Evidence + Mail Log',
+      'Exhibit H - Court-Ready Notes',
+      'Exhibit I - Certified Mail Checklist'
     ]
     toc.forEach((item) => {
       addCenteredText(item, 12)
@@ -481,7 +536,7 @@ EXHIBIT G - SEND CHECKLIST
 
       // Extract section title from first line
       const lines = trimmed.split('\n')
-      const titleMatch = lines[0].match(/^EXHIBIT\s+[A-G]\s*-\s*(.+)$/i)
+      const titleMatch = lines[0].match(/^EXHIBIT\s+[A-I]\s*-\s*(.+)$/i)
       
       if (titleMatch) {
         addSectionBreak(titleMatch[1].trim())
@@ -504,6 +559,18 @@ EXHIBIT G - SEND CHECKLIST
       : formData.letterType + '_letter_' + safeName + '.pdf'
     doc.save(fileName)
   }
+
+  const timelineDates = (() => {
+    if (!formData.mailedDate) return null
+    const base = new Date(formData.mailedDate + 'T00:00:00')
+    if (Number.isNaN(base.getTime())) return null
+    const addDays = (d: number) => {
+      const dt = new Date(base)
+      dt.setDate(dt.getDate() + d)
+      return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    }
+    return { day15: addDays(15), day30: addDays(30), day45: addDays(45) }
+  })()
 
   const steps = [
     { num: 1, label: 'Your Info' },
@@ -715,6 +782,61 @@ EXHIBIT G - SEND CHECKLIST
                   </select>
                 </div>
               </div>
+
+              <div>
+                <label className="block text-sm mb-2">Evidence Bundle (comma-separated)</label>
+                <textarea
+                  value={formData.evidenceList}
+                  onChange={(e) => updateField('evidenceList', e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none min-h-20"
+                  placeholder="Driver license, utility bill, account statement, payment receipt"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm mb-2">Certified Mail Date (optional)</label>
+                  <input
+                    type="date"
+                    value={formData.mailedDate}
+                    onChange={(e) => updateField('mailedDate', e.target.value)}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm mb-2">Tracking Number (optional)</label>
+                  <input
+                    type="text"
+                    value={formData.trackingNumber}
+                    onChange={(e) => updateField('trackingNumber', e.target.value)}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none"
+                    placeholder="7019..."
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm mb-2">Court / Venue (optional)</label>
+                  <input
+                    type="text"
+                    value={formData.courtVenue}
+                    onChange={(e) => updateField('courtVenue', e.target.value)}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none"
+                    placeholder="Wayne County Circuit Court"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm mb-2">Case Number (optional)</label>
+                  <input
+                    type="text"
+                    value={formData.caseNumber}
+                    onChange={(e) => updateField('caseNumber', e.target.value)}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none"
+                    placeholder="26-12345-CZ"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="flex gap-4 mt-8">
@@ -841,6 +963,30 @@ EXHIBIT G - SEND CHECKLIST
                 </ul>
               )}
             </div>
+
+            {formData.letterType === 'packet' && (
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                <h4 className="font-semibold text-emerald-400 mb-3">🗓️ Deadline Tracker (saved automatically)</h4>
+                {timelineDates ? (
+                  <div className="space-y-2 text-sm">
+                    <label className="flex items-center gap-3">
+                      <input type="checkbox" checked={deadlineChecklist.day15} onChange={(e) => setDeadlineChecklist(prev => ({ ...prev, day15: e.target.checked }))} />
+                      <span>Day 15 follow-up ({timelineDates.day15})</span>
+                    </label>
+                    <label className="flex items-center gap-3">
+                      <input type="checkbox" checked={deadlineChecklist.day30} onChange={(e) => setDeadlineChecklist(prev => ({ ...prev, day30: e.target.checked }))} />
+                      <span>Day 30 CFPB complaint ({timelineDates.day30})</span>
+                    </label>
+                    <label className="flex items-center gap-3">
+                      <input type="checkbox" checked={deadlineChecklist.day45} onChange={(e) => setDeadlineChecklist(prev => ({ ...prev, day45: e.target.checked }))} />
+                      <span>Day 45 AG / legal escalation ({timelineDates.day45})</span>
+                    </label>
+                  </div>
+                ) : (
+                  <p className="text-sm text-zinc-400">Add a Certified Mail Date in step 2 to auto-generate and track 15/30/45 day deadlines.</p>
+                )}
+              </div>
+            )}
 
             <Link href="/" className="block text-center text-zinc-500 hover:text-white mt-4">
               Generate Another Letter →
