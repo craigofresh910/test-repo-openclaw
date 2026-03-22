@@ -386,19 +386,123 @@ EXHIBIT G - SEND CHECKLIST
 
   const downloadPDF = () => {
     const doc = new jsPDF()
-    
-    // Add letter content
-    const lines = generatedLetter.split('\n')
-    let y = 20
-    
-    lines.forEach((line) => {
-      const wrapped = doc.splitTextToSize(line, 170)
-      doc.text(wrapped, 20, y)
-      y += wrapped.length * 7
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const pageHeight = doc.internal.pageSize.getHeight()
+    const margin = 20
+    const maxWidth = pageWidth - (margin * 2)
+    let y = margin
+
+    const addNewPage = () => {
+      doc.addPage()
+      y = margin
+    }
+
+    const addCenteredText = (text: string, size: number, bold = false) => {
+      doc.setFontSize(size)
+      doc.setFont('helvetica', bold ? 'bold' : 'normal')
+      const lines = doc.splitTextToSize(text, maxWidth)
+      const x = (pageWidth - maxWidth) / 2
+      doc.text(lines, x, y)
+      y += lines.length * size * 0.4
+    }
+
+    const addBodyText = (text: string, size = 11) => {
+      doc.setFontSize(size)
+      doc.setFont('helvetica', 'normal')
+      const lines = doc.splitTextToSize(text, maxWidth)
+      lines.forEach((line: string) => {
+        if (y > pageHeight - margin) addNewPage()
+        doc.text(line, margin, y)
+        y += size * 0.5
+      })
+    }
+
+    const addSectionBreak = (title: string) => {
+      if (y > pageHeight - 40) addNewPage()
+      y += 10
+      doc.setDrawColor(0, 200, 100)
+      doc.setLineWidth(0.5)
+      doc.line(margin, y, pageWidth - margin, y)
+      y += 8
+      addCenteredText(title, 14, true)
+      y += 5
+      doc.setDrawColor(0, 200, 100)
+      doc.line(margin, y, pageWidth - margin, y)
+      y += 10
+    }
+
+    const addTextBlock = (text: string, size = 11) => {
+      if (y > pageHeight - 40) addNewPage()
+      addBodyText(text, size)
+      y += 5
+    }
+
+    // === COVER PAGE ===
+    doc.setFillColor(10, 10, 10)
+    doc.rect(0, 0, pageWidth, pageHeight, 'F')
+    doc.setTextColor(0, 200, 100)
+    addCenteredText('CREDIT DISPUTE PACKET', 28, true)
+    y += 15
+    addCenteredText('Prepared for: ' + (formData.fullName || 'Consumer'), 16)
+    addCenteredText('Date: ' + formData.date, 12)
+    y += 20
+    doc.setTextColor(255, 255, 255)
+    addCenteredText('Re: ' + (formData.creditorName || 'Credit Dispute'), 14)
+    y += 10
+    addCenteredText('Account: ' + (formData.accountNumber || 'N/A'), 12)
+    addCenteredText('Amount: $' + (formData.debtAmount || 'N/A'), 12)
+    y += 25
+    doc.setTextColor(0, 200, 100)
+    addCenteredText('CONTENTS', 18, true)
+    y += 15
+    const toc = [
+      'Exhibit A - Consumer Affidavit',
+      'Exhibit B - Legal Notice & Statutory Demand',
+      'Exhibit C - Method of Verification (MOV) Demand',
+      'Exhibit D - Debt Validation Demand',
+      'Exhibit E - Violation Scoring',
+      'Exhibit F - Escalation Timeline',
+      'Exhibit G - Certified Mail Checklist'
+    ]
+    toc.forEach((item) => {
+      addCenteredText(item, 12)
+      y += 8
     })
-    
+
+    // === CONTENT PAGES ===
+    doc.addPage()
+    doc.setTextColor(0, 0, 0)
+    y = margin
+
+    const sections = generatedLetter.split('============================')
+    sections.forEach((section) => {
+      const trimmed = section.trim()
+      if (!trimmed) return
+
+      // Extract section title from first line
+      const lines = trimmed.split('\n')
+      const titleMatch = lines[0].match(/^EXHIBIT\s+[A-G]\s*-\s*(.+)$/i)
+      
+      if (titleMatch) {
+        addSectionBreak(titleMatch[1].trim())
+        // Body content after title
+        const bodyLines = lines.slice(1).join('\n').trim()
+        if (bodyLines) addTextBlock(bodyLines)
+      } else if (trimmed.includes(':')) {
+        // Regular section
+        addTextBlock(trimmed)
+      } else {
+        addTextBlock(trimmed)
+      }
+      y += 5
+    })
+
+    // === SAVE ===
     const safeName = (formData.fullName || 'client').replace(/\s+/g, '_')
-    doc.save(formData.letterType + '_letter_' + safeName + '.pdf')
+    const fileName = formData.letterType === 'packet' 
+      ? 'dispute_packet_' + safeName + '.pdf'
+      : formData.letterType + '_letter_' + safeName + '.pdf'
+    doc.save(fileName)
   }
 
   const steps = [
