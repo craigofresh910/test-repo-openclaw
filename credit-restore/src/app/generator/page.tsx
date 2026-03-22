@@ -19,6 +19,9 @@ interface FormData {
   debtAmount: string
   bureau: 'experian' | 'equifax' | 'transunion' | 'all'
   reportDate: string
+  daysSinceDispute: string
+  collectorContactAfterCease: 'yes' | 'no'
+  hasSupportingDocs: 'yes' | 'no'
   // Letter
   letterType: LetterType
   disputeReason: 'identity_theft' | 'inaccurate_reporting' | 'not_mine' | 'paid_not_updated'
@@ -38,6 +41,9 @@ export default function Generator() {
     debtAmount: '',
     bureau: 'all',
     reportDate: '',
+    daysSinceDispute: '',
+    collectorContactAfterCease: 'no',
+    hasSupportingDocs: 'no',
     letterType: 'validation',
     disputeReason: 'inaccurate_reporting',
     date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -50,7 +56,7 @@ export default function Generator() {
   }
 
   const generateLetter = () => {
-    const { fullName, address, city, state, zip, creditorName, accountNumber, debtAmount, bureau, reportDate, letterType, disputeReason, date } = formData
+    const { fullName, address, city, state, zip, creditorName, accountNumber, debtAmount, bureau, reportDate, daysSinceDispute, collectorContactAfterCease, hasSupportingDocs, letterType, disputeReason, date } = formData
     const fullAddress = `${address}, ${city}, ${state} ${zip}`
     
     let letter = ''
@@ -254,6 +260,23 @@ ${fullAddress}
           .map((l, i) => `${i + 1}. ${l}`)
           .join('\n');
 
+        const elapsed = Number(daysSinceDispute || 0)
+        let violationScore = 0
+        if (elapsed >= 30) violationScore += 40
+        if (elapsed >= 45) violationScore += 25
+        if (collectorContactAfterCease === 'yes') violationScore += 20
+        if (hasSupportingDocs === 'yes') violationScore += 15
+        if (violationScore > 100) violationScore = 100
+
+        const escalationTier = violationScore >= 75 ? 'HIGH' : violationScore >= 45 ? 'MEDIUM' : 'LOW'
+
+        const timeline = [
+          `Day 0: Send packet via certified mail (retain tracking + copies).`,
+          `Day 15: Send follow-up MOV/validation demand if no complete response.`,
+          `Day 30: File CFPB complaint if unresolved or unverifiable reporting remains.`,
+          `Day 45: Escalate to state AG + prepare litigation counsel handoff if still noncompliant.`
+        ].join('\n')
+
         letter = `
 AFFIDAVIT + CASE LAW PACKET
 
@@ -261,7 +284,10 @@ PACKET INDEX
 Exhibit A - Consumer Affidavit
 Exhibit B - Legal Notice and Statutory Demand
 Exhibit C - Method of Verification (MOV) Demand
-Exhibit D - Certified Mail Checklist
+Exhibit D - Debt Validation Demand
+Exhibit E - Violation Scoring
+Exhibit F - Escalation Timeline
+Exhibit G - Certified Mail Checklist
 
 ============================
 EXHIBIT A - CONSUMER AFFIDAVIT
@@ -310,17 +336,45 @@ Provide the method and documentary basis used to verify this account, including:
 - Original contract/application
 - Chain of title/assignment (if applicable)
 - Payment/balance ledger
-- Date and source of verification
+- Date/source of verification
+- Name/title of person/system that performed verification
 
 ============================
-EXHIBIT D - SEND CHECKLIST
+EXHIBIT D - DEBT VALIDATION DEMAND (COLLECTION FILES)
+============================
+
+If this account is in collections, provide:
+- Original creditor details
+- Full chain of assignment/ownership
+- Itemized accounting ledger
+- Authority to collect and report this debt
+
+============================
+EXHIBIT E - VIOLATION SCORING
+============================
+
+Days Since Initial Dispute: ${daysSinceDispute || '0'}
+Collector Contact After Cease (if applicable): ${collectorContactAfterCease}
+Supporting Documents Attached: ${hasSupportingDocs}
+
+Violation Score: ${violationScore}/100
+Escalation Tier: ${escalationTier}
+
+============================
+EXHIBIT F - ESCALATION TIMELINE
+============================
+
+${timeline}
+
+============================
+EXHIBIT G - SEND CHECKLIST
 ============================
 
 [ ] Print packet
 [ ] Sign affidavit
-[ ] Add supporting documents (ID, utility bill, payment proof, police report if applicable)
-[ ] Send via certified mail with return receipt
-[ ] Keep copies and tracking records
+[ ] Attach exhibits + support docs (ID, utility bill, payment proof, police report if applicable)
+[ ] Send certified mail with return receipt
+[ ] Save tracking + response deadlines
 `
         break
       }
@@ -343,7 +397,8 @@ EXHIBIT D - SEND CHECKLIST
       y += wrapped.length * 7
     })
     
-    doc.save(`${formData.letterType}_letter_${formData.fullName.replace(/\s+/g, '_')}.pdf`)
+    const safeName = (formData.fullName || 'client').replace(/\s+/g, '_')
+    doc.save(formData.letterType + '_letter_' + safeName + '.pdf')
   }
 
   const steps = [
@@ -521,6 +576,40 @@ EXHIBIT D - SEND CHECKLIST
                   onChange={(e) => updateField('reportDate', e.target.value)}
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none"
                 />
+              </div>
+              <div>
+                <label className="block text-sm mb-2">Days Since Dispute Sent (optional)</label>
+                <input
+                  type="number"
+                  value={formData.daysSinceDispute}
+                  onChange={(e) => updateField('daysSinceDispute', e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none"
+                  placeholder="30"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm mb-2">Collector Contact After Cease</label>
+                  <select
+                    value={formData.collectorContactAfterCease}
+                    onChange={(e) => updateField('collectorContactAfterCease', e.target.value as FormData['collectorContactAfterCease'])}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none"
+                  >
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm mb-2">Supporting Docs Ready</label>
+                  <select
+                    value={formData.hasSupportingDocs}
+                    onChange={(e) => updateField('hasSupportingDocs', e.target.value as FormData['hasSupportingDocs'])}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none"
+                  >
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                  </select>
+                </div>
               </div>
             </div>
 
